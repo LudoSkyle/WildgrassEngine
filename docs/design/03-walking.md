@@ -33,6 +33,7 @@ enters the game, and when a warp or a reload places it.
 | `jumps` | `true` | jumps ledges |
 | `slides` | `true` | slides on ice |
 | `through` | `false` | blocks no one, blocked by no character |
+| `pace` | `0` | its walking pace; 0: the config's (feature 6) |
 
 ```gdscript
 walker.turn(Vector2i.LEFT)
@@ -56,15 +57,20 @@ obstacle).
   at once when a step ends during a frame, with the time left. A held key
   never stops between cells: after any time T, the walker has gone pace × T,
   however the frames fall. `WgPlayerInput` is one; feature 6 adds others.
-- **The pace is chosen when a step starts**: walk or run, in cells per second
-  (`movement_config.json`), then the filter hook
+- **The pace is chosen when a step starts**: walk (the walker's `pace`, else
+  the config's) or run, in cells per second (`movement_config.json`), then the
+  filter hook
   `step_pace(pace, walker, direction, running)`: a bike changes it there.
 - `Wildgrass.tiles.can_step()` decides, with the walker passed to its hook: a
   surfboard allows water there. Refused: `bumped(direction)`, the walker faces
   that way and plays its walk in place.
 - **A step reserves its target cell, on the level it reaches**: two walkers
   never go to the same cell. Walkers block each other through the tiles'
-  `can_step` hook; `Wildgrass.walkers.at(cell, level)` finds who stands there.
+  `can_step` hook, except that a walker may step into a cell another is
+  leaving (feature 6); `Wildgrass.walkers.at(cell, level)` finds who stands
+  there. `walker.destination` is the cell it ends on, `walker.heading` the
+  direction of its step, `walker.can_step(direction)` whether a step would
+  start.
 - **The level changes** as `Wildgrass.tiles.level_after()` says, and
   `z_index` is twice the level: 0 on the ground, 2 on a level 1 deck. Draw a
   deck of level L at `z_index` 2L − 1, and what covers every walker (roofs,

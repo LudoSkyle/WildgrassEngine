@@ -146,7 +146,8 @@ default, in `movement_config.json`). Pressed while the player stands still,
 the engine looks at the cell faced, on the player's level:
 
 1. **A `WgInteractable`** covering it, on that level, found by global
-   position (one inside a walker is that walker). Its `_interact(walker)`
+   position; one inside a walker is that walker, on the cell it ends on (the
+   one it walks into, mid-step). Its `_interact(walker)`
    runs; the player reads no input until it returns, the interactable is
    freed, or a warp or a reload happens; crossing a seam keeps it waiting.
 2. **A counter**: tile data `counter` on that cell → the cell beyond is looked
