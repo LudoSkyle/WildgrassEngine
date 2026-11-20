@@ -62,7 +62,7 @@ func test_a_game_written_comes_back_whole() -> void:
 	assert_array(_events).is_equal(["written 1", "new game 2", "loaded 1"])
 	var file := _file(1)
 	assert_int(int(file["format"])).is_equal(1)
-	assert_array(file["parts"].keys()).is_equal(["story", "quests", "bag", "clock"])
+	assert_array(file["parts"].keys()).is_equal(["story", "quests", "bag", "clock", "map"])
 	assert_bool(FileAccess.file_exists(_world.save.path_of(1) + ".tmp")).is_false()
 
 
@@ -144,7 +144,7 @@ func test_parts_are_restored_in_order_a_coroutine_awaited_before_the_game_is_tol
 	assert_bool(done[0]).is_true()
 	assert_array(order).is_equal(["late", "loaded 1"])
 	assert_bool(_world.save.add_part(&"bag", Callable(), Callable(), Callable())).is_false()
-	assert_array(_world.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock", &"late"])
+	assert_array(_world.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock", &"map", &"late"])
 	assert_array(_world.logged).is_equal(["ERROR a part 'bag' is already added"])
 
 
@@ -190,7 +190,7 @@ func test_a_summary_shows_the_play_time_and_what_the_game_adds() -> void:
 		return summary)
 	_world.clock.advance(60.0)
 	_world.save.write(1)
-	assert_that(_world.save.summary(1)).is_equal({"seconds": 60.0, "name": "Ludo 1"})
+	assert_that(_world.save.summary(1)).is_equal({"seconds": 60.0, "map": "", "zone": "", "name": "Ludo 1"})
 	assert_that(_world.save.summary(2)).is_equal({})
 
 
