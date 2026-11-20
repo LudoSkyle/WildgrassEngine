@@ -47,6 +47,8 @@ if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
 | `place` | `bottom` | `top`, `middle` |
 | `auto` | `0` | seconds after the last page before going on without the key (battles) |
 | `hold` | `false` | returns once written; the box stays until the next message or `close()` (“Saving…”) |
+| `locked` | `false` | once written, the key does nothing: with `auto`, the message goes on by itself |
+| `values` | none | placeholders of this message alone, `{"item": "Potion"}`, read before the texts' own; a value may hold placeholders (a Studio name) |
 | `walk_away` | `false` | a direction other than the one faced ends the message, and the player walks on that way (signs) |
 | `screen` | `message_box` | another screen extending `WgMessageBox` (a battle's box) |
 
@@ -119,11 +121,16 @@ the label and acted on when writing reaches them:
 - A tag that returns a signal holds writing until it is emitted, and the key
   does nothing meanwhile: a jingle plays to its end.
 
-**A game adds its own**: `Wildgrass.dialogue.add_tag(&"give", _give)`. The
-callable gets the tag's value as a `String` (`[give=potion*3]` → `"potion*3"`)
+**A game adds its own**: `Wildgrass.dialogue.add_tag(&"jingle", _jingle)`.
+The callable gets the tag's value as a `String` (`[jingle=item]` → `"item"`)
 and runs when writing reaches it; if it returns a signal, writing waits for it
 (a jingle). A name of Godot's BBCode, or one already taken, is refused. An
 unknown tag is left to the label, which shows it, and logged.
+
+`add_tag(name, callable, true)` declares a tag that **narrates**: a message
+holding it is the game's voice, not the character's ("You got a Potion!"), and
+shows no speaker, from its first letter, wherever the tag stands; the next
+message shows the speaker again. `[give]` (feature 8) is one.
 
 ## Questions
 
@@ -140,6 +147,13 @@ choice; `-1`: cancel does nothing).
 - The list shows `maxChoices` (config) at most, and only as many as fit
   between the box and the edge of the screen; beyond, it scrolls, the
   selection kept in view.
+
+`ask_number(text, options)` asks for a number: options `min` (0), `max` (99),
+`default` (`min`), and those of `say()`. The number appears once the question
+is written, where the choices would; up and down move it by one, left and
+right by ten, wrapping round the range; confirm returns it. Cancel, `close()`,
+a warp or a reload return `null`. A `max` below `min` is logged and becomes
+`min`.
 
 ## Talking to what you face
 
@@ -172,9 +186,11 @@ sets it, whatever the level; `covers` hides what a deck covers.
 | `size` | `(1, 1)` | cells covered, from its own |
 | `level` | `0` | inside a walker: the walker's |
 | `sides` | all | the directions the player may face while talking to it (`Up` alone: read from below) |
+| `blocks` | `false` | blocks its cells to walkers (an item on the ground, feature 8) |
 
-Signal `interacted(walker)`. It blocks nothing: what is drawn blocks through
-the TileSet, a sign included.
+Signal `interacted(walker)`. By default it blocks nothing: what is drawn
+blocks through the TileSet, a sign included. One inside a walker never blocks
+by itself.
 
 `WgSign` extends it: `text` (multiline, `[page]` inside), said with
 `style = "sign"` and `walk_away`. Anything else (a clock that tells the time,
@@ -190,7 +206,7 @@ a television) is a game's subclass overriding `_interact()`.
 	"advance": "page",
 	"scrollSpeed": 60,
 	"maxChoices": 6,
-	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down" }
+	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right" }
 }
 ```
 
@@ -199,9 +215,8 @@ reset; an unknown `advance`, logged, gives `page`.
 
 ## Later
 
-- Entering a number (quantities): with the bag, feature 8. Naming the player
-  or a Pokémon: its own screen, with the new game.
-- The money shown beside a shop's question: feature 8, as a tag.
+- Naming the player or a Pokémon: its own screen, with the new game.
+- The money shown beside a shop's question: with the shops, as a tag.
 - Text placeholders, the key bound to an action, words that follow the
   player's gender: feature 5. Story variables: feature 7.
 - A character turning toward the player it talks to: feature 6.
@@ -221,7 +236,10 @@ own box, `auto`, `hold`, `walk_away`, another box screen, messages cut by
 and config errors, missing actions; choices shown once written, the default,
 moving round, cancel and its values, `confirm()`, disabled choices, the mouse,
 only the config's actions, scrolling and fitting the screen, placing,
-questions cut short or whose box cannot open, wrong questions; reading a sign,
+questions cut short or whose box cannot open, wrong questions; tags that
+narrate and the speaker shown again after, `locked`, a message's own values
+and the placeholders they hold; numbers shown once written, moving round their
+range, cancelled or cut short, placed against the frame, a bad range; reading a sign,
 the player held, the key that ends a sign, walking away, sides, size and
 level, an interactable in a walker, counters, tile messages, the interact
 hook, an interaction ended by its end, a freed target or a warp, a seam that
