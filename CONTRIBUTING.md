@@ -5,6 +5,8 @@
 - **English only**: code, comments, docs, commits.
 - **No assets**: code and texture-free scenes only. No images, sounds, fonts
   or tilesets.
+- **Godot first**: maps, TileSets and scenes are made in Godot's own editor
+  and work as they are. Pokémon Studio support is added on top, never instead.
 - **Pokémon Studio formats** for game data.
 - **Extensible**: configs, replaceable screens, hooks, conventional paths
   (see `docs/design/00-foundation.md`).
