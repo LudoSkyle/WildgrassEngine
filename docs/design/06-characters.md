@@ -138,7 +138,6 @@ logged and reset.
 
 - Conditions on what a character says, whether it is there, a guard's
   passage: feature 7.
-- Positions kept with the save: feature 9.
 - Sight (who a character sees in front of it), trainers walking up to the
   player, emotions above a head: with battles.
 - Moves relative to the character, as event routes have them: an importer

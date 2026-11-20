@@ -61,6 +61,8 @@ send you straight back. Feature 3 decides when a door is used and calls
 Wildgrass.maps.warp(&"cave", &"Ladder", &"fade", Vector2i(0, 1), Vector2i.DOWN)
 Wildgrass.maps.use(door)          # warp to the door's target, by its rules
 Wildgrass.maps.go_to(&"start_island", &"Spawn")   # warp with no transition
+Wildgrass.maps.go_to_cell(&"town", Vector2i(3, 4), Vector2i.LEFT)   # a loaded game
+Wildgrass.maps.has_map(&"town")   # true if its scene exists
 Wildgrass.maps.reload()           # same map, traveller stays
 Wildgrass.maps.current            # WgMap or null
 Wildgrass.maps.traveller = player # any Node2D, set by feature 3
@@ -86,7 +88,7 @@ A warp, in order:
 
 - Unknown map: error logged, nothing changes.
 - Unknown point: warning, arrival at the map's first spawn point, else its
-  origin.
+  origin. An empty point is that first spawn point, without a warning.
 - Maps go under `Wildgrass.maps.host`: a y-sorted engine node by default; a
   game can give its own (inside a `SubViewport`, say).
 - `reload()` loads the current map and its neighbours again, in place: the

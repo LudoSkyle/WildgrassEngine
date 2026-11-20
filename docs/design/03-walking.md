@@ -71,7 +71,8 @@ obstacle).
   feature 8) blocks its cells the same way; `Wildgrass.walkers.at(cell, level)` finds who stands
   there. `walker.destination` is the cell it ends on, `walker.heading` the
   direction of its step, `walker.can_step(direction)` whether a step would
-  start.
+  start. `walker.place_at(cell, level, facing)` puts it on a cell at once (a
+  loaded game, a scene).
 - **The level changes** as `Wildgrass.tiles.level_after()` says, and
   `z_index` is twice the level: 0 on the ground, 2 on a level 1 deck. Draw a
   deck of level L at `z_index` 2L − 1, and what covers every walker (roofs,
