@@ -16,6 +16,8 @@ const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Bag := preload("res://addons/wildgrass/bag/bag.gd")
+const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
+const Save := preload("res://addons/wildgrass/save/save.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -32,6 +34,8 @@ var story: Story
 var quests: Quests
 var items: Items
 var bag: Bag
+var clock: Clock
+var save: Save
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
 var config: ConfigRegistry
@@ -43,6 +47,7 @@ var tile_set: TileSet
 func _init(parent: Node, map_config := {}) -> void:
 	sandbox = Sandbox.new()
 	sandbox.use_data_folder()
+	sandbox.set_setting("wildgrass/paths/saves", sandbox.root + "saves/")
 	var levels := {"solidLayers": [1, 2], "edgeLayers": [4, 5]}
 	levels.merge(map_config, true)
 	sandbox.write_json("Data/configs/map_config.json", levels)
@@ -59,6 +64,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
 	config.register(&"bag", WgBagConfig, "bag_config")
+	config.register(&"save", WgSaveConfig, "save_config")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -88,6 +94,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.bag = bag
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
+	clock = Clock.new()
+	save = Save.new(paths, logger, config, hooks)
+	save.add_part(&"story", story.state, story.restore, story.reset)
+	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
+	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
+	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	tile_set = T.tile_set()
 
 

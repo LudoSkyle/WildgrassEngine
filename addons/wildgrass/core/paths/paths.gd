@@ -10,6 +10,7 @@ const DEFAULTS: Dictionary[StringName, String] = {
 	&"graphics": "res://graphics/",
 	&"audio": "res://audio/",
 	&"maps": "res://maps/",
+	&"saves": "user://",
 }
 
 ## True when the game was launched with `-- --test`: player files are redirected.

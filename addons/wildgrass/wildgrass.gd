@@ -20,6 +20,7 @@ const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const Save := preload("res://addons/wildgrass/save/save.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -42,6 +43,7 @@ var quests: Quests
 var items: Items
 var bag: Bag
 var dialogue: Dialogue
+var save: Save
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -78,10 +80,13 @@ func _init() -> void:
 	walkers.bag = bag
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
+	save = _service(&"save", Save, [paths, log, config, hooks])
+	_add_parts()
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
 	config.register(&"bag", WgBagConfig, "bag_config")
+	config.register(&"save", WgSaveConfig, "save_config")
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
@@ -90,6 +95,15 @@ func _init() -> void:
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
+
+
+## The engine's parts of a saved game, in the order they are restored.
+func _add_parts() -> void:
+	save.add_part(&"story", story.state, story.restore, story.reset)
+	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
+	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
+	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 
 
 func _ready() -> void:
