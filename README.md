@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters.
+dialogue, texts, characters, story.
 
 ## Install
 
@@ -130,6 +130,21 @@ them. Move characters in scenes:
 await Wildgrass.walkers.walk(guard, [Vector2i.LEFT, Vector2i.UP])
 await Wildgrass.walkers.walk_to(guard, Vector2i(12, 7))
 ```
+
+**Story**: flags and values, and conditions written in the inspector
+(`bell_told, !bell_hung, badges >= 3, local:taken`). A `WgShowIf` child keeps
+its parent off a map unless its condition holds; `states` on `WgTalk` and
+`WgSign` (`condition => text`) and `ask` make what is said follow the story;
+messages set flags with `[flag=name]`.
+
+```gdscript
+Wildgrass.story.set_flag(&"bell_told")
+Wildgrass.quests.start(&"bell")
+Wildgrass.quests.complete(&"bell", 0)
+```
+
+Quests are `WgQuest` resources you register, or a Studio project's
+`Data/Studio/quests/*.json`, read as they are.
 
 ## License
 
