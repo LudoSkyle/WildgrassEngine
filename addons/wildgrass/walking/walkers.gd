@@ -9,6 +9,7 @@ const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_regi
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const Story := preload("res://addons/wildgrass/story/story.gd")
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
@@ -19,6 +20,8 @@ var maps: Maps
 var tiles: Tiles
 ## Says the tile messages; set once the dialogue service exists.
 var dialogue: Dialogue
+## What characters say follows it; set once the story service exists.
+var story: Story
 
 ## Walker -> the [cell, level] pairs it holds: where it stands, and where its
 ## step goes.

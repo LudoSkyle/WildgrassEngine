@@ -5,6 +5,7 @@ extends RefCounted
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## A flag or a value changed.
 signal changed(name: StringName)
@@ -19,6 +20,8 @@ var _maps: Maps
 var _flags: Dictionary[StringName, bool] = {}
 var _values: Dictionary[StringName, Variant] = {}
 var _warned: Dictionary[String, bool] = {}
+## True once a [reload] tag was reached, until the dialogue closes or a warp.
+var _reload_asked := false
 
 static var _comparison := RegEx.create_from_string("^(\\w+)\\s*(!=|<=|>=|=|<|>)\\s*(.+)$")
 static var _identifier := RegEx.create_from_string("^\\w+$")
@@ -30,6 +33,8 @@ func _init(logger: Log, hook_registry: Hooks, maps_service: Maps) -> void:
 	_maps = maps_service
 	_hooks.add(&"text_value", &"wildgrass_story", _text_value)
 	_hooks.add(&"map_built", &"wildgrass_story", _keep_what_shows)
+	# Before the dialogue's own: a warp drops a reload asked, then closes it.
+	_maps.map_changed.connect(_on_map_changed)
 
 
 func set_flag(flag: StringName) -> void:
@@ -94,6 +99,39 @@ func check(condition: String, node: Node = null) -> bool:
 		if _holds(term, node) == denied:
 			return false
 	return true
+
+
+## Adds the message tags `[flag=name]`, `[unflag=name]` and `[reload]`, which
+## reloads the map once the dialogue is closed, unless a warp closed it.
+func add_tags(dialogue: Dialogue) -> void:
+	# Methods, not lambdas: a lambda would keep this service alive.
+	dialogue.add_tag(&"flag", _flag_tag)
+	dialogue.add_tag(&"unflag", _unflag_tag)
+	dialogue.add_tag(&"reload", _ask_reload)
+	dialogue.closed.connect(_on_dialogue_closed)
+
+
+func _flag_tag(flag: String) -> void:
+	set_flag(StringName(flag))
+
+
+func _unflag_tag(flag: String) -> void:
+	clear_flag(StringName(flag))
+
+
+func _ask_reload(_value: String) -> void:
+	_reload_asked = true
+
+
+func _on_dialogue_closed() -> void:
+	if _reload_asked:
+		_reload_asked = false
+		_maps.reload()
+
+
+func _on_map_changed(_map: WgMap) -> void:
+	if not _maps.is_crossing:
+		_reload_asked = false
 
 
 ## Everything, as a dictionary JSON can hold.

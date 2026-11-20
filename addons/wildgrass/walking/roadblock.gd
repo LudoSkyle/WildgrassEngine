@@ -20,7 +20,7 @@ func _triggered(walker: WgWalker) -> void:
 		for child: Node in keeper.get_children():
 			if child is WgTalk:
 				var talk := child as WgTalk
-				said = talk.text if said.is_empty() else said
+				said = talk.current_text(walkers.story) if said.is_empty() else said
 				if not talk.speaker.is_empty():
 					options["speaker"] = talk.speaker
 				if talk.speaker_color.a > 0.0:

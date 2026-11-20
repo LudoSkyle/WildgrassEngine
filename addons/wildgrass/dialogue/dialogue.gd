@@ -244,7 +244,10 @@ func _next() -> void:
 			continue
 		_current = request
 		_held_open = false
-		var text := _texts.format(_translated(request.text), true)
+		var translated := _translated(request.text)
+		if translated != request.text:
+			_check_translation(request.text, translated)
+		var text := _texts.format(translated, true)
 		if request.options.has("speaker"):
 			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])))
 		for answer: Dictionary in request.answers:
@@ -271,6 +274,23 @@ func _open_box(screen_name: StringName) -> bool:
 	box.closed.connect(_on_box_closed.bind(box))
 	opened.emit()
 	return true
+
+
+## A translation that loses a game tag of its source would act differently in
+## that language only: logged.
+func _check_translation(source: String, translated: String) -> void:
+	var kept: Array[String] = []
+	for tag: Dictionary in MessageTags.split(translated, tag_names(), [])["tags"]:
+		if _tags.has(tag["name"]):
+			kept.append("%s=%s" % [tag["name"], tag["value"]])
+	for tag: Dictionary in MessageTags.split(source, tag_names(), [])["tags"]:
+		var written := "%s=%s" % [tag["name"], tag["value"]]
+		if not _tags.has(tag["name"]):
+			continue
+		if written in kept:
+			kept.erase(written)
+		else:
+			log.error(&"dialogue", "the translation of \"%s\" loses [%s]" % [source, written.trim_suffix("=")])
 
 
 static func _translated(text: String) -> String:
