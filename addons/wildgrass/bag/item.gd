@@ -33,6 +33,11 @@ var icon_path := ""
 var on_missing_icon := Callable()
 
 
+## Its name for `count` of it: the plural when more than one, if it has one.
+func name_for(count: int) -> String:
+	return plural if count > 1 and not plural.is_empty() else name
+
+
 func _load_icon() -> Texture2D:
 	if ResourceLoader.exists(icon_path):
 		return load(icon_path) as Texture2D

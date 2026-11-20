@@ -33,7 +33,7 @@ func _interact(walker: WgWalker) -> void:
 	var found: WgItem = walkers.bag.item(item)
 	if found == null:
 		return
-	var values := {"item": found.plural if count > 1 and not found.plural.is_empty() else found.name, "count": count}
+	var values := {"item": found.name_for(count), "count": count}
 	if not walkers.bag.give(item, count):
 		await walkers.dialogue.say(full_text, {"values": values})
 		return
