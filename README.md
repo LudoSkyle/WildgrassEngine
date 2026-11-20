@@ -5,7 +5,7 @@ GDScript only, ships no assets.
 
 ## Status
 
-In development: the foundation, maps and doors.
+In development: the foundation, maps and doors, linked maps.
 
 ## Install
 
@@ -53,6 +53,16 @@ await Wildgrass.maps.use(door)
 ```
 
 `map_config.json`: `{ "tileSize": 16, "fadeSeconds": 0.25 }`.
+
+**Linked maps** show against each other's sides and are walked into with no
+transition. On each `WgMap`, set `size` (in tiles) and add a `WgMapLink` per
+side: the other map, its side and its offset. Each map links back to the
+other. Give ground layers a negative `z_index`, or a neighbour's ground hides
+the player at the seam. After each step of the player:
+
+```gdscript
+Wildgrass.maps.cross()
+```
 
 ## License
 
