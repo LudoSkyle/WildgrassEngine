@@ -29,6 +29,7 @@ func _init(logger: Log, hook_registry: Hooks, maps_service: Maps) -> void:
 	_hooks = hook_registry
 	_maps = maps_service
 	_hooks.add(&"text_value", &"wildgrass_story", _text_value)
+	_hooks.add(&"map_built", &"wildgrass_story", _keep_what_shows)
 
 
 func set_flag(flag: StringName) -> void:
@@ -166,6 +167,26 @@ static func _compare(left: Variant, operator: String, written: String) -> bool:
 		"=": return str(left) == str(right)
 		"!=": return str(left) != str(right)
 	return false
+
+
+## Frees what a WgShowIf of `map` keeps off it.
+func _keep_what_shows(map: WgMap, _map_id: StringName) -> void:
+	var gates: Array[WgShowIf] = []
+	_collect_gates(map, gates)
+	for gate in gates:
+		if not is_instance_valid(gate):
+			continue
+		var kept := gate.get_parent()
+		if is_instance_valid(kept) and kept != map and not check(gate.condition, kept):
+			kept.get_parent().remove_child(kept)
+			kept.free()
+
+
+static func _collect_gates(node: Node, found: Array[WgShowIf]) -> void:
+	for child: Node in node.get_children():
+		if child is WgShowIf:
+			found.append(child)
+		_collect_gates(child, found)
 
 
 func _text_value(found: Variant, value_name: StringName) -> Variant:
