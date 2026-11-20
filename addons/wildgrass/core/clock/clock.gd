@@ -36,7 +36,8 @@ func _set_shader_global(value: float) -> void:
 	RenderingServer.global_shader_parameter_set(SHADER_GLOBAL, value)
 
 
-## Declares the `game_time` shader global if the project does not.
+## Declares the `game_time` shader global if the project does not. Project
+## globals are loaded at start; the server's own list is for the editor only.
 static func declare_shader_global() -> void:
-	if not RenderingServer.global_shader_parameter_get_list().has(SHADER_GLOBAL):
+	if not ProjectSettings.has_setting("shader_globals/" + SHADER_GLOBAL):
 		RenderingServer.global_shader_parameter_add(SHADER_GLOBAL, RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 0.0)
