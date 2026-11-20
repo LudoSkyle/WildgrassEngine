@@ -37,6 +37,7 @@ var _paths: Paths
 var _studio_read := false
 var _quests: Dictionary[StringName, WgQuest] = {}
 var _givers: Dictionary[StringName, Callable] = {}
+var _checks: Dictionary[StringName, Callable] = {}
 ## Id -> {"state", "progress": Array[int], "revealed": Array[bool], "claimed"}.
 var _progress: Dictionary[StringName, Dictionary] = {}
 
@@ -149,11 +150,15 @@ func is_revealed(id: StringName, index: int) -> bool:
 	return _progress.has(id) and _progress[id]["revealed"][index]
 
 
-## Gives the earnings of a finished quest, once: true the first time. A kind
+## Gives the earnings of a finished quest, once: true the first time. Nothing
+## is given, and it stays to claim, while an earning would not fit. A kind
 ## nobody gives is logged, the others given.
 func claim(id: StringName) -> bool:
 	if not is_finished(id) or _progress[id]["claimed"]:
 		return false
+	for earning in _quests[id].earnings:
+		if _checks.has(earning.kind) and not _checks[earning.kind].callv(earning.args):
+			return false
 	_progress[id]["claimed"] = true
 	for earning in _quests[id].earnings:
 		if _givers.has(earning.kind):
@@ -164,9 +169,13 @@ func claim(id: StringName) -> bool:
 
 
 ## `giver` is called with an earning's arguments when a quest of that kind of
-## earning is claimed.
-func add_earning(kind: StringName, giver: Callable) -> void:
+## earning is claimed; `check`, with the same, says whether it would fit.
+func add_earning(kind: StringName, giver: Callable, check := Callable()) -> void:
 	_givers[kind] = giver
+	if check.is_valid():
+		_checks[kind] = check
+	else:
+		_checks.erase(kind)
 
 
 ## Every quest's progress, as a dictionary JSON can hold.

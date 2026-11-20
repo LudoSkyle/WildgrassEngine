@@ -18,6 +18,7 @@ const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
+const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## A project setting here names a subclass to use instead of a service.
@@ -39,6 +40,7 @@ var walkers: Walkers
 var story: Story
 var quests: Quests
 var items: Items
+var bag: Bag
 var dialogue: Dialogue
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
@@ -68,6 +70,7 @@ func _init() -> void:
 	story = _service(&"story", Story, [log, hooks, maps])
 	quests = _service(&"quests", Quests, [log, hooks, paths])
 	items = _service(&"items", Items, [paths, log, config])
+	bag = _service(&"bag", Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
