@@ -53,3 +53,14 @@ func test_map_config_resets_impossible_values() -> void:
 	assert_array(config.load_data({"tileSize": 0, "fadeSeconds": -1}, "map_config.json")).has_size(2)
 	assert_int(config.tile_size).is_equal(16)
 	assert_float(config.fade_seconds).is_equal(0.0)
+
+
+func test_map_config_needs_one_solid_and_one_edge_layer_from_1_to_32_per_level() -> void:
+	var config := WgMapConfig.new()
+	assert_array(config.load_data({"solidLayers": [1, 2], "edgeLayers": [4, 5]}, "map_config.json")).is_empty()
+	assert_array(config.solid_layers).is_equal([1, 2])
+	for bad: Dictionary in [{"solidLayers": [1, 2], "edgeLayers": [4]}, {"solidLayers": [], "edgeLayers": []}, {"solidLayers": [0], "edgeLayers": [4]}, {"solidLayers": [1], "edgeLayers": [33]}]:
+		config = WgMapConfig.new()
+		assert_array(config.load_data(bad, "map_config.json")).has_size(1)
+		assert_array(config.solid_layers).is_equal([1])
+		assert_array(config.edge_layers).is_equal([4])
