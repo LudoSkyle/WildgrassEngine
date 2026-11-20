@@ -6,7 +6,7 @@ extends WgScreen
 
 const MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
 
-enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD, CHOOSING }
+enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD, CHOOSING, NUMBER }
 
 @export_group("Nodes")
 ## The box's frame; `style` sets its `theme_type_variation`.
@@ -24,6 +24,10 @@ enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD,
 ## A container of the choices of a question, holding one Button as a model;
 ## optional.
 @export var choices: NodePath = ^"Choices"
+## Shown with the number asked by `ask_number()`; optional.
+@export var number: NodePath = ^"Number"
+## The `Label` of that number.
+@export var number_value: NodePath = ^"Number/Value"
 @export_group("")
 ## Places the frame by `place`, and the speaker, portrait and marker around
 ## it. Off: the scene's own layout is kept.
@@ -38,6 +42,11 @@ var state := State.IDLE
 var _frame: Control
 var _text: RichTextLabel
 var _speaker: Control
+var _number: Control
+var _number_value: Label
+## `{"min", "max", "default"}` while a number is asked.
+var _range: Dictionary = {}
+var _value := 0
 var _speaker_name: Label
 var _portrait: TextureRect
 var _waiting: CanvasItem
@@ -83,6 +92,10 @@ func _ready() -> void:
 	_portrait = get_node_or_null(portrait) as TextureRect
 	_waiting = get_node_or_null(waiting) as CanvasItem
 	_choices = get_node_or_null(choices) as Control
+	_number = get_node_or_null(number) as Control
+	_number_value = get_node_or_null(number_value) as Label
+	if _number != null:
+		_number.hide()
 	if _choices != null:
 		for child: Node in _choices.get_children():
 			if child is Button:
@@ -122,13 +135,16 @@ func _process(delta: float) -> void:
 ## Starts writing `message`, with the options of `say()`. `answers`, each
 ## `{"text", "disabled"}`, are shown once it is written: a question. Texts come
 ## translated and formatted.
-func show_message(message: String, options: Dictionary, answers: Array[Dictionary] = []) -> void:
+func show_message(message: String, options: Dictionary, answers: Array[Dictionary] = [], asked: Dictionary = {}) -> void:
 	if _text == null:
-		dialogue._message_done(int(options.get("cancel", -1)) if not answers.is_empty() else 0)
+		dialogue._message_done(null if not asked.is_empty() else (int(options.get("cancel", -1)) if not answers.is_empty() else 0))
 		return
 	_options = options
 	_answers = answers
+	_range = asked
 	_close_choices()
+	if _number != null:
+		_number.hide()
 	_dress()
 	var split := MessageTags.split(message, dialogue.tag_names(), _effect_tags())
 	for tag_name: String in split["unknown"]:
@@ -195,6 +211,8 @@ func confirm() -> void:
 			dialogue.advanced.emit()
 			_next_page()
 		State.WRITTEN:
+			if _options.get("locked", false):
+				return
 			dialogue.advanced.emit()
 			_end()
 
@@ -210,6 +228,22 @@ func shown_text() -> String:
 func _on_input(event: InputEvent) -> bool:
 	if dialogue == null:
 		return false
+	if state == State.NUMBER:
+		if dialogue.is_action(event, "confirm"):
+			_answer_number(_value)
+		elif dialogue.is_action(event, "cancel"):
+			_answer_number(null)
+		elif dialogue.is_action(event, "up"):
+			_set_value(_value + 1)
+		elif dialogue.is_action(event, "down"):
+			_set_value(_value - 1)
+		elif dialogue.is_action(event, "right"):
+			_set_value(_value + 10)
+		elif dialogue.is_action(event, "left"):
+			_set_value(_value - 10)
+		else:
+			return false
+		return true
 	if state == State.CHOOSING:
 		if dialogue.is_action(event, "confirm"):
 			_pick(_selected)
@@ -334,6 +368,9 @@ func _page_written() -> void:
 		state = State.CHOOSING
 		_open_choices()
 		return
+	if not _range.is_empty():
+		_open_number()
+		return
 	if _options.get("hold", false):
 		state = State.HELD
 		dialogue._message_done(0)
@@ -427,10 +464,41 @@ func _rows_that_fit() -> int:
 
 ## Against the frame's right edge: above it, below when the box is at the top.
 func _place_choices() -> void:
-	_choices.reset_size()
+	_place_beside(_choices)
+
+
+func _place_beside(node: Control) -> void:
+	node.reset_size()
 	var area := _frame.get_rect()
 	var below := str(_options.get("place", "bottom")) == "top"
-	_choices.position = Vector2(area.end.x - _choices.size.x, area.end.y if below else area.position.y - _choices.size.y)
+	node.position = Vector2(area.end.x - node.size.x, area.end.y if below else area.position.y - node.size.y)
+
+
+func _open_number() -> void:
+	if _number == null or _number_value == null:
+		dialogue.log.error(&"dialogue", "%s: no number to ask in" % name)
+		_answer_number(null)
+		return
+	state = State.NUMBER
+	_value = _range["default"]
+	_number_value.text = str(_value)
+	_number.show()
+	if arrange:
+		_place_beside(_number)
+
+
+## Moves the number, wrapping round its range.
+func _set_value(wanted: int) -> void:
+	var low: int = _range["min"]
+	_value = low + posmod(wanted - low, int(_range["max"]) - low + 1)
+	_number_value.text = str(_value)
+
+
+func _answer_number(value: Variant) -> void:
+	state = State.IDLE
+	if _number != null:
+		_number.hide()
+	dialogue._message_done(value)
 
 
 func _next_page() -> void:

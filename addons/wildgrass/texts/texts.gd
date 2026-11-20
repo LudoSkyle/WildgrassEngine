@@ -120,8 +120,8 @@ func value(value_name: StringName) -> Variant:
 ## `text` with its placeholders filled: `{name}`, `{name?yes|no}`,
 ## `{key:action}`, `{text:file:line}`, and Studio's `[VAR …]` tokens. With
 ## `escape`, what values put in is escaped for messages: it never reads as a
-## tag.
-func format(text: String, escape := false) -> String:
+## tag. `values` come first: one text's own.
+func format(text: String, escape := false, values := {}) -> String:
 	if _placeholder == null:
 		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
 		_token = RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
@@ -129,8 +129,8 @@ func format(text: String, escape := false) -> String:
 		if found.get_string(1) == "text" and not found.get_string(2).is_empty():
 			return _studio_reference(found)
 		return found.get_string())
-	result = _replace(_token, result, _fill_token.bind(escape))
-	return _replace(_placeholder, result, _fill_placeholder.bind(escape))
+	result = _replace(_token, result, _fill_token.bind(escape, values))
+	return _replace(_placeholder, result, _fill_placeholder.bind(escape, values))
 
 
 func config() -> WgLanguageConfig:
@@ -214,7 +214,7 @@ func _studio_reference(found: RegExMatch) -> String:
 	return studio(parts[0].to_int(), parts[1].to_int())
 
 
-func _fill_placeholder(found: RegExMatch, escape: bool) -> String:
+func _fill_placeholder(found: RegExMatch, escape: bool, values: Dictionary) -> String:
 	var value_name := found.get_string(1)
 	var argument := found.get_string(2)
 	var shown: Variant = null
@@ -223,7 +223,7 @@ func _fill_placeholder(found: RegExMatch, escape: bool) -> String:
 	if value_name == "key" and not argument.is_empty():
 		shown = _key_name(argument)
 	elif argument.is_empty():
-		shown = value(StringName(value_name))
+		shown = values[value_name] if values.has(value_name) else value(StringName(value_name))
 	if shown == null:
 		_warn_once("no value for %s" % found.get_string())
 		return found.get_string()
@@ -233,12 +233,12 @@ func _fill_placeholder(found: RegExMatch, escape: bool) -> String:
 
 
 ## `[VAR NAME(000n, …)]` is the value `name_n`; `[VAR NAME]`, `name`.
-func _fill_token(found: RegExMatch, escape: bool) -> String:
+func _fill_token(found: RegExMatch, escape: bool, values: Dictionary) -> String:
 	var value_name := found.get_string(1).to_lower()
 	var index := found.get_string(2).get_slice(",", 0).strip_edges()
 	if index.is_valid_hex_number():
 		value_name += "_%d" % index.hex_to_int()
-	var shown: Variant = value(StringName(value_name))
+	var shown: Variant = values[value_name] if values.has(value_name) else value(StringName(value_name))
 	if shown == null:
 		_warn_once("no value for Studio token %s" % found.get_string())
 		return ""

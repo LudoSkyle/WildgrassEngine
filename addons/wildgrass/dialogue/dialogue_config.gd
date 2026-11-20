@@ -13,6 +13,7 @@ enum Advance {
 
 const DEFAULT_ACTIONS: Dictionary[String, String] = {
 	"confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down",
+	"left": "ui_left", "right": "ui_right",
 }
 
 ## Letters written per second; 0 writes each page at once.

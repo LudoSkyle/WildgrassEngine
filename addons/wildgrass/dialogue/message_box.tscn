@@ -81,3 +81,14 @@ focus_mode = 0
 auto_translate_mode = 2
 toggle_mode = true
 alignment = 0
+
+[node name="Number" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 24.0
+
+[node name="Value" type="Label" parent="Number"]
+layout_mode = 2
+auto_translate_mode = 2
+horizontal_alignment = 2
