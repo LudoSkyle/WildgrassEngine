@@ -100,8 +100,20 @@ func _init(parent: Node, map_config := {}) -> void:
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
+	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
 	tile_set = T.tile_set()
+	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
+
+
+## Walkers of a map built from its scene use this world's service, not the
+## engine's.
+func _give_walkers(node: Node, _map_id: StringName = &"") -> void:
+	for child: Node in node.get_children():
+		if child is WgWalker and (child as WgWalker).walkers == null:
+			(child as WgWalker).walkers = walkers
+		_give_walkers(child)
 
 
 ## A current map of `size` cells with an Entities node and tiles from `cells`.

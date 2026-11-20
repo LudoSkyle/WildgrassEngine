@@ -260,6 +260,16 @@ func _finish_step() -> void:
 			walkers.trigger_at(self)
 
 
+## Puts the walker on `at` of the current map's grid, at once, on `on_level`,
+## facing `direction` if not zero: a loaded game, a scene.
+func place_at(at: Vector2i, on_level := level, direction := Vector2i.ZERO) -> void:
+	level = on_level
+	global_position = walkers.tiles.center_of(at)
+	_settle()
+	if direction != Vector2i.ZERO:
+		_face(direction)
+
+
 ## Stops any step and takes the cell under the walker, at its centre.
 func _settle() -> void:
 	is_moving = false

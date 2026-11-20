@@ -103,7 +103,9 @@ func _add_parts() -> void:
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
+	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
 
 
 func _ready() -> void:

@@ -32,8 +32,8 @@ func test_the_autoload_provides_every_service() -> void:
 	assert_bool(engine.config.is_registered(&"dialogue")).is_true()
 	assert_bool(engine.config.is_registered(&"language")).is_true()
 	assert_bool(engine.config.is_registered(&"save")).is_true()
-	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock"])
-	assert_bool(engine.hooks.has(&"save_summary", &"wildgrass_clock")).is_true()
+	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock", &"map"])
+	assert_array(engine.hooks.names(&"save_summary")).is_equal([&"wildgrass_clock", &"wildgrass_map"])
 	assert_str(engine.screens.scene_path(&"message_box")).is_equal("res://addons/wildgrass/dialogue/message_box.tscn")
 
 

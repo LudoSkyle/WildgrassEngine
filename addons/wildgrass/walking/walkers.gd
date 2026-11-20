@@ -388,6 +388,95 @@ func _known(action_key: String) -> bool:
 	return false
 
 
+## The `map` part of a saved game: the current map, the traveller's cell,
+## level and facing on it, and every walker's of that map, by its path in it.
+## Cells are the map's own, from its corner. Empty with no map or traveller.
+func map_state() -> Dictionary:
+	var map := maps.current
+	if map == null or maps.traveller == null:
+		return {}
+	var state := {"map": str(maps.current_id)}
+	state.merge(_place_of(maps.traveller, map))
+	var others := {}
+	for walker: WgWalker in _held:
+		if walker != maps.traveller and is_instance_valid(walker) and map.is_ancestor_of(walker):
+			others[str(map.get_path_to(walker))] = _place_of(walker, map)
+	state["walkers"] = others
+	return state
+
+
+## Refuses a game whose map no longer exists, unless the filter hook
+## `save_lost_map(map_id, state)` names one that does: the traveller then
+## starts at its first spawn point.
+func check_map(state: Dictionary) -> bool:
+	if state.is_empty() or maps.has_map(StringName(str(state.get("map", "")))):
+		return true
+	var lost := str(state.get("map", ""))
+	var instead := StringName(str(hooks.filter(&"save_lost_map", &"", [lost, state])))
+	if not maps.has_map(instead):
+		log.error(&"walking", "the saved map '%s' no longer exists" % lost)
+		return false
+	state["map"] = str(instead)
+	state.erase("cell")
+	state.erase("walkers")
+	return true
+
+
+## Puts the traveller and the walkers back where `map_state()` saw them.
+func restore_map(state: Dictionary) -> void:
+	if state.is_empty():
+		return
+	var map_id := StringName(str(state["map"]))
+	if not state.has("cell"):
+		await maps.go_to(map_id, &"")
+		return
+	var place := _read_place(state)
+	if not await maps.go_to_cell(map_id, place["cell"], place["facing"]):
+		return
+	var traveller := maps.traveller as WgWalker
+	if traveller != null:
+		traveller.place_at(place["cell"], place["level"], place["facing"])
+	var others: Variant = state.get("walkers", {})
+	if not others is Dictionary:
+		return
+	for path: Variant in others:
+		var walker := maps.current.get_node_or_null(NodePath(str(path))) as WgWalker
+		if walker != null and walker != traveller and others[path] is Dictionary:
+			var at := _read_place(others[path])
+			walker.place_at(at["cell"], at["level"], at["facing"])
+
+
+## A new game: the game warps to its first map itself.
+func reset_map() -> void:
+	pass
+
+
+## The `save_summary` hook: a game's card shows where it was left.
+func map_summary(summary: Dictionary, _slot: int) -> Dictionary:
+	summary["map"] = str(maps.current_id)
+	summary["zone"] = str(maps.current.zone) if maps.current != null else ""
+	return summary
+
+
+func _place_of(node: Node2D, map: WgMap) -> Dictionary:
+	var walker := node as WgWalker
+	var cell := tiles.cell_of(node.global_position - map.global_position)
+	if walker != null:
+		cell = walker.cell - tiles.cell_of(map.global_position)
+	var facing := walker.facing if walker != null else Vector2i.DOWN
+	return {"cell": [cell.x, cell.y], "level": walker.level if walker != null else 0, "facing": [facing.x, facing.y]}
+
+
+static func _read_place(saved: Dictionary) -> Dictionary:
+	return {"cell": _read_cell(saved.get("cell")), "level": int(saved.get("level", 0)), "facing": _read_cell(saved.get("facing"))}
+
+
+static func _read_cell(value: Variant) -> Vector2i:
+	if value is Array and value.size() == 2:
+		return Vector2i(int(value[0]), int(value[1]))
+	return Vector2i.ZERO
+
+
 ## A warp or a reload ends every interaction and scripted walk; crossing a
 ## seam does not.
 func _on_map_changed(_map: WgMap) -> void:

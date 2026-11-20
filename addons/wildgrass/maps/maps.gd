@@ -57,8 +57,24 @@ func _init(paths: Paths, logger: Log, config: ConfigRegistry, hooks: Hooks, scre
 
 
 ## Moves the traveller to `point` of map `map_id` (empty: this map), plus
-## `offset` tiles, facing `direction` if not zero. Returns false if refused.
+## `offset` tiles, facing `direction` if not zero. An empty `point` is the
+## map's first spawn point. Returns false if refused.
 func warp(map_id: StringName, point: StringName, transition := &"fade", offset := Vector2i.ZERO, direction := Vector2i.ZERO) -> bool:
+	return await _warp(map_id, point, transition, offset, direction, false)
+
+
+## Moves the traveller to `cell` of map `map_id`, with no transition, facing
+## `direction` (down if zero): a loaded game.
+func go_to_cell(map_id: StringName, cell: Vector2i, direction := Vector2i.ZERO) -> bool:
+	return await _warp(map_id, &"", &"none", cell, direction, true)
+
+
+## True if map `map_id` has a scene.
+func has_map(map_id: StringName) -> bool:
+	return not map_id.is_empty() and ResourceLoader.exists(_map_path(map_id))
+
+
+func _warp(map_id: StringName, point: StringName, transition: StringName, offset: Vector2i, direction: Vector2i, at_cell: bool) -> bool:
 	if is_changing:
 		return false
 	var target_id := current_id if map_id.is_empty() else map_id
@@ -72,7 +88,8 @@ func warp(map_id: StringName, point: StringName, transition := &"fade", offset :
 	var screen := await _cover(transition)
 	if not same_map:
 		_replace(next, target_id, Vector2.ZERO)
-	var arrival := _arrival(current, point)
+	var half := Vector2(_tile_size(), _tile_size()) * 0.5
+	var arrival := {"position": current.global_position + half, "direction": Vector2i.DOWN, "point": null} if at_cell else _arrival(current, point)
 	_place(arrival["position"] + Vector2(offset * _tile_size()))
 	traveller_arrived.emit(direction if direction != Vector2i.ZERO else arrival["direction"], arrival["point"])
 	_announce_zone(next)
@@ -338,9 +355,10 @@ func _host_alive() -> bool:
 
 ## {"position": global position, "direction": facing, "point": node or null}
 func _arrival(map: WgMap, point_name: StringName) -> Dictionary:
-	var point := map.find_point(point_name)
+	var point := map.find_point(point_name) if not point_name.is_empty() else null
 	if point == null:
-		_log.warn(&"maps", "%s: no door or spawn point '%s'" % [current_id, point_name])
+		if not point_name.is_empty():
+			_log.warn(&"maps", "%s: no door or spawn point '%s'" % [current_id, point_name])
 		point = map.first_spawn_point()
 	if point == null:
 		return {"position": map.global_position, "direction": Vector2i.DOWN, "point": null}
