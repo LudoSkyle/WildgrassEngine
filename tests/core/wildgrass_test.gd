@@ -88,9 +88,13 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgConfig", "WgDisplayConfig", "WgDoor", "WgLogConfig", "WgMap", "WgMapConfig", "WgScreen", "WgSpawnPoint", "WgTransition"])
+	assert_array(names).is_equal(["WgConfig", "WgDisplayConfig", "WgDoor", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgScreen", "WgSpawnPoint", "WgTransition"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
+
+
+func test_the_map_host_is_y_sorted_so_the_lower_map_draws_on_top() -> void:
+	assert_bool(_start_engine().map_host.y_sort_enabled).is_true()
 
 
 func test_display_config_and_log_config_are_applied_at_start() -> void:

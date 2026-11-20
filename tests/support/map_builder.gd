@@ -12,9 +12,10 @@ func _init(sandbox: Sandbox) -> void:
 
 
 ## A WgMap with an Entities node. Add points with the other methods, then save().
-func map(zone := &"") -> WgMap:
+func map(zone := &"", size := Vector2i.ZERO) -> WgMap:
 	var root := WgMap.new()
 	root.zone = zone
+	root.size = size
 	var entities := Node2D.new()
 	entities.name = "Entities"
 	root.add_child(entities)
@@ -40,6 +41,15 @@ static func door(map_node: Node, door_name: String, position: Vector2, target_ma
 	node.direction = direction
 	node.transition = transition
 	map_node.add_child(node)
+	return node
+
+
+static func link(map_node: WgMap, side: WgMapLink.Side, target: StringName, offset := 0) -> WgMapLink:
+	var node := WgMapLink.new()
+	node.side = side
+	node.map = target
+	node.offset = offset
+	map_node.links.append(node)
 	return node
 
 
