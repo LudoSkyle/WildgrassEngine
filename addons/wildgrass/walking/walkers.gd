@@ -154,6 +154,29 @@ func interact(walker: WgWalker) -> void:
 		_busy.erase(walker)
 
 
+## Runs the enabled trigger under `walker`, the traveller, after its own step:
+## it is held at once, until the trigger returns. Not while a script walks it
+## or it is held already.
+func trigger_at(walker: WgWalker) -> void:
+	if is_scripted(walker) or is_busy(walker) or not walker.is_inside_tree():
+		return
+	var found: WgTrigger = null
+	for node: Node in walker.get_tree().get_nodes_in_group(WgTrigger.GROUP):
+		var trigger := node as WgTrigger
+		if trigger.enabled and trigger.covers(tiles.cell_of(trigger.global_position), walker.cell, walker.level):
+			found = trigger
+			break
+	if found == null:
+		return
+	walker.is_sliding = false
+	_interactions += 1
+	var number := _interactions
+	_busy[walker] = [found, number]
+	await found.trigger(walker)
+	if _busy.has(walker) and _busy[walker][1] == number:
+		_busy.erase(walker)
+
+
 ## True while `walker` interacts: until the interaction returns, what it
 ## interacts with is freed, or the map changes.
 func is_busy(walker: WgWalker) -> bool:
