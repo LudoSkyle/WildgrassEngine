@@ -236,7 +236,7 @@ func test_data_comes_from_the_first_tile_from_the_top_that_sets_it() -> void:
 	assert_that(_tiles.data(Vector2i(2, 1), &"water")).is_equal(false)
 	assert_that(_tiles.data(Vector2i(3, 1), &"sand")).is_equal(false)
 	assert_that(_tiles.data(Vector2i(4, 1), &"sand")).is_null()
-	assert_that(_tiles.data(Vector2i(1, 1), &"jump")).is_null()
+	assert_that(_tiles.data(Vector2i(1, 1), &"nope")).is_null()
 	assert_that(_tiles.data(Vector2i(1, 1), &"water")).is_equal(false)
 
 
