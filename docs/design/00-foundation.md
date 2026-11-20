@@ -91,6 +91,8 @@ if bag and not bag.is_closed():
   without `close()` still closes. One that closes in `_on_open` comes back
   closed and is not announced.
 - Screens stack. Only the top one gets `_on_input`, mouse and focus.
+- `took_input()`: true in the frame a screen handled an input event, even if
+  it closed since; the game does not act on that press too.
 - Signals `screen_opened(name, screen)`, `screen_closed(name)`.
 
 ## Hooks

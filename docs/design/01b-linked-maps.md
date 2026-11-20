@@ -62,7 +62,8 @@ lands on a tile. If the traveller now stands in a neighbour:
    but cameras under it keep their view; `neighbours` lists the maps already
    shown that the new map links to;
 2. signal `zone_changed(old, new)` if the zone differs;
-3. signal `map_changed(map)`;
+3. signal `map_changed(map)`, with `is_crossing` true meanwhile: a crossing,
+   not a warp or a reload;
 4. the other maps are freed; missing neighbours load in the background, each
    added as soon as it is ready; `is_loading_neighbours` is true until signal
    `neighbours_loaded`.
