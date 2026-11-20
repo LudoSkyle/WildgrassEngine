@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts.
+dialogue, texts, characters.
 
 ## Install
 
@@ -118,6 +118,18 @@ await Wildgrass.dialogue.say("Welcome, {player}! Press {key:ui_accept}.")
 
 `language_config.json` (Studio's): `defaultLanguage`,
 `choosableLanguageCode`, `choosableLanguageTexts`.
+
+**Characters**: a scene whose root is a `WgWalker`, with a
+`WgCharacterSprite` (a 4 × 4 character sheet), a controller (`WgWander` in an
+area or on tiles carrying some data, `WgPatrol` along a route) and a `WgTalk`
+for what it says. Put a `WgRoadblock` beside a guard to keep a passage
+closed, or your own `WgTrigger` on cells that react when the player steps on
+them. Move characters in scenes:
+
+```gdscript
+await Wildgrass.walkers.walk(guard, [Vector2i.LEFT, Vector2i.UP])
+await Wildgrass.walkers.walk_to(guard, Vector2i(12, 7))
+```
 
 ## License
 
