@@ -5,7 +5,7 @@ GDScript only, ships no assets.
 
 ## Status
 
-In development: the foundation, maps and doors, linked maps, tiles.
+In development: the foundation, maps and doors, linked maps, tiles, walking.
 
 ## Install
 
@@ -72,6 +72,18 @@ Add custom data layers for what the ground is (`sand`, `water`…).
 var cell := Wildgrass.tiles.cell_of(player.global_position)
 var free := Wildgrass.tiles.can_step(cell, Vector2i.DOWN)
 var sandy: Variant = Wildgrass.tiles.data(cell, &"sand")
+```
+
+**Walking**: make the player a scene whose root is a `WgWalker`, with an
+`AnimatedSprite2D` named `Sprite` (animations `idle_down`, `walk_left`,
+`run_up`…), a `WgCamera` and a `WgPlayerInput`. Make it the traveller; it
+walks, runs, jumps ledges, slides on ice, takes doors and crosses linked maps
+by itself. Add a `run` action to the input map. Paces and actions:
+`movement_config.json`.
+
+```gdscript
+Wildgrass.maps.traveller = player
+await Wildgrass.maps.go_to(&"town", &"Spawn")
 ```
 
 ## License
