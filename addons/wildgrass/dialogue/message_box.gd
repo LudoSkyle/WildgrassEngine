@@ -6,7 +6,7 @@ extends WgScreen
 
 const MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
 
-enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD }
+enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD, CHOOSING }
 
 @export_group("Nodes")
 ## The box's frame; `style` sets its `theme_type_variation`.
@@ -21,6 +21,9 @@ enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD 
 @export var portrait: NodePath = ^"Portrait"
 ## Shown while a written page waits for the key; optional.
 @export var waiting: NodePath = ^"Waiting"
+## A container of the choices of a question, holding one Button as a model;
+## optional.
+@export var choices: NodePath = ^"Choices"
 @export_group("")
 ## Places the frame by `place`, and the speaker, portrait and marker around
 ## it. Off: the scene's own layout is kept.
@@ -40,6 +43,15 @@ var _portrait: TextureRect
 var _waiting: CanvasItem
 var _frame_height := 0.0
 var _options: Dictionary = {}
+var _choices: Control
+var _model: Button
+var _buttons: Array[Button] = []
+## Each `{"text", "disabled"}`.
+var _answers: Array[Dictionary] = []
+var _selected := 0
+var _first_shown := 0
+## Choices shown at once.
+var _room := 1
 ## Each `{"at": character, "name", "value"}`, in order.
 var _tags: Array[Dictionary] = []
 var _tag_index := 0
@@ -70,6 +82,15 @@ func _ready() -> void:
 	_speaker_name = get_node_or_null(speaker_name) as Label
 	_portrait = get_node_or_null(portrait) as TextureRect
 	_waiting = get_node_or_null(waiting) as CanvasItem
+	_choices = get_node_or_null(choices) as Control
+	if _choices != null:
+		for child: Node in _choices.get_children():
+			if child is Button:
+				_model = child
+				break
+		if _model != null:
+			_choices.remove_child(_model)
+		_choices.hide()
 	if _frame == null or _text == null:
 		push_error("%s: a message box needs a frame and a RichTextLabel" % name)
 		return
@@ -85,6 +106,11 @@ func _ready() -> void:
 			optional.hide()
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE and is_instance_valid(_model):
+		_model.free()
+
+
 func _on_open(args: Dictionary) -> void:
 	dialogue = args.get("dialogue")
 
@@ -94,11 +120,15 @@ func _process(delta: float) -> void:
 
 
 ## Starts writing `message`, already translated, with the options of `say()`.
-func show_message(message: String, options: Dictionary) -> void:
+## `answers`, each `{"text", "disabled"}`, are shown once it is written: a
+## question.
+func show_message(message: String, options: Dictionary, answers: Array[Dictionary] = []) -> void:
 	if _text == null:
-		dialogue._message_done(0)
+		dialogue._message_done(int(options.get("cancel", -1)) if not answers.is_empty() else 0)
 		return
 	_options = options
+	_answers = answers
+	_close_choices()
 	_dress()
 	var split := MessageTags.split(message, dialogue.tag_names(), _effect_tags())
 	for tag_name: String in split["unknown"]:
@@ -180,6 +210,19 @@ func shown_text() -> String:
 func _on_input(event: InputEvent) -> bool:
 	if dialogue == null:
 		return false
+	if state == State.CHOOSING:
+		if dialogue.is_action(event, "confirm"):
+			_pick(_selected)
+		elif dialogue.is_action(event, "cancel"):
+			if int(_options["cancel"]) >= 0:
+				_answer(int(_options["cancel"]))
+		elif dialogue.is_action(event, "up"):
+			_select(posmod(_selected - 1, _answers.size()))
+		elif dialogue.is_action(event, "down"):
+			_select(posmod(_selected + 1, _answers.size()))
+		else:
+			return false
+		return true
 	if dialogue.is_action(event, "confirm"):
 		confirm()
 		return true
@@ -287,6 +330,10 @@ func _page_written() -> void:
 		state = State.PAGE_WRITTEN
 		_show_waiting(true)
 		return
+	if not _answers.is_empty():
+		state = State.CHOOSING
+		_open_choices()
+		return
 	if _options.get("hold", false):
 		state = State.HELD
 		dialogue._message_done(0)
@@ -300,6 +347,90 @@ func _end() -> void:
 	state = State.IDLE
 	_show_waiting(false)
 	dialogue._message_done(0)
+
+
+func _open_choices() -> void:
+	if _choices == null or _model == null:
+		dialogue.log.error(&"dialogue", "%s: no choices to show a question in" % name)
+		_answer(int(_options["cancel"]))
+		return
+	for index in _answers.size():
+		var button := _model.duplicate() as Button
+		button.text = TranslationServer.translate(_answers[index]["text"])
+		button.disabled = _answers[index]["disabled"]
+		button.toggle_mode = true
+		button.focus_mode = Control.FOCUS_NONE
+		button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		button.pressed.connect(_pick.bind(index))
+		_choices.add_child(button)
+		_buttons.append(button)
+	_choices.show()
+	_room = dialogue.config().max_choices
+	if arrange:
+		_room = mini(_room, _rows_that_fit())
+	_first_shown = 0
+	_select(clampi(int(_options.get("default", 0)), 0, _answers.size() - 1), false)
+	if arrange:
+		_place_choices()
+
+
+func _close_choices() -> void:
+	for button in _buttons:
+		button.queue_free()
+		_choices.remove_child(button)
+	_buttons.clear()
+	if _choices != null:
+		_choices.hide()
+
+
+## Selects a choice, keeping it among those shown.
+func _select(index: int, announce := true) -> void:
+	_selected = index
+	var room := _room
+	if _selected < _first_shown:
+		_first_shown = _selected
+	elif _selected >= _first_shown + room:
+		_first_shown = _selected - room + 1
+	for i in _buttons.size():
+		_buttons[i].visible = i >= _first_shown and i < _first_shown + room
+		_buttons[i].set_pressed_no_signal(i == _selected)
+	if announce:
+		dialogue.choice_moved.emit(_selected)
+
+
+func _pick(index: int) -> void:
+	if state != State.CHOOSING:
+		return
+	if _answers[index]["disabled"]:
+		_buttons[index].set_pressed_no_signal(index == _selected)
+		dialogue.choice_refused.emit(index)
+		return
+	dialogue.choice_made.emit(index)
+	_answer(index)
+
+
+func _answer(index: int) -> void:
+	state = State.IDLE
+	_close_choices()
+	dialogue._message_done(index)
+
+
+## Rows of choices between the frame and the edge of the screen, at least one.
+func _rows_that_fit() -> int:
+	var row := _buttons[0].get_combined_minimum_size().y
+	var gap := float(_choices.get_theme_constant(&"separation")) if _choices is BoxContainer else 0.0
+	var area := _frame.get_rect()
+	var below := str(_options.get("place", "bottom")) == "top"
+	var space := (size.y - area.end.y if below else area.position.y) - margin
+	return maxi(1, floori((space + gap) / (row + gap)))
+
+
+## Against the frame's right edge: above it, below when the box is at the top.
+func _place_choices() -> void:
+	_choices.reset_size()
+	var area := _frame.get_rect()
+	var below := str(_options.get("place", "bottom")) == "top"
+	_choices.position = Vector2(area.end.x - _choices.size.x, area.end.y if below else area.position.y - _choices.size.y)
 
 
 func _next_page() -> void:

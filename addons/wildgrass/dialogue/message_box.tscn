@@ -68,3 +68,16 @@ mouse_filter = 2
 
 [node name="Arrow" type="Polygon2D" parent="Waiting"]
 polygon = PackedVector2Array(0, 0, 6, 0, 3, 4)
+
+[node name="Choices" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 31.0
+
+[node name="Choice" type="Button" parent="Choices"]
+layout_mode = 2
+focus_mode = 0
+auto_translate_mode = 2
+toggle_mode = true
+alignment = 0
