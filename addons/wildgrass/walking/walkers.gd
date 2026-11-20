@@ -27,6 +27,34 @@ var _missing_actions: Array[String] = []
 ## Walker -> [what it interacts with, the interaction's number].
 var _busy: Dictionary[WgWalker, Array] = {}
 var _interactions := 0
+var _scripts: Dictionary[WgWalker, Walk] = {}
+## True while a path is searched: characters do not block it, they move.
+var _searching := false
+
+const DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
+const WALK_OPTIONS: Array[String] = ["face", "run", "skip_blocked"]
+## Cells a path search visits per frame.
+const SEARCH_CELLS_PER_FRAME := 25
+
+
+## A walk a script asked for, and how it ended.
+class Walk:
+	signal finished
+	var steps: Array[Vector2i] = []
+	var index := 0
+	var face := true
+	var run := false
+	var skip_blocked := false
+	var waited := 0.0
+	var done := false
+	var result := false
+
+	func finish(value: bool) -> void:
+		if done:
+			return
+		done = true
+		result = value
+		finished.emit()
 
 
 func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, screen_registry: ScreenRegistry, maps_service: Maps, tiles_service: Tiles) -> void:
@@ -64,9 +92,10 @@ func settle(walker: WgWalker, cell: Vector2i, level: int) -> void:
 	_held[walker] = [[cell, level]]
 
 
-## `walker` holds nothing any more.
+## `walker` holds nothing any more; a walk it was on ends.
 func forget(walker: WgWalker) -> void:
 	_held.erase(walker)
+	_end_walk(walker, false)
 
 
 ## The door standing in `cell` of the current map, or null.
@@ -132,6 +161,128 @@ func is_busy(walker: WgWalker) -> bool:
 	return true
 
 
+## Walks `walker` through `directions`, one step each; returns true once
+## done, false if cut short: a warp or a reload, the walker freed, another walk
+## for it, or a cell that stayed taken for `patience` seconds. Options: `face`
+## (true; false backs away), `run`, `skip_blocked` (skips a taken cell instead
+## of waiting).
+func walk(walker: WgWalker, directions: Array, options := {}) -> bool:
+	if not is_instance_valid(walker):
+		return false
+	for key: Variant in options:
+		if str(key) not in WALK_OPTIONS:
+			log.warn(&"walking", "unknown walk option '%s'" % key)
+	_end_walk(walker, false)
+	var request := Walk.new()
+	for direction: Variant in directions:
+		request.steps.append(direction)
+	request.face = options.get("face", true)
+	request.run = options.get("run", false)
+	request.skip_blocked = options.get("skip_blocked", false)
+	_scripts[walker] = request
+	if not request.done:
+		await request.finished
+	return request.result
+
+
+## Walks `walker` to the world cell `cell` by a path found through what
+## `can_step` allows, over a few frames; false if there is none within
+## `pathCells`, or as `walk()`.
+func walk_to(walker: WgWalker, cell: Vector2i, options := {}) -> bool:
+	var path: Variant = await _find_path(walker, cell)
+	if path == null:
+		return false
+	return await walk(walker, path, options)
+
+
+## True while a script walks `walker`: its controller waits.
+func is_scripted(walker: WgWalker) -> bool:
+	return _scripts.has(walker)
+
+
+## Asked by a scripted walker free to step: its next step, or the end.
+func drive_script(walker: WgWalker, delta: float) -> void:
+	var request := _scripts[walker]
+	while request.index < request.steps.size():
+		var direction := request.steps[request.index]
+		if walker.can_step(direction):
+			request.index += 1
+			request.waited = 0.0
+			walker.step(direction, request.run, request.face)
+			return
+		if not request.skip_blocked:
+			if request.face:
+				walker.turn(direction)
+			request.waited += delta
+			if request.waited >= movement().patience:
+				_end_walk(walker, false)
+			return
+		request.index += 1
+	_end_walk(walker, true)
+
+
+func _end_walk(walker: WgWalker, result: bool) -> void:
+	if _scripts.has(walker):
+		var request := _scripts[walker]
+		_scripts.erase(walker)
+		request.finish(result)
+
+
+## The directions from `walker`'s cell to `target`, or null.
+func _find_path(walker: WgWalker, target: Vector2i) -> Variant:
+	if not is_instance_valid(walker) or not walker.is_inside_tree():
+		return null
+	var tree := walker.get_tree()
+	var start := Vector3i(walker.cell.x, walker.cell.y, walker.level)
+	var came_from: Dictionary[Vector3i, Array] = {start: []}
+	var queue: Array[Vector3i] = [start]
+	var visited := 0
+	var budget := movement().path_cells
+	while not queue.is_empty():
+		if visited > 0 and visited % SEARCH_CELLS_PER_FRAME == 0:
+			await tree.process_frame
+			if not is_instance_valid(walker):
+				return null
+		var here: Vector3i = queue.pop_front()
+		if Vector2i(here.x, here.y) == target:
+			var path: Array[Vector2i] = []
+			var key := here
+			while key != start:
+				path.push_front(came_from[key][1])
+				key = came_from[key][0]
+			return path
+		visited += 1
+		if visited > budget:
+			return null
+		_searching = true
+		for next: Array in _moves_from(walker, here):
+			if not came_from.has(next[0]):
+				came_from[next[0]] = [here, next[1]]
+				queue.append(next[0])
+		_searching = false
+	return null
+
+
+## [cell and level after, direction] for each step `walker` could take from
+## `here`, jumps included.
+func _moves_from(walker: WgWalker, here: Vector3i) -> Array[Array]:
+	var moves: Array[Array] = []
+	var cell := Vector2i(here.x, here.y)
+	for direction in DIRECTIONS:
+		var after := cell + direction
+		var level := here.z
+		if tiles.can_step(cell, direction, here.z, walker):
+			level = tiles.level_after(cell, direction, here.z)
+		elif walker.jumps and tiles.data(after, &"jump") == direction and tiles.is_solid(after, here.z) \
+				and not tiles.has_edge(cell, direction, here.z) and tiles.can_step(after, direction, here.z, walker):
+			level = tiles.level_after(after, direction, here.z)
+			after += direction
+		else:
+			continue
+		moves.append([Vector3i(after.x, after.y, level), direction])
+	return moves
+
+
 ## True if `walker`'s controller may act now. The traveller's always may: its
 ## input keeps track of the keys. Others stand still while a screen is open,
 ## a warp runs, or the player is held, unless the config says otherwise.
@@ -182,14 +333,20 @@ func _known(action_key: String) -> bool:
 	return false
 
 
-## A warp or a reload ends every interaction; crossing a seam does not.
+## A warp or a reload ends every interaction and scripted walk; crossing a
+## seam does not.
 func _on_map_changed(_map: WgMap) -> void:
-	if not maps.is_crossing:
-		_busy.clear()
+	if maps.is_crossing:
+		return
+	_busy.clear()
+	for walker: WgWalker in _scripts.keys():
+		_end_walk(walker, false)
 
 
+## Walkers block each other, except going through, or stepping into a cell
+## another is leaving.
 func _keep_walkers_apart(allowed: bool, cell: Vector2i, direction: Vector2i, level: int, walker: Node) -> bool:
-	if not allowed or (walker is WgWalker and (walker as WgWalker).through):
+	if not allowed or _searching or (walker is WgWalker and (walker as WgWalker).through):
 		return allowed
 	var other := at(cell + direction, tiles.level_after(cell, direction, level))
-	return other == null or other == walker
+	return other == null or other == walker or (other.is_moving and other.cell == cell + direction)
