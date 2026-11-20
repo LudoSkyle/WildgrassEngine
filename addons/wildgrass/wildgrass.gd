@@ -13,6 +13,7 @@ const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
+const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -28,6 +29,7 @@ var clock: Clock
 var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
+var walkers: Walkers
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -52,9 +54,11 @@ func _init() -> void:
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
+	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"map", WgMapConfig, "map_config")
+	config.register(&"movement", WgMovementConfig, "movement_config")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 

@@ -2,7 +2,8 @@
 ##
 ## Physics layers: 0 = level 0 solid (layer 1), 1 = level 0 edges (layer 4),
 ## 2 = level 1 solid (layer 2), 3 = level 1 edges (layer 5).
-## Data layers: sand, water, covers, ramp (bool), floor (int).
+## Data layers: sand, water, covers, ramp, ice (bool), floor (int), jump
+## (Vector2i).
 extends RefCounted
 
 const GROUND := Vector2i(0, 0)
@@ -17,6 +18,9 @@ const DECK := Vector2i(8, 0)
 const RAMP := Vector2i(9, 0)
 ## A ramp with railings on its left and right sides.
 const RAILED_RAMP := Vector2i(3, 1)
+const ICE := Vector2i(4, 1)
+## A solid ledge jumped downward.
+const LEDGE := Vector2i(5, 1)
 ## 3×3, centred on its cell; blocks its two lower rows.
 const TREE := Vector2i(0, 1)
 
@@ -30,20 +34,21 @@ static func tile_set(size := 16) -> TileSet:
 	for bit: int in [1, 4, 2, 5]:
 		tiles.add_physics_layer()
 		tiles.set_physics_layer_collision_layer(tiles.get_physics_layers_count() - 1, 1 << (bit - 1))
-	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT]]:
+	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I]]:
 		tiles.add_custom_data_layer()
 		tiles.set_custom_data_layer_name(tiles.get_custom_data_layers_count() - 1, data[0])
 		tiles.set_custom_data_layer_type(tiles.get_custom_data_layers_count() - 1, data[1])
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(Image.create(size * 10, size * 4, false, Image.FORMAT_RGBA8))
 	source.texture_region_size = Vector2i(size, size)
-	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP]:
+	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP, ICE, LEDGE]:
 		source.create_tile(coords)
 	source.create_tile(TREE, Vector2i(3, 3))
 	tiles.add_source(source, 0)
 	var k := size / 16.0
 	_polygon(source, WALL, 0, FULL, k)
 	_polygon(source, WATER, 0, FULL, k)
+	_polygon(source, LEDGE, 0, FULL, k)
 	_polygon(source, TOP_EDGE, 1, [Vector2(-8, -8), Vector2(8, -8), Vector2(8, -5), Vector2(-8, -5)], k)
 	_polygon(source, HALF, 0, [Vector2(-8, -8), Vector2(0, -8), Vector2(0, 4), Vector2(-8, 4)], k)
 	_polygon(source, TREE, 0, [Vector2(-24, -8), Vector2(24, -8), Vector2(24, 24), Vector2(-24, 24)], k)
@@ -60,6 +65,8 @@ static func tile_set(size := 16) -> TileSet:
 	_data(source, RAMP, "ramp", true)
 	_data(source, RAILED_RAMP, "floor", 1)
 	_data(source, RAILED_RAMP, "ramp", true)
+	_data(source, ICE, "ice", true)
+	_data(source, LEDGE, "jump", Vector2i.DOWN)
 	return tiles
 
 
