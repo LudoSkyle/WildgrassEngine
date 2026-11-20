@@ -31,3 +31,18 @@ func test_a_channel_level_overrides_the_global_level_both_ways() -> void:
 	_log.debug(&"other", "3")
 	assert_array(_received).is_equal(["DEBUG loud 1"])
 
+
+func test_configure_applies_the_levels_of_log_config() -> void:
+	var config := WgLogConfig.new()
+	config.load_data({"level": "warn", "channels": {"screens": "debug"}}, "log_config.json")
+	_log.configure(config)
+	_log.info(&"config", "1")
+	_log.debug(&"screens", "2")
+	assert_array(_received).is_equal(["DEBUG screens 2"])
+
+
+func test_log_config_drops_an_unknown_channel_level() -> void:
+	var config := WgLogConfig.new()
+	var problems := config.load_data({"channels": {"screens": "loud", "map": "info"}}, "log_config.json")
+	assert_array(problems).has_size(1)
+	assert_dict(config.channels).is_equal({"map": "info"})

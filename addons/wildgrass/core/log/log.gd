@@ -54,3 +54,10 @@ func write(message_level: Level, channel: StringName, message: String) -> void:
 	elif message_level == Level.ERROR:
 		push_error("%s %s" % [head, message])
 
+
+## Applies the levels of `log_config.json`.
+func configure(config: WgLogConfig) -> void:
+	level = config.level
+	channel_levels.clear()
+	for channel: String in config.channels:
+		channel_levels[StringName(channel)] = WgLogConfig.level_of(config.channels[channel]) as Level
