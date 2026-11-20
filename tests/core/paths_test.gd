@@ -19,6 +19,7 @@ func test_resolve_uses_the_studio_folders_by_default() -> void:
 	assert_str(paths.resolve(&"data", "configs/x.json")).is_equal("res://Data/configs/x.json")
 	assert_str(paths.resolve(&"graphics", "a.png")).is_equal("res://graphics/a.png")
 	assert_str(paths.resolve(&"audio", "a.ogg")).is_equal("res://audio/a.ogg")
+	assert_str(paths.resolve(&"maps", "town.tscn")).is_equal("res://maps/town.tscn")
 
 
 func test_resolve_follows_the_project_setting_with_or_without_trailing_slash() -> void:
@@ -33,8 +34,8 @@ func test_resolve_ignores_a_leading_slash() -> void:
 
 
 func test_a_game_can_add_a_kind_of_folder_in_the_settings() -> void:
-	_sandbox.set_setting("wildgrass/paths/maps", "res://maps/")
-	assert_str(Paths.new(false).resolve(&"maps", "town.tscn")).is_equal("res://maps/town.tscn")
+	_sandbox.set_setting("wildgrass/paths/cutscenes", "res://cutscenes/")
+	assert_str(Paths.new(false).resolve(&"cutscenes", "intro.tscn")).is_equal("res://cutscenes/intro.tscn")
 
 
 func test_an_unknown_kind_resolves_to_empty() -> void:
