@@ -17,6 +17,7 @@ const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
+const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## A project setting here names a subclass to use instead of a service.
@@ -37,6 +38,7 @@ var tiles: Tiles
 var walkers: Walkers
 var story: Story
 var quests: Quests
+var items: Items
 var dialogue: Dialogue
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
@@ -65,6 +67,7 @@ func _init() -> void:
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	story = _service(&"story", Story, [log, hooks, maps])
 	quests = _service(&"quests", Quests, [log, hooks, paths])
+	items = _service(&"items", Items, [paths, log, config])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
@@ -73,6 +76,7 @@ func _init() -> void:
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
+	config.register(&"bag", WgBagConfig, "bag_config")
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")

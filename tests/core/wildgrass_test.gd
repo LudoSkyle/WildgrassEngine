@@ -25,7 +25,7 @@ func _start_engine() -> Engine_:
 
 func test_the_autoload_provides_every_service() -> void:
 	var engine: Engine_ = get_tree().root.get_node("Wildgrass")
-	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests]:
+	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests, engine.items]:
 		assert_object(service).is_not_null()
 	assert_bool(engine.config.is_registered(&"display")).is_true()
 	assert_bool(engine.config.is_registered(&"log")).is_true()
@@ -91,7 +91,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
+	assert_array(names).is_equal(["WgBagConfig", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 

@@ -14,6 +14,7 @@ const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
+const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -28,6 +29,9 @@ var dialogue: Dialogue
 var texts: Texts
 var story: Story
 var quests: Quests
+var items: Items
+## The paths of this world: missing assets are reported there.
+var paths: Paths
 var config: ConfigRegistry
 ## Parent of the maps and the screens; free it with the test.
 var root: Node2D
@@ -52,6 +56,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"movement", WgMovementConfig, "movement_config")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
+	config.register(&"bag", WgBagConfig, "bag_config")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -70,6 +75,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	texts = Texts.new(Paths.new(false), logger, config, hooks)
 	story = Story.new(logger, hooks, maps)
 	quests = Quests.new(logger, hooks, Paths.new(false))
+	paths = Paths.new(false)
+	items = Items.new(paths, logger, config)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
