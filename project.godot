@@ -8,9 +8,24 @@ config_version=5
 config/name="Wildgrass Engine"
 config/features=PackedStringArray("4.7")
 
+[autoload]
+
+Wildgrass="*res://addons/wildgrass/wildgrass.gd"
+
 [debug]
 
 gdscript/warnings/untyped_declaration=2
 gdscript/warnings/directory_rules={
 "res://addons/gdUnit4": 0
+}
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/wildgrass/plugin.cfg")
+
+[shader_globals]
+
+game_time={
+"type": "float",
+"value": 0.0
 }
