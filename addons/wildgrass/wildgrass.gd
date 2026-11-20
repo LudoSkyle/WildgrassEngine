@@ -28,7 +28,7 @@ var screens: ScreenRegistry
 var maps: Maps
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
-## Default parent of the map on screen.
+## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
 var map_host: Node2D
 
 
@@ -46,6 +46,7 @@ func _init() -> void:
 	screens = _service(&"screens", ScreenRegistry, [log, screen_layer])
 	map_host = Node2D.new()
 	map_host.name = "Map"
+	map_host.y_sort_enabled = true
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	config.register(&"log", WgLogConfig, "log_config")

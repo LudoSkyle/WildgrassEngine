@@ -6,6 +6,10 @@ extends Node2D
 @export var entities: NodePath = ^"Entities"
 ## Pokémon Studio zone id: map-wide data shared by several maps.
 @export var zone: StringName = &""
+## Width and height in tiles. Required by links; zero: the map has no edges.
+@export var size := Vector2i.ZERO
+## Maps shown against its sides.
+@export var links: Array[WgMapLink] = []
 
 
 ## The node the traveller goes in, or the map itself if missing.
