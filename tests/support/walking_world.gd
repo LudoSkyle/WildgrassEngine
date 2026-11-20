@@ -15,6 +15,7 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
+const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -30,6 +31,7 @@ var texts: Texts
 var story: Story
 var quests: Quests
 var items: Items
+var bag: Bag
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
 var config: ConfigRegistry
@@ -77,6 +79,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	quests = Quests.new(logger, hooks, Paths.new(false))
 	paths = Paths.new(false)
 	items = Items.new(paths, logger, config)
+	bag = Bag.new(logger, hooks, items, quests)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
