@@ -256,6 +256,8 @@ func _finish_step() -> void:
 		if door != null and door.kind == WgDoor.Kind.CONTACT:
 			is_sliding = false
 			walkers.maps.use(door)
+		else:
+			walkers.trigger_at(self)
 
 
 ## Stops any step and takes the cell under the walker, at its centre.

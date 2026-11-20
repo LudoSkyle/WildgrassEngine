@@ -64,6 +64,15 @@ func _drive(walker: WgWalker, delta: float) -> void:
 		walker.step(_active, walkers.is_held("run"))
 
 
+## Ignores `direction` until its key is released: the way back into a passage
+## the player was turned away from.
+func block(direction: Vector2i) -> void:
+	_blocked = direction
+	if _active == direction:
+		_active = Vector2i.ZERO
+		_held_for = 0.0
+
+
 func _listen(walker: WgWalker) -> void:
 	if _walker == walker:
 		return
