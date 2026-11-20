@@ -47,3 +47,9 @@ func test_entities_falls_back_to_the_map_itself() -> void:
 	_map.add_child(entities)
 	assert_object(_map.entities_node()).is_same(entities)
 
+
+func test_map_config_resets_impossible_values() -> void:
+	var config := WgMapConfig.new()
+	assert_array(config.load_data({"tileSize": 0, "fadeSeconds": -1}, "map_config.json")).has_size(2)
+	assert_int(config.tile_size).is_equal(16)
+	assert_float(config.fade_seconds).is_equal(0.0)

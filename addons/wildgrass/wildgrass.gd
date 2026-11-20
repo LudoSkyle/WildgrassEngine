@@ -11,6 +11,7 @@ const Display := preload("res://addons/wildgrass/core/display/display.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -24,8 +25,11 @@ var display: Display
 var hooks: Hooks
 var clock: Clock
 var screens: ScreenRegistry
+var maps: Maps
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
+## Default parent of the map on screen.
+var map_host: Node2D
 
 
 func _init() -> void:
@@ -40,8 +44,15 @@ func _init() -> void:
 	screen_layer.layer = SCREEN_LAYER
 	add_child(screen_layer)
 	screens = _service(&"screens", ScreenRegistry, [log, screen_layer])
+	map_host = Node2D.new()
+	map_host.name = "Map"
+	add_child(map_host)
+	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
+	config.register(&"map", WgMapConfig, "map_config")
+	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
+	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 
 
 func _ready() -> void:
