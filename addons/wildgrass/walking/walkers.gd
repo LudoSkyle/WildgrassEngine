@@ -10,6 +10,7 @@ const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
+const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
@@ -22,6 +23,8 @@ var tiles: Tiles
 var dialogue: Dialogue
 ## What characters say follows it; set once the story service exists.
 var story: Story
+## Item balls give through it; set once the bag service exists.
+var bag: Bag
 
 ## Walker -> the [cell, level] pairs it holds: where it stands, and where its
 ## step goes.
@@ -155,6 +158,17 @@ func interact(walker: WgWalker) -> void:
 	hooks.filter(&"interact", handled, [cell, walker])
 	if _busy.has(walker) and _busy[walker][1] == number:
 		_busy.erase(walker)
+
+
+## True if an interactable that blocks covers `cell` on `level`. One inside a
+## walker does not: the walker holds its cell.
+func _blocked(tree: SceneTree, cell: Vector2i, level: int) -> bool:
+	for node: Node in tree.get_nodes_in_group(WgInteractable.GROUP):
+		var blocking := node as WgInteractable
+		if blocking.blocks and blocking.level == level and not blocking.get_parent() is WgWalker \
+				and Rect2i(tiles.cell_of(blocking.global_position), blocking.size).has_point(cell):
+			return true
+	return false
 
 
 ## Runs the enabled trigger under `walker`, the traveller, after its own step:
@@ -385,9 +399,13 @@ func _on_map_changed(_map: WgMap) -> void:
 
 
 ## Walkers block each other, except going through, or stepping into a cell
-## another is leaving.
+## another is leaving; an interactable that blocks blocks them all.
 func _keep_walkers_apart(allowed: bool, cell: Vector2i, direction: Vector2i, level: int, walker: Node) -> bool:
-	if not allowed or _searching or (walker is WgWalker and (walker as WgWalker).through):
+	if not allowed:
+		return false
+	if walker != null and walker.is_inside_tree() and _blocked(walker.get_tree(), cell + direction, tiles.level_after(cell, direction, level)):
+		return false
+	if _searching or (walker is WgWalker and (walker as WgWalker).through):
 		return allowed
 	var other := at(cell + direction, tiles.level_after(cell, direction, level))
 	return other == null or other == walker or (other.is_moving and other.cell == cell + direction)

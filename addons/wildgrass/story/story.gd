@@ -221,7 +221,7 @@ func _keep_what_shows(map: WgMap, _map_id: StringName) -> void:
 
 
 static func _collect_gates(node: Node, found: Array[WgShowIf]) -> void:
-	for child: Node in node.get_children():
+	for child: Node in node.get_children(true):
 		if child is WgShowIf:
 			found.append(child)
 		_collect_gates(child, found)

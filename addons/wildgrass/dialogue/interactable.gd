@@ -1,7 +1,7 @@
 ## Something the player talks to or examines by facing it and pressing the
 ## interact action. Placed on a map, on its cell; one inside a walker is that
-## walker, on the cell it ends on. It blocks nothing: what is drawn blocks
-## through the TileSet.
+## walker, on the cell it ends on. It blocks nothing unless `blocks`: what is
+## drawn blocks through the TileSet.
 class_name WgInteractable
 extends Node2D
 
@@ -21,6 +21,8 @@ signal interacted(walker: WgWalker)
 @export var level := 0
 ## The directions the player may face it from.
 @export_flags("Up", "Down", "Left", "Right") var sides := 15
+## Blocks the cells it covers, as a boulder or an item lying there.
+@export var blocks := false
 
 
 func _enter_tree() -> void:

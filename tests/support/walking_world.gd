@@ -84,6 +84,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
+	walkers.bag = bag
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	tile_set = T.tile_set()
