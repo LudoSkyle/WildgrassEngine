@@ -233,6 +233,14 @@ func facing() -> Vector2i:
 	return walker.facing if walker != null else Vector2i.ZERO
 
 
+## The message under way, once written, stays `seconds` then goes on by
+## itself, the key not hurrying it.
+func lock_current(seconds: float) -> void:
+	if _current != null:
+		_current.options["locked"] = true
+		_current.options["auto"] = seconds
+
+
 ## Called by the box when the message under way ends.
 func _message_done(result: Variant) -> void:
 	var request := _current

@@ -213,17 +213,17 @@ func test_wait_stops_writing_until_the_key() -> void:
 
 
 func test_every_tag_runs_once_in_order_however_the_text_is_shown() -> void:
-	_world.dialogue.add_tag(&"give", _record.bind("give"))
+	_world.dialogue.add_tag(&"gift", _record.bind("gift"))
 	_world.dialogue.add_tag(&"mark", _record.bind("mark"))
-	_say("a[give=potion*3]b[pause=5]c[mark=x]d[wait]e[give=ball]")
+	_say("a[gift=potion*3]b[pause=5]c[mark=x]d[wait]e[gift=ball]")
 	_press("ui_accept")
 	assert_str(_shown()).is_equal("abcd")
-	assert_array(_calls).is_equal(["give potion*3", "mark x"])
+	assert_array(_calls).is_equal(["gift potion*3", "mark x"])
 	_press("ui_accept")
 	_press("ui_accept")
 	assert_str(_shown()).is_equal("abcde")
 	_box().advance(10.0)
-	assert_array(_calls).is_equal(["give potion*3", "mark x", "give ball"])
+	assert_array(_calls).is_equal(["gift potion*3", "mark x", "gift ball"])
 
 
 func test_a_tag_returning_a_signal_holds_writing_and_the_key_does_nothing() -> void:
@@ -250,12 +250,12 @@ func test_a_pace_of_zero_writes_at_once_up_to_wait() -> void:
 func test_a_game_cannot_take_a_bbcode_or_engine_tag_or_one_taken() -> void:
 	assert_bool(_world.dialogue.add_tag(&"color", _record.bind("color"))).is_false()
 	assert_bool(_world.dialogue.add_tag(&"pause", _record.bind("pause"))).is_false()
-	assert_bool(_world.dialogue.add_tag(&"give", _record.bind("give"))).is_true()
-	assert_bool(_world.dialogue.add_tag(&"give", _record.bind("give"))).is_false()
+	assert_bool(_world.dialogue.add_tag(&"gift", _record.bind("gift"))).is_true()
+	assert_bool(_world.dialogue.add_tag(&"gift", _record.bind("gift"))).is_false()
 	assert_array(_world.logged).is_equal([
 		"ERROR cannot add the tag [color]: taken",
 		"ERROR cannot add the tag [pause]: taken",
-		"ERROR cannot add the tag [give]: taken",
+		"ERROR cannot add the tag [gift]: taken",
 	])
 
 

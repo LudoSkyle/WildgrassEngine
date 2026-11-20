@@ -69,6 +69,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens = ScreenRegistry.new(logger, screen_layer)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
+	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -84,6 +85,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.dialogue = dialogue
 	walkers.story = story
 	story.add_tags(dialogue)
+	bag.add_tags(dialogue, screens)
 	tile_set = T.tile_set()
 
 

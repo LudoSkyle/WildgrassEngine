@@ -5,6 +5,8 @@ const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
+const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 
 ## The count of an item changed.
 signal changed(id: StringName, count: int)
@@ -25,6 +27,9 @@ var _counts: Dictionary[StringName, int] = {}
 ## Every item held, in the order received.
 var _order: Array[StringName] = []
 var _money := 0
+var _dialogue: Dialogue
+var _screens: ScreenRegistry
+var _reveal: WgScreen
 
 
 func _init(logger: Log, hook_registry: Hooks, items_service: Items, quests: Quests) -> void:
@@ -35,6 +40,18 @@ func _init(logger: Log, hook_registry: Hooks, items_service: Items, quests: Ques
 	_hooks.add(&"story_term", &"wildgrass_bag", _read_term)
 	quests.add_earning(&"money", _give_money, _can_give_money)
 	quests.add_earning(&"item", _give_item, _can_give_item)
+
+
+## Adds the message tags `[give=id]`, `[give=id*n]`, which narrates, and
+## `[take=id]`, `[take=id*n]`.
+func add_tags(dialogue: Dialogue, screens: ScreenRegistry) -> void:
+	_dialogue = dialogue
+	_screens = screens
+	# Methods, not lambdas: a lambda would keep this service alive.
+	dialogue.add_tag(&"give", _give_tag, true)
+	dialogue.add_tag(&"take", _take_tag)
+	dialogue.message_finished.connect(_close_reveal)
+	dialogue.closed.connect(_close_reveal)
 
 
 ## True if `count` of `id` would fit: a known item, not past `maxCount`, nor
@@ -169,6 +186,36 @@ func reset() -> void:
 	_counts.clear()
 	_order.clear()
 	_money = 0
+
+
+func _give_tag(value: String) -> void:
+	var parts := _parse(value)
+	if not give(parts[0], parts[1]):
+		return
+	var given_item := _items.item(parts[0])
+	if not _items.bag_config().pocket(given_item.pocket).get("reveal", false):
+		return
+	_close_reveal()
+	_reveal = _screens.open(&"item_reveal", {"item": given_item, "forward": _dialogue.box})
+	_dialogue.lock_current(_items.bag_config().reveal_seconds)
+
+
+func _take_tag(value: String) -> void:
+	var parts := _parse(value)
+	if not remove(parts[0], parts[1]):
+		log.warn(&"bag", "cannot take %s x%d: there are %d" % [parts[0], parts[1], count(parts[0])])
+
+
+## `id` or `id*n` as [id, n].
+static func _parse(value: String) -> Array:
+	var parts := value.split("*")
+	return [StringName(parts[0].strip_edges()), maxi(parts[1].to_int(), 1) if parts.size() > 1 else 1]
+
+
+func _close_reveal() -> void:
+	if is_instance_valid(_reveal) and not _reveal.is_closed():
+		_reveal.close()
+	_reveal = null
 
 
 func _set_money(value: int) -> void:
