@@ -64,7 +64,7 @@ func _init() -> void:
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	story = _service(&"story", Story, [log, hooks, maps])
-	quests = _service(&"quests", Quests, [log, hooks])
+	quests = _service(&"quests", Quests, [log, hooks, paths])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
