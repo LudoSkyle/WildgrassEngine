@@ -132,6 +132,31 @@ func is_busy(walker: WgWalker) -> bool:
 	return true
 
 
+## True if `walker`'s controller may act now. The traveller's always may: its
+## input keeps track of the keys. Others stand still while a screen is open,
+## a warp runs, or the player is held, unless the config says otherwise.
+func may_act(walker: WgWalker) -> bool:
+	if walker == maps.traveller or not movement().still_during_dialogue:
+		return true
+	if maps.is_changing or not screens.stack().is_empty():
+		return false
+	var player := maps.traveller as WgWalker
+	return player == null or not is_busy(player)
+
+
+## The map `node` belongs to, or null.
+static func map_of(node: Node) -> WgMap:
+	var parent := node.get_parent()
+	while parent != null and not parent is WgMap:
+		parent = parent.get_parent()
+	return parent as WgMap
+
+
+## The world cell of `local`, a cell of `map`.
+func world_cell(map: WgMap, local: Vector2i) -> Vector2i:
+	return tiles.cell_of(maps.rect(map).position) + local
+
+
 func movement() -> WgMovementConfig:
 	return config.get_config(&"movement") as WgMovementConfig
 

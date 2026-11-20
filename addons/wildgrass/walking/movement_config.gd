@@ -20,6 +20,9 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 @export var jump_height := 8.0
 ## How long a direction must be held, from a standstill, before walking.
 @export var hold_seconds := 0.12
+## Characters do not move by themselves while a screen is open, a warp runs,
+## or the player is held by an interaction.
+@export var still_during_dialogue := true
 ## Input map action of each direction, of running and of interacting. Unset
 ## keys keep theirs.
 @export var actions: Dictionary[String, String] = DEFAULT_ACTIONS.duplicate()

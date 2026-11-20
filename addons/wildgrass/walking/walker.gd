@@ -30,6 +30,9 @@ signal bumped(direction: Vector2i)
 @export var slides := true
 ## Blocks no one, and no character blocks it.
 @export var through := false
+## Walking pace in cells per second; 0: the config's. Running keeps the
+## config's.
+@export var pace := 0.0
 
 ## The walkers service: the engine's, unless set before entering the tree.
 var walkers: Walkers
@@ -106,7 +109,7 @@ func advance(delta: float) -> void:
 			if is_sliding:
 				if not _start_step(_heading, _pace, false):
 					is_sliding = false
-			elif controller != null:
+			elif controller != null and walkers.may_act(self):
 				controller._drive(self, left)
 			if not is_moving:
 				break
@@ -141,8 +144,9 @@ func step(direction: Vector2i, run := false, face := true) -> bool:
 			walkers.maps.use(door)
 			return true
 	var config := walkers.movement()
-	var pace := float(walkers.hooks.filter(&"step_pace", config.run_pace if run else config.walk_pace, [self, direction, run]))
-	if _start_step(direction, pace, run):
+	var base := config.run_pace if run else (pace if pace > 0.0 else config.walk_pace)
+	var step_pace := float(walkers.hooks.filter(&"step_pace", base, [self, direction, run]))
+	if _start_step(direction, step_pace, run):
 		return true
 	if not _pushing and not _pushed:
 		bumped.emit(direction)
