@@ -1,17 +1,29 @@
 ## What a character says, inside it: it ends its step, turns toward the
 ## player, speaks, then turns back, unless a script moved or turned it
-## meanwhile. Its controller waits while it talks.
+## meanwhile. Its controller waits while it talks. What it says may follow the
+## story.
 class_name WgTalk
 extends WgInteractable
 
+const StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
+
 ## What it says; `[page]` starts a page.
 @export_multiline var text := ""
+## `condition => text`: the last whose condition holds is said instead.
+@export var states: Array[String] = []
+## A question before: `Question?`, or `condition => Question?` for one state.
+@export var ask := ""
 ## Its name, shown beside the box.
 @export var speaker := ""
 ## The colour of its name; transparent: the label's.
 @export var speaker_color := Color.TRANSPARENT
 ## Turns toward the player, then back.
 @export var turns := true
+
+
+## What it says now.
+func current_text(story: RefCounted) -> String:
+	return StoryLines.choose(story, self, text, states, ask)["text"]
 
 
 func _interact(walker: WgWalker) -> void:
@@ -34,7 +46,9 @@ func _interact(walker: WgWalker) -> void:
 		options["speaker"] = speaker
 	if speaker_color.a > 0.0:
 		options["speaker_color"] = speaker_color
-	await walkers.dialogue.say(text, options)
+	var chosen := StoryLines.choose(walkers.story, self, text, states, ask)
+	if chosen["question"].is_empty() or await walkers.dialogue.confirm(chosen["question"], options):
+		await walkers.dialogue.say(chosen["text"], options)
 	if character == null or not is_instance_valid(character):
 		return
 	walkers.set_still(character, false)

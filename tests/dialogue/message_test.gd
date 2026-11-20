@@ -214,16 +214,16 @@ func test_wait_stops_writing_until_the_key() -> void:
 
 func test_every_tag_runs_once_in_order_however_the_text_is_shown() -> void:
 	_world.dialogue.add_tag(&"give", _record.bind("give"))
-	_world.dialogue.add_tag(&"flag", _record.bind("flag"))
-	_say("a[give=potion*3]b[pause=5]c[flag=x]d[wait]e[give=ball]")
+	_world.dialogue.add_tag(&"mark", _record.bind("mark"))
+	_say("a[give=potion*3]b[pause=5]c[mark=x]d[wait]e[give=ball]")
 	_press("ui_accept")
 	assert_str(_shown()).is_equal("abcd")
-	assert_array(_calls).is_equal(["give potion*3", "flag x"])
+	assert_array(_calls).is_equal(["give potion*3", "mark x"])
 	_press("ui_accept")
 	_press("ui_accept")
 	assert_str(_shown()).is_equal("abcde")
 	_box().advance(10.0)
-	assert_array(_calls).is_equal(["give potion*3", "flag x", "give ball"])
+	assert_array(_calls).is_equal(["give potion*3", "mark x", "give ball"])
 
 
 func test_a_tag_returning_a_signal_holds_writing_and_the_key_does_nothing() -> void:
