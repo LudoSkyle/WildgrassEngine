@@ -3,6 +3,9 @@
 class_name WgConfig
 extends Resource
 
+## Keys every Studio file carries, which configs ignore.
+const STUDIO_KEYS: Array[String] = ["klass"]
+
 
 ## Reads `data` into this config. Returns the problems found; a field with a
 ## problem keeps its current value.
@@ -10,6 +13,8 @@ func load_data(data: Dictionary, source: String) -> PackedStringArray:
 	var problems := PackedStringArray()
 	var fields := _fields()
 	for key: Variant in data:
+		if str(key) in STUDIO_KEYS:
+			continue
 		var field := str(key).to_snake_case()
 		if not fields.has(field):
 			problems.append("%s: unknown key '%s'" % [source, key])

@@ -45,6 +45,14 @@ func test_an_empty_cell_falls_back_to_the_fallback_locale_then_the_first_column(
 	assert_str(_world.texts.studio(9001, 1)).is_equal("Nur")
 
 
+func test_a_cell_studio_left_untranslated_falls_back_as_an_empty_one() -> void:
+	_world.sandbox.write("Data/Text/Dialogs/100045.csv", "en,fr,it\nThe Tower,La Tour,[~ 0]\n[~ 1],Les étages,[~ 1]\n[~ 2],[~ 2],[~ 2]\n")
+	_world.texts.language = "it"
+	assert_str(_world.texts.studio(100045, 0)).is_equal("The Tower")
+	assert_str(_world.texts.studio(100045, 1)).is_equal("Les étages")
+	assert_str(_world.texts.studio(100045, 2)).is_empty()
+
+
 func test_a_whole_file_is_given_in_the_current_language() -> void:
 	_world.texts.language = "fr"
 	assert_array(Array(_world.texts.studio_file(100000))).is_equal(["Œuf", "Bulbizarre", "Seed, Pokémon\nof grass"])
