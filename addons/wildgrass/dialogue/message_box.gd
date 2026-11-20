@@ -119,9 +119,9 @@ func _process(delta: float) -> void:
 	advance(delta)
 
 
-## Starts writing `message`, already translated, with the options of `say()`.
-## `answers`, each `{"text", "disabled"}`, are shown once it is written: a
-## question.
+## Starts writing `message`, with the options of `say()`. `answers`, each
+## `{"text", "disabled"}`, are shown once it is written: a question. Texts come
+## translated and formatted.
 func show_message(message: String, options: Dictionary, answers: Array[Dictionary] = []) -> void:
 	if _text == null:
 		dialogue._message_done(int(options.get("cancel", -1)) if not answers.is_empty() else 0)
@@ -356,7 +356,7 @@ func _open_choices() -> void:
 		return
 	for index in _answers.size():
 		var button := _model.duplicate() as Button
-		button.text = TranslationServer.translate(_answers[index]["text"])
+		button.text = _answers[index]["text"]
 		button.disabled = _answers[index]["disabled"]
 		button.toggle_mode = true
 		button.focus_mode = Control.FOCUS_NONE
@@ -504,7 +504,7 @@ func _dress() -> void:
 		_speaker.visible = not speaker_text.is_empty()
 	if _speaker_name != null:
 		_speaker_name.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
-		_speaker_name.text = TranslationServer.translate(speaker_text)
+		_speaker_name.text = speaker_text
 		if _options.has("speaker_color"):
 			_speaker_name.add_theme_color_override(&"font_color", _options["speaker_color"])
 		else:

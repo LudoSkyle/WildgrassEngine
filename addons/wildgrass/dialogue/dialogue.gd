@@ -8,6 +8,7 @@ const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_regis
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
 
 ## The box was opened.
@@ -78,6 +79,7 @@ var _config: ConfigRegistry
 var _hooks: Hooks
 var _screens: ScreenRegistry
 var _maps: Maps
+var _texts: Texts
 var _letters_per_second := -1.0
 var _tags: Dictionary[String, Callable] = {}
 var _queue: Array[Request] = []
@@ -86,8 +88,9 @@ var _held_open := false
 var _missing_actions: Array[String] = []
 
 
-func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, screen_registry: ScreenRegistry, maps_service: Maps) -> void:
+func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, screen_registry: ScreenRegistry, maps_service: Maps, texts_service: Texts) -> void:
 	log = logger
+	_texts = texts_service
 	_config = config_registry
 	_hooks = hook_registry
 	_screens = screen_registry
@@ -241,7 +244,11 @@ func _next() -> void:
 			continue
 		_current = request
 		_held_open = false
-		var text := str(TranslationServer.translate(request.text))
+		var text := _texts.format(_translated(request.text), true)
+		if request.options.has("speaker"):
+			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])))
+		for answer: Dictionary in request.answers:
+			answer["text"] = _texts.format(_translated(answer["text"]))
 		text = str(_hooks.filter(&"message_text", text, [request.options]))
 		box.show_message(text, request.options, request.answers)
 
@@ -264,6 +271,10 @@ func _open_box(screen_name: StringName) -> bool:
 	box.closed.connect(_on_box_closed.bind(box))
 	opened.emit()
 	return true
+
+
+static func _translated(text: String) -> String:
+	return str(TranslationServer.translate(text))
 
 
 func _close_if_idle() -> void:

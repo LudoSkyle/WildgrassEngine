@@ -281,6 +281,24 @@ func test_a_message_goes_through_tr_then_the_hook_which_may_change_options() -> 
 	assert_str((_box().get_node("Speaker/Name") as Label).text).is_equal("Bob")
 
 
+func test_messages_speakers_and_choices_are_formatted_when_shown() -> void:
+	_world.texts.set_value(&"rival", "[wait]Blue")
+	var answer := [null]
+	var talk := func() -> void:
+		await _world.dialogue.say("Hi, {rival}!", {"speaker": "{rival}"})
+		answer[0] = await _world.dialogue.ask("Battle {rival}?", ["{rival}!", "No"])
+	talk.call()
+	_box().set_process(false)
+	_box().advance(10.0)
+	assert_str(_shown()).is_equal("Hi, [wait]Blue!")
+	assert_str((_box().get_node("Speaker/Name") as Label).text).is_equal("[wait]Blue")
+	_world.texts.set_value(&"rival", "Gary")
+	_press("ui_accept")
+	_box().advance(10.0)
+	assert_str(_shown()).is_equal("Battle Gary?")
+	assert_str((_box().get_node("Choices").get_child(0) as Button).text).is_equal("Gary!")
+
+
 func test_the_speaker_shows_with_its_colour_and_hides_without() -> void:
 	var name_label: Label
 	var both := func() -> void:
