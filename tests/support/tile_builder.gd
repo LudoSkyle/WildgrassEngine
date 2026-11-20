@@ -2,8 +2,8 @@
 ##
 ## Physics layers: 0 = level 0 solid (layer 1), 1 = level 0 edges (layer 4),
 ## 2 = level 1 solid (layer 2), 3 = level 1 edges (layer 5).
-## Data layers: sand, water, covers, ramp, ice, counter (bool), floor (int),
-## jump (Vector2i), message (String).
+## Data layers: sand, water, covers, ramp, ice, counter, grass (bool), floor
+## (int), jump (Vector2i), message (String).
 extends RefCounted
 
 const GROUND := Vector2i(0, 0)
@@ -25,6 +25,8 @@ const LEDGE := Vector2i(5, 1)
 const COUNTER := Vector2i(6, 1)
 ## A solid bookshelf that says something.
 const SHELF := Vector2i(7, 1)
+## Tall grass, walked through.
+const GRASS := Vector2i(8, 1)
 ## 3×3, centred on its cell; blocks its two lower rows.
 const TREE := Vector2i(0, 1)
 
@@ -38,14 +40,14 @@ static func tile_set(size := 16) -> TileSet:
 	for bit: int in [1, 4, 2, 5]:
 		tiles.add_physics_layer()
 		tiles.set_physics_layer_collision_layer(tiles.get_physics_layers_count() - 1, 1 << (bit - 1))
-	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING]]:
+	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING], ["grass", TYPE_BOOL]]:
 		tiles.add_custom_data_layer()
 		tiles.set_custom_data_layer_name(tiles.get_custom_data_layers_count() - 1, data[0])
 		tiles.set_custom_data_layer_type(tiles.get_custom_data_layers_count() - 1, data[1])
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(Image.create(size * 10, size * 4, false, Image.FORMAT_RGBA8))
 	source.texture_region_size = Vector2i(size, size)
-	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP, ICE, LEDGE, COUNTER, SHELF]:
+	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP, ICE, LEDGE, COUNTER, SHELF, GRASS]:
 		source.create_tile(coords)
 	source.create_tile(TREE, Vector2i(3, 3))
 	tiles.add_source(source, 0)
@@ -75,6 +77,7 @@ static func tile_set(size := 16) -> TileSet:
 	_data(source, LEDGE, "jump", Vector2i.DOWN)
 	_data(source, COUNTER, "counter", true)
 	_data(source, SHELF, "message", "Full of books.")
+	_data(source, GRASS, "grass", true)
 	return tiles
 
 
