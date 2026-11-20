@@ -5,7 +5,8 @@ GDScript only, ships no assets.
 
 ## Status
 
-In development: the foundation, maps and doors, linked maps, tiles, walking.
+In development: the foundation, maps and doors, linked maps, tiles, walking,
+dialogue.
 
 ## Install
 
@@ -85,6 +86,23 @@ by itself. Add a `run` action to the input map. Paces and actions:
 Wildgrass.maps.traveller = player
 await Wildgrass.maps.go_to(&"town", &"Spawn")
 ```
+
+**Dialogue**: messages are written letter by letter in a box, page by page,
+with Godot's BBCode. Questions return the index of the choice taken.
+
+```gdscript
+await Wildgrass.dialogue.say("Hello!", {"speaker": "Alix"})
+var choice := await Wildgrass.dialogue.ask("Which one?", ["Bulbasaur", "Charmander"])
+var saving := await Wildgrass.dialogue.confirm("Save the game?")
+```
+
+The player talks to what it faces with `ui_accept`: put a `WgSign` on a map,
+or a `WgInteractable` with your own `_interact()`. A `message` custom data
+layer makes a tile say its text (bookshelves); a `counter` one reaches across
+it. To restyle the box, inherit `addons/wildgrass/dialogue/message_box.tscn`
+and set *wildgrass/screens/message_box* to your scene; a sign's frame is the
+`MessageFrame_sign` theme type variation. Paces and actions:
+`dialogue_config.json`.
 
 ## License
 
