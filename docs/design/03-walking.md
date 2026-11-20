@@ -67,7 +67,8 @@ obstacle).
 - **A step reserves its target cell, on the level it reaches**: two walkers
   never go to the same cell. Walkers block each other through the tiles'
   `can_step` hook, except that a walker may step into a cell another is
-  leaving (feature 6); `Wildgrass.walkers.at(cell, level)` finds who stands
+  leaving (feature 6); an interactable that `blocks` (an item on the ground,
+  feature 8) blocks its cells the same way; `Wildgrass.walkers.at(cell, level)` finds who stands
   there. `walker.destination` is the cell it ends on, `walker.heading` the
   direction of its step, `walker.can_step(direction)` whether a step would
   start.

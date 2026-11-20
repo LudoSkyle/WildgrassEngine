@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters, story.
+dialogue, texts, characters, story, bag.
 
 ## Install
 
@@ -145,6 +145,18 @@ Wildgrass.quests.complete(&"bell", 0)
 
 Quests are `WgQuest` resources you register, or a Studio project's
 `Data/Studio/quests/*.json`, read as they are.
+
+**Bag**: items are `WgItem` resources you register, or a Studio project's
+`Data/Studio/items/*.json`, read when first asked for. Pockets and limits:
+`bag_config.json`. Messages give and take with `[give=potion*3]` and
+`[take=potion]`; a `WgItemBall` lays an item on a map. The `bag` screen lists
+the pockets, and uses and tosses items.
+
+```gdscript
+Wildgrass.bag.add(&"potion", 3)
+Wildgrass.items.add_use(&"repel", _repel)   # what using it does
+Wildgrass.screens.open(&"bag")
+```
 
 ## License
 
