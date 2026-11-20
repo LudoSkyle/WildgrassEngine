@@ -1,0 +1,16 @@
+; Engine development project: runs the engine's tests. Games only install
+; addons/wildgrass/.
+
+config_version=5
+
+[application]
+
+config/name="Wildgrass Engine"
+config/features=PackedStringArray("4.7")
+
+[debug]
+
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/directory_rules={
+"res://addons/gdUnit4": 0
+}
