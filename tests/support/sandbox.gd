@@ -53,6 +53,30 @@ func scene(relative: String, script: Script = null) -> String:
 	return path
 
 
+## Points the maps folder at this sandbox.
+func use_maps_folder() -> String:
+	set_setting("wildgrass/paths/maps", root + "maps/")
+	return root + "maps/"
+
+
+## Saves `map` as maps/<id>.tscn, every descendant owned by it, then frees it.
+func save_map(map_id: String, map: Node) -> String:
+	_own(map, map)
+	var packed := PackedScene.new()
+	packed.pack(map)
+	map.free()
+	var path := root + "maps/%s.tscn" % map_id
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	ResourceSaver.save(packed, path)
+	return path
+
+
+static func _own(node: Node, owner_node: Node) -> void:
+	for child: Node in node.get_children():
+		child.owner = owner_node
+		_own(child, owner_node)
+
+
 func cleanup() -> void:
 	for key: String in _saved_settings:
 		ProjectSettings.set_setting(key, _saved_settings[key])
