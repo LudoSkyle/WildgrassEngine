@@ -5,7 +5,7 @@ GDScript only, ships no assets.
 
 ## Status
 
-In development: the foundation, maps and doors, linked maps.
+In development: the foundation, maps and doors, linked maps, tiles.
 
 ## Install
 
@@ -62,6 +62,16 @@ the player at the seam. After each step of the player:
 
 ```gdscript
 Wildgrass.maps.cross()
+```
+
+**Tiles**: draw collisions as physics polygons in the TileSet editor, on
+physics layer 1 (layer 4 for edges between two cells: cliff tops, fences).
+Add custom data layers for what the ground is (`sand`, `water`…).
+
+```gdscript
+var cell := Wildgrass.tiles.cell_of(player.global_position)
+var free := Wildgrass.tiles.can_step(cell, Vector2i.DOWN)
+var sandy: Variant = Wildgrass.tiles.data(cell, &"sand")
 ```
 
 ## License
