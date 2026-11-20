@@ -75,6 +75,7 @@ func _init() -> void:
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
 	walkers.story = story
+	walkers.bag = bag
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	config.register(&"log", WgLogConfig, "log_config")

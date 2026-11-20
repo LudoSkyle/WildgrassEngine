@@ -100,6 +100,11 @@ func remove(id: StringName, count := 1) -> bool:
 	return true
 
 
+## The item of that id, as `Wildgrass.items.item()`.
+func item(id: StringName) -> WgItem:
+	return _items.item(id)
+
+
 func count(id: StringName) -> int:
 	return _counts.get(id, 0)
 
