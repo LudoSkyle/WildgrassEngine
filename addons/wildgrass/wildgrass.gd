@@ -60,7 +60,7 @@ func _init() -> void:
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
-	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps])
+	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")

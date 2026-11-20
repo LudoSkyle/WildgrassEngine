@@ -1,5 +1,5 @@
 ## The language of the game, and the texts it shows: Studio's text files are
-## read here, as data.
+## read here, as data, and placeholders filled.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -31,6 +31,10 @@ var _hooks: Hooks
 ## File -> `{"header": its language codes, "rows": its lines}`; empty if missing.
 var _files: Dictionary[int, Dictionary] = {}
 var _warned: Dictionary[String, bool] = {}
+var _values: Dictionary[StringName, Variant] = {}
+
+static var _placeholder: RegEx
+static var _token: RegEx
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
@@ -92,6 +96,40 @@ func studio_file(file: int) -> PackedStringArray:
 	return lines
 
 
+## Sets the value of `{name}`: anything shown as text, or a Callable called
+## each time it is shown. `null` removes it.
+func set_value(value_name: StringName, value: Variant) -> void:
+	if value == null:
+		_values.erase(value_name)
+	else:
+		_values[value_name] = value
+
+
+## The value of `{name}`: the one set, then the `text_value` filter hook.
+## `null` if there is none.
+func value(value_name: StringName) -> Variant:
+	var found: Variant = _values.get(value_name)
+	if found is Callable:
+		found = (found as Callable).call()
+	return _hooks.filter(&"text_value", found, [value_name])
+
+
+## `text` with its placeholders filled: `{name}`, `{name?yes|no}`,
+## `{key:action}`, `{text:file:line}`, and Studio's `[VAR …]` tokens. With
+## `escape`, what values put in is escaped for messages: it never reads as a
+## tag.
+func format(text: String, escape := false) -> String:
+	if _placeholder == null:
+		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
+		_token = RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
+	var result := _replace(_placeholder, text, func(found: RegExMatch) -> String:
+		if found.get_string(1) == "text" and not found.get_string(2).is_empty():
+			return _studio_reference(found)
+		return found.get_string())
+	result = _replace(_token, result, _fill_token.bind(escape))
+	return _replace(_placeholder, result, _fill_placeholder.bind(escape))
+
+
 func config() -> WgLanguageConfig:
 	return _config.get_config(&"language") as WgLanguageConfig
 
@@ -146,3 +184,84 @@ func _warn_once(message: String) -> void:
 		return
 	_warned[message] = true
 	log.warn(&"texts", message)
+
+
+static func _replace(pattern: RegEx, text: String, fill: Callable) -> String:
+	var result := ""
+	var from := 0
+	for found: RegExMatch in pattern.search_all(text):
+		result += text.substr(from, found.get_start() - from) + str(fill.call(found))
+		from = found.get_end()
+	return result + text.substr(from)
+
+
+func _studio_reference(found: RegExMatch) -> String:
+	var parts := found.get_string(2).split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		_warn_once("bad Studio text reference %s" % found.get_string())
+		return found.get_string()
+	return studio(parts[0].to_int(), parts[1].to_int())
+
+
+func _fill_placeholder(found: RegExMatch, escape: bool) -> String:
+	var value_name := found.get_string(1)
+	var argument := found.get_string(2)
+	var shown: Variant = null
+	if value_name == "text" and not argument.is_empty():
+		return found.get_string()
+	if value_name == "key" and not argument.is_empty():
+		shown = _key_name(argument)
+	elif argument.is_empty():
+		shown = value(StringName(value_name))
+	if shown == null:
+		_warn_once("no value for %s" % found.get_string())
+		return found.get_string()
+	if found.get_start(3) >= 0:
+		return found.get_string(3) if _is_true(shown) else found.get_string(4)
+	return _escaped(str(shown), escape)
+
+
+## `[VAR NAME(000n, …)]` is the value `name_n`; `[VAR NAME]`, `name`.
+func _fill_token(found: RegExMatch, escape: bool) -> String:
+	var value_name := found.get_string(1).to_lower()
+	var index := found.get_string(2).get_slice(",", 0).strip_edges()
+	if index.is_valid_hex_number():
+		value_name += "_%d" % index.hex_to_int()
+	var shown: Variant = value(StringName(value_name))
+	if shown == null:
+		_warn_once("no value for Studio token %s" % found.get_string())
+		return ""
+	return _escaped(str(shown), escape)
+
+
+## The key bound to `action`, else its first input, through the `key_name`
+## filter hook. `null` for an unknown action.
+func _key_name(action: String) -> Variant:
+	if not InputMap.has_action(action):
+		return null
+	var events := InputMap.action_get_events(action)
+	var shown := ""
+	for event: InputEvent in events:
+		var key := event as InputEventKey
+		if key != null:
+			var code := key.keycode if key.keycode != KEY_NONE else DisplayServer.keyboard_get_keycode_from_physical(key.physical_keycode)
+			shown = OS.get_keycode_string(code)
+			break
+	if shown.is_empty() and not events.is_empty():
+		shown = events[0].as_text()
+	return _hooks.filter(&"key_name", shown, [action])
+
+
+static func _is_true(shown: Variant) -> bool:
+	match typeof(shown):
+		TYPE_BOOL:
+			return shown
+		TYPE_INT, TYPE_FLOAT:
+			return shown != 0
+		TYPE_STRING, TYPE_STRING_NAME:
+			return not str(shown).is_empty()
+	return true
+
+
+static func _escaped(shown: String, escape: bool) -> String:
+	return shown.replace("[", "[lb]") if escape else shown
