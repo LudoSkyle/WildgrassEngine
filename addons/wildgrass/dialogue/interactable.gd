@@ -1,6 +1,7 @@
 ## Something the player talks to or examines by facing it and pressing the
 ## interact action. Placed on a map, on its cell; one inside a walker is that
-## walker. It blocks nothing: what is drawn blocks through the TileSet.
+## walker, on the cell it ends on. It blocks nothing: what is drawn blocks
+## through the TileSet.
 class_name WgInteractable
 extends Node2D
 
