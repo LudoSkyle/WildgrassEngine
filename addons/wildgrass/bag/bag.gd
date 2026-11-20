@@ -100,6 +100,11 @@ func remove(id: StringName, count := 1) -> bool:
 	return true
 
 
+## The bag's config: pockets, limits.
+func config() -> WgBagConfig:
+	return _items.bag_config()
+
+
 ## The item of that id, as `Wildgrass.items.item()`.
 func item(id: StringName) -> WgItem:
 	return _items.item(id)
@@ -139,16 +144,19 @@ func sort(pocket: StringName) -> void:
 		_order[slots[index]] = sorted[index]
 
 
+## True if `id` is held, usable outside battle, and has a use.
+func can_use(id: StringName) -> bool:
+	var found := _items.item(id)
+	return found != null and has(id) and found.usable and _items.use_of(found).is_valid()
+
+
 ## Uses an item: what `Wildgrass.items.add_use()` says, awaited; a consumed
 ## item used up is removed. False if not used.
 func use(id: StringName) -> bool:
+	if not can_use(id):
+		return false
 	var found := _items.item(id)
-	if found == null or not has(id) or not found.usable:
-		return false
-	var use_it := _items.use_of(found)
-	if not use_it.is_valid():
-		return false
-	var result: Variant = await use_it.call(id)
+	var result: Variant = await _items.use_of(found).call(id)
 	if result is bool and not result:
 		return false
 	if found.consumed:
