@@ -5,7 +5,7 @@ Status: implemented.
 Loads maps and moves the traveller (the player) between and within them, with
 named, replaceable transitions. Walking, facing and input belong to feature 3;
 music, banner, weather to later features, through the hooks and zones below.
-Seamless links between neighbouring maps are a feature of their own.
+Maps linked side by side are feature 1b (`01b-linked-maps.md`).
 
 ## Maps
 
@@ -70,9 +70,10 @@ A warp, in order:
 
 1. ignored while another runs (`is_changing`);
 2. the transition covers the screen;
-3. hook `map_leaving(old_map)`, old map freed, new map loaded, hook
-   `map_loaded(new_map)` so features set it up before it shows. Skipped when
-   the target is the current map: the traveller only moves;
+3. hook `map_leaving(map)` and free, for every map on screen; the new map
+   at the origin, then its neighbours, each with hook `map_loaded(map)` so
+   features set it up before it shows, even if the target was a neighbour.
+   Skipped when the target is the current map: the traveller only moves;
 4. the traveller moves into `entities`, at the point plus the offset; signal
    `traveller_arrived(direction, door)` so feature 3 faces it and blocks the
    way back;
@@ -83,10 +84,13 @@ A warp, in order:
 - Unknown map: error logged, nothing changes.
 - Unknown point: warning, arrival at the map's first spawn point, else its
   origin.
-- Maps go under `Wildgrass.maps.host`: an engine node by default; a game can
-  give its own (inside a `SubViewport`, say).
-- `reload()` keeps the traveller's position and facing, runs the map hooks,
-  but neither `traveller_arrived` nor `zone_changed`.
+- Maps go under `Wildgrass.maps.host`: a y-sorted engine node by default; a
+  game can give its own (inside a `SubViewport`, say).
+- `reload()` loads the current map and its neighbours again, in place: the
+  maps and the traveller keep their position, the traveller its facing. It
+  runs the map hooks, but neither `traveller_arrived` nor `zone_changed`.
+- Saves store positions local to the current map: it is not always at the
+  origin.
 
 ## Transitions
 
