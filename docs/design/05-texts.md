@@ -30,7 +30,8 @@ Wildgrass.texts.studio_file(100012)    # every line of a file
   it is asked for, then kept.
 - Language: the column of the current language; empty or missing, the
   project's fallback locale (*Localization → Locale → Fallback*), then the
-  first column.
+  first column that has a text. A cell Studio left untranslated (`[~ 0]`) is
+  empty.
 - A missing file or line gives `""`, logged once.
 - A regional locale reads its language's column (`fr_FR` → `fr`); a column
   code differing from the Godot locale is mapped by `studioColumns`

@@ -51,7 +51,8 @@ extends WgConfig
   dictionaries, enums by name, sub-configs (an exported `WgConfig` with a
   default instance).
 - Missing key: default kept. Unknown key, wrong type, wrong element: logged,
-  value kept. `_validate()` then resets impossible values.
+  value kept. `_validate()` then resets impossible values. The `klass` key
+  every Studio file carries is ignored.
 
 ```gdscript
 Wildgrass.config.register(&"display", WgDisplayConfig, "display_config")

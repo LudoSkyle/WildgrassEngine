@@ -32,6 +32,8 @@ if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
   `ask()` returns `cancel` (or `-1`); so they do if the box is freed, or a warp
   or a reload happens during the message, which closes it. Crossing a seam
   keeps it.
+- A translation that loses a game tag of its source is logged as an error
+  (feature 7).
 - **The key that ends a message never starts something else**: the press that
   closes a sign does not read it again, whenever Godot closes the box in that
   frame (`Wildgrass.screens.took_input()`).

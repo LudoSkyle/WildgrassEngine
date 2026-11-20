@@ -71,8 +71,11 @@ A warp, in order:
 1. ignored while another runs (`is_changing`);
 2. the transition covers the screen;
 3. hook `map_leaving(map)` and free, for every map on screen; the new map
-   at the origin, then its neighbours, each with hook `map_loaded(map)` so
-   features set it up before it shows, even if the target was a neighbour.
+   at the origin, then its neighbours, each with hook `map_built(map, id)` as
+   soon as it is instanced, before the tree (feature 7 frees what the story
+   keeps off it), then `map_loaded(map)` so features set it up before it
+   shows, even if the target was a neighbour. `id_of(map)` gives the id of
+   any map built.
    Skipped when the target is the current map: the traveller only moves;
 4. the traveller moves into `entities`, at the point plus the offset; signal
    `traveller_arrived(direction, door)` so feature 3 faces it and blocks the
