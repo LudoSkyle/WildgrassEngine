@@ -115,6 +115,18 @@ func test_close_runs_once_and_announces_it() -> void:
 
 func test_without_screens_input_is_not_handled() -> void:
 	assert_bool(_screens.handle_input(InputEventKey.new())).is_false()
+	assert_bool(_screens.took_input()).is_false()
+
+
+func test_input_a_screen_handled_is_marked_for_the_frame_even_once_it_closed() -> void:
+	_screens.register(&"a", _sandbox.scene("s.tscn", RecordingScreen))
+	var screen := _screens.open(&"a")
+	assert_bool(_screens.took_input()).is_false()
+	_screens.handle_input(InputEventKey.new())
+	screen.close()
+	assert_bool(_screens.took_input()).is_true()
+	await get_tree().process_frame
+	assert_bool(_screens.took_input()).is_false()
 
 
 func test_a_screen_freed_without_close_still_closes() -> void:

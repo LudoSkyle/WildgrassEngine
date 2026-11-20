@@ -14,6 +14,7 @@ var _layer: Node
 var _defaults: Dictionary[StringName, String] = {}
 var _overrides: Dictionary[StringName, String] = {}
 var _stack: Array[WgScreen] = []
+var _took_frame := -1
 
 
 ## Screens are added as children of `layer`.
@@ -92,7 +93,16 @@ func is_open(screen_name: StringName) -> bool:
 ## Gives `event` to the top screen. Returns true if it handled it.
 func handle_input(event: InputEvent) -> bool:
 	var screen := top()
-	return screen != null and screen._on_input(event)
+	if screen == null or not screen._on_input(event):
+		return false
+	_took_frame = Engine.get_process_frames()
+	return true
+
+
+## True in the frame a screen handled an input event, even if it closed since:
+## the game does not act on that press too.
+func took_input() -> bool:
+	return _took_frame == Engine.get_process_frames()
 
 
 func _on_screen_closed(screen: WgScreen) -> void:
