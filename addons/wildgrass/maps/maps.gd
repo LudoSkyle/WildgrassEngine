@@ -41,6 +41,8 @@ var _hooks: Hooks
 var _screens: ScreenRegistry
 var _zone: StringName = &""
 var _neighbour_ids: Dictionary[WgMap, StringName] = {}
+## Every map built and not freed yet -> its id.
+var _ids: Dictionary[WgMap, StringName] = {}
 ## Bumped whenever the maps on screen are replaced: older loads are dropped.
 var _generation := 0
 
@@ -159,11 +161,10 @@ func map_at(global_position: Vector2) -> WgMap:
 
 
 ## The global rectangle of `map`, from its size.
-## The id of a map on screen, current or neighbour; empty for another.
+## The id of a map built from its scene, on screen or about to be; empty for
+## another.
 func id_of(map: WgMap) -> StringName:
-	if map == current:
-		return current_id
-	return _neighbour_ids.get(map, &"")
+	return _ids.get(map, &"")
 
 
 func rect(map: WgMap) -> Rect2:
@@ -179,10 +180,12 @@ func _instantiate(map_id: StringName) -> WgMap:
 	if not ResourceLoader.exists(path):
 		_log.error(&"maps", "unknown map '%s' (no %s)" % [map_id, path])
 		return null
-	return _instantiate_scene(load(path) as PackedScene, path)
+	return _instantiate_scene(load(path) as PackedScene, path, map_id)
 
 
-func _instantiate_scene(packed: PackedScene, path: String) -> WgMap:
+## Builds a map from its scene; the `map_built` hook sees it before it enters
+## the tree.
+func _instantiate_scene(packed: PackedScene, path: String, map_id: StringName) -> WgMap:
 	if packed == null:
 		_log.error(&"maps", "%s could not be loaded" % path)
 		return null
@@ -191,7 +194,10 @@ func _instantiate_scene(packed: PackedScene, path: String) -> WgMap:
 		_log.error(&"maps", "%s: the root is not a WgMap" % path)
 		node.free()
 		return null
-	return node
+	var map := node as WgMap
+	_ids[map] = map_id
+	_hooks.run(&"map_built", [map, map_id])
+	return map
 
 
 ## Frees every map on screen (the traveller survives), shows `next` at `at`
@@ -220,6 +226,7 @@ func _replace(next: WgMap, next_id: StringName, at: Vector2) -> void:
 
 func _free_map(map: WgMap) -> void:
 	_hooks.run(&"map_leaving", [map])
+	_ids.erase(map)
 	map.get_parent().remove_child(map)
 	map.free()
 
@@ -250,6 +257,7 @@ func _valid_links(map: WgMap, map_id: StringName) -> Array[WgMapLink]:
 func _show_neighbour(neighbour: WgMap, link: WgMapLink) -> void:
 	if neighbour.size == Vector2i.ZERO:
 		_log.error(&"maps", "%s: no size; not shown next to %s" % [link.map, current_id])
+		_ids.erase(neighbour)
 		neighbour.free()
 		return
 	_check_link_back(neighbour, link)
@@ -315,7 +323,7 @@ func _load_neighbours(links: Array[WgMapLink]) -> void:
 			var packed := ResourceLoader.load_threaded_get(path) as PackedScene
 			if generation != _generation or not _host_alive():
 				continue
-			var neighbour := _instantiate_scene(packed, path)
+			var neighbour := _instantiate_scene(packed, path, link.map)
 			if neighbour != null:
 				_show_neighbour(neighbour, link)
 	if generation == _generation and _host_alive():
