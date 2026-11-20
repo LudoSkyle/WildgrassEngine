@@ -117,7 +117,7 @@ func _problems() -> Array[String]:
 
 
 func _wait_for_neighbours() -> void:
-	if _maps.is_loading_neighbours:
+	if _maps != null and _maps.is_loading_neighbours:
 		await _maps.neighbours_loaded
 
 
@@ -312,6 +312,17 @@ func test_a_host_freed_during_background_loading_ends_it_quietly() -> void:
 	while _maps.is_loading_neighbours:
 		await get_tree().process_frame
 	assert_array(announced).is_empty()
+
+
+## A threaded load nobody collects leaks until the game quits.
+func test_maps_dropped_during_background_loading_leave_no_load_behind() -> void:
+	_route()
+	await _maps.go_to(&"route", &"Spawn")
+	_cross_to(Vector2(16, 128))
+	var beach := _sandbox.root + "maps/beach.tscn"
+	assert_int(ResourceLoader.load_threaded_get_status(beach)).is_not_equal(ResourceLoader.THREAD_LOAD_INVALID_RESOURCE)
+	_maps = null
+	assert_int(ResourceLoader.load_threaded_get_status(beach)).is_equal(ResourceLoader.THREAD_LOAD_INVALID_RESOURCE)
 
 
 func test_links_without_a_size_show_the_map_alone() -> void:
