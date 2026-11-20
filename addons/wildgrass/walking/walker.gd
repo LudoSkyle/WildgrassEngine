@@ -46,6 +46,10 @@ var is_moving := false
 var is_running := false
 var is_jumping := false
 var is_sliding := false
+## The cell it ends on: the one its step goes to, else its own.
+var destination: Vector2i:
+	get:
+		return _to_cell if is_moving else _cell
 ## The direction of the step under way; zero at rest.
 var heading: Vector2i:
 	get:

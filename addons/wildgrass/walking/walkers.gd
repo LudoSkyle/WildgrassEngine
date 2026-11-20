@@ -28,6 +28,7 @@ var _missing_actions: Array[String] = []
 var _busy: Dictionary[WgWalker, Array] = {}
 var _interactions := 0
 var _scripts: Dictionary[WgWalker, Walk] = {}
+var _still: Dictionary[WgWalker, bool] = {}
 ## True while a path is searched: characters do not block it, they move.
 var _searching := false
 
@@ -95,6 +96,7 @@ func settle(walker: WgWalker, cell: Vector2i, level: int) -> void:
 ## `walker` holds nothing any more; a walk it was on ends.
 func forget(walker: WgWalker) -> void:
 	_held.erase(walker)
+	_still.erase(walker)
 	_end_walk(walker, false)
 
 
@@ -119,7 +121,9 @@ func _door_in(node: Node, cell: Vector2i) -> WgDoor:
 func interactable_at(tree: SceneTree, cell: Vector2i, level: int, direction: Vector2i) -> WgInteractable:
 	for node: Node in tree.get_nodes_in_group(WgInteractable.GROUP):
 		var interactable := node as WgInteractable
-		if interactable.covers(tiles.cell_of(interactable.global_position), cell, level, direction):
+		var holder := interactable.get_parent() as WgWalker
+		var origin := holder.destination if holder != null else tiles.cell_of(interactable.global_position)
+		if interactable.covers(origin, cell, level, direction):
 			return interactable
 	return null
 
@@ -283,10 +287,21 @@ func _moves_from(walker: WgWalker, here: Vector3i) -> Array[Array]:
 	return moves
 
 
-## True if `walker`'s controller may act now. The traveller's always may: its
-## input keeps track of the keys. Others stand still while a screen is open,
-## a warp runs, or the player is held, unless the config says otherwise.
+## Keeps `walker`'s controller from acting, while it talks say.
+func set_still(walker: WgWalker, still: bool) -> void:
+	if still:
+		_still[walker] = true
+	else:
+		_still.erase(walker)
+
+
+## True if `walker`'s controller may act now: not while kept still. The
+## traveller's otherwise always may: its input keeps track of the keys. Others
+## stand still while a screen is open, a warp runs, or the player is held,
+## unless the config says otherwise.
 func may_act(walker: WgWalker) -> bool:
+	if _still.has(walker):
+		return false
 	if walker == maps.traveller or not movement().still_during_dialogue:
 		return true
 	if maps.is_changing or not screens.stack().is_empty():
