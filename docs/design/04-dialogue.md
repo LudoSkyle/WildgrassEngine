@@ -21,12 +21,13 @@ if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
 - **The box stays open between messages**: it closes at the end of the frame
   in which the last one ended, unless another `say()` or `ask()` follows.
   `await say(a)` then `await say(b)` never makes it flicker.
-- A message goes through `tr()`, then the filter hook
-  `message_text(text, options)`, then its tags are read (below). Feature 5
-  adds its placeholders through the hook: names, keys, gendered words. A
-  handler may change `options` too (a speaker named in the text itself).
-  **What a handler puts in goes through `Wildgrass.dialogue.escape()`**
-  (`[` → `[lb]`): a nickname written `[page]` stays text.
+- A message goes through `tr()`, then `Wildgrass.texts.format()` (feature 5:
+  names, keys, gendered words), then the filter hook
+  `message_text(text, options)`, then its tags are read (below). Speakers and
+  choices go through `tr()` and `format()` too. A handler may change
+  `options` (a speaker named in the text itself). **What a handler puts in
+  goes through `Wildgrass.dialogue.escape()`** (`[` → `[lb]`): a nickname
+  written `[page]` stays text.
 - `close()` closes the box at once. A pending `say()` returns, a pending
   `ask()` returns `cancel` (or `-1`); so they do if the box is freed, or a warp
   or a reload happens during the message, which closes it. Crossing a seam

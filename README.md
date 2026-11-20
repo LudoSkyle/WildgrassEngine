@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue.
+dialogue, texts.
 
 ## Install
 
@@ -103,6 +103,21 @@ it. To restyle the box, inherit `addons/wildgrass/dialogue/message_box.tscn`
 and set *wildgrass/screens/message_box* to your scene; a sign's frame is the
 `MessageFrame_sign` theme type variation. Paces and actions:
 `dialogue_config.json`.
+
+**Texts**: translate your game as any Godot project (`.po` or `.csv` in
+*Project Settings → Localization*). Studio's text files in
+`Data/Text/Dialogs/` are read as data; the plugin keeps Godot from importing
+them as translations.
+
+```gdscript
+Wildgrass.texts.language = "fr"
+var name := Wildgrass.texts.studio(100000, 25)   # file, line: "Pikachu"
+Wildgrass.texts.set_value(&"player", "Ludo")
+await Wildgrass.dialogue.say("Welcome, {player}! Press {key:ui_accept}.")
+```
+
+`language_config.json` (Studio's): `defaultLanguage`,
+`choosableLanguageCode`, `choosableLanguageTexts`.
 
 ## License
 
