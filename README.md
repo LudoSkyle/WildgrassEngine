@@ -5,7 +5,7 @@ GDScript only, ships no assets.
 
 ## Status
 
-In development: only the foundation exists.
+In development: the foundation, maps and doors.
 
 ## Install
 
@@ -41,6 +41,18 @@ Wildgrass.hooks.add(&"engine_ready", &"my_game", _on_engine_ready)
 
 **Game time**: `Wildgrass.clock.seconds` in code, the `game_time` global in
 shaders.
+
+**Maps** are scenes in `res://maps/`, named by id (`town.tscn` → `town`). Their
+root is a `WgMap`, with an `Entities` node for the player. Add `WgSpawnPoint`
+and `WgDoor` nodes anywhere in them.
+
+```gdscript
+Wildgrass.maps.traveller = player
+await Wildgrass.maps.go_to(&"town", &"Spawn")
+await Wildgrass.maps.use(door)
+```
+
+`map_config.json`: `{ "tileSize": 16, "fadeSeconds": 0.25 }`.
 
 ## License
 
