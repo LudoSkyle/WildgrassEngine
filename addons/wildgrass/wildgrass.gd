@@ -12,6 +12,7 @@ const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -26,6 +27,7 @@ var hooks: Hooks
 var clock: Clock
 var screens: ScreenRegistry
 var maps: Maps
+var tiles: Tiles
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -49,6 +51,7 @@ func _init() -> void:
 	map_host.y_sort_enabled = true
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
+	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"map", WgMapConfig, "map_config")
