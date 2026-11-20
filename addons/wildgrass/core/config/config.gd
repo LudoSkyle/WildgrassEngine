@@ -91,10 +91,11 @@ static func _convert_type(value: Variant, type: int, current: Variant, where: St
 				return {"value": Color.html(value)}
 		TYPE_ARRAY:
 			if value is Array:
-				return _convert_array(value, current as Array, where)
+				return _convert_array(value, current if current is Array else [], where)
 		TYPE_DICTIONARY:
+			# An element of an array has no current value: any dictionary.
 			if value is Dictionary:
-				return _convert_dictionary(value, current as Dictionary, where)
+				return _convert_dictionary(value, current if current is Dictionary else {}, where)
 	return {"error": "%s: expected %s, got %s" % [where, type_string(type), JSON.stringify(value)]}
 
 
