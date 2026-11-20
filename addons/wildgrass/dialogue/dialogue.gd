@@ -1,5 +1,6 @@
-## Messages written in a box. Opens the box screen, queues what is said, and
-## closes the box at the end of the frame in which the last message ended.
+## Messages written in a box, and questions. Opens the box screen, queues what
+## is said, and closes the box at the end of the frame in which the last
+## message ended.
 extends RefCounted
 
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
@@ -17,11 +18,18 @@ signal page_shown
 signal advanced
 ## A message ended.
 signal message_finished
+## The selection of a question moved to `index`.
+signal choice_moved(index: int)
+## The choice at `index` was taken.
+signal choice_made(index: int)
+## The choice at `index` is disabled: it was not taken.
+signal choice_refused(index: int)
 ## The box was closed.
 signal closed
 
 const OPTIONS: Array[String] = [
 	"speaker", "speaker_color", "portrait", "style", "place", "auto", "hold", "walk_away", "screen",
+	"default", "cancel",
 ]
 const PLACES: Array[String] = ["bottom", "top", "middle"]
 const DIRECTIONS: Dictionary[String, Vector2i] = {
@@ -33,8 +41,14 @@ class Request:
 	signal finished
 	var text: String
 	var options: Dictionary
+	## Each `{"text", "disabled"}`; empty unless a question.
+	var answers: Array[Dictionary] = []
 	var done := false
 	var result := 0
+
+	## What a question answers when it is cut short.
+	func cancelled() -> int:
+		return int(options["cancel"]) if not answers.is_empty() else 0
 
 	func finish(value: int) -> void:
 		if done:
@@ -89,7 +103,29 @@ func say(text: String, options := {}) -> void:
 		await request.finished
 
 
-## Closes the box at once. Pending messages return.
+## Asks `text`, then shows `choices`; returns the index of the choice taken.
+## A choice is a String, or `{"text": …, "disabled": true}`: shown, never
+## taken. Options as `say()`, and `default` (0), the choice selected first;
+## `cancel` (the last), what the cancel action answers, `-1` for nothing.
+func ask(text: String, choices: Array, options := {}) -> int:
+	if choices.is_empty():
+		log.error(&"dialogue", "a question needs choices: \"%s\"" % text)
+		return -1
+	var request := _enqueue(text, options, choices)
+	if not request.done:
+		await request.finished
+	return request.result
+
+
+## Asks `text` with Yes and No; true for Yes. Cancel answers No.
+func confirm(text: String, options := {}) -> bool:
+	var checked := options.duplicate()
+	checked["cancel"] = 1
+	return await ask(text, ["Yes", "No"], checked) == 0
+
+
+## Closes the box at once. Pending messages return; questions answer their
+## `cancel`, or `-1`.
 func close() -> void:
 	_held_open = false
 	if is_instance_valid(box) and not box.is_closed():
@@ -185,10 +221,12 @@ func _message_done(result: int) -> void:
 			_next()
 
 
-func _enqueue(text: String, options: Dictionary) -> Request:
+func _enqueue(text: String, options: Dictionary, choices := []) -> Request:
 	var request := Request.new()
 	request.text = text
 	request.options = _checked(options)
+	if not choices.is_empty():
+		request.answers = _answers(choices, request.options)
 	_queue.append(request)
 	if _current == null:
 		_next()
@@ -199,13 +237,13 @@ func _next() -> void:
 	while _current == null and not _queue.is_empty():
 		var request: Request = _queue.pop_front()
 		if not _open_box(StringName(request.options.get("screen", &"message_box"))):
-			request.finish(0)
+			request.finish(request.cancelled())
 			continue
 		_current = request
 		_held_open = false
 		var text := str(TranslationServer.translate(request.text))
 		text = str(_hooks.filter(&"message_text", text, [request.options]))
-		box.show_message(text, request.options)
+		box.show_message(text, request.options, request.answers)
 
 
 func _open_box(screen_name: StringName) -> bool:
@@ -251,13 +289,35 @@ func _drop_all() -> void:
 	_current = null
 	_queue.clear()
 	for request in pending:
-		request.finish(0)
+		request.finish(request.cancelled())
 
 
 ## A warp or a reload closes the box; crossing a seam does not.
 func _on_map_changed(_map: WgMap) -> void:
 	if not _maps.is_crossing and (is_open() or _current != null):
 		close()
+
+
+## The choices as `{"text", "disabled"}`; checks `default` and `cancel`.
+func _answers(choices: Array, options: Dictionary) -> Array[Dictionary]:
+	var answers: Array[Dictionary] = []
+	for choice: Variant in choices:
+		if choice is Dictionary:
+			answers.append({"text": str(choice.get("text", "")), "disabled": bool(choice.get("disabled", false))})
+		else:
+			answers.append({"text": str(choice), "disabled": false})
+	var last := answers.size() - 1
+	var default := int(options.get("default", 0))
+	if default < 0 or default > last:
+		log.warn(&"dialogue", "default %d is not a choice; using 0" % default)
+		default = 0
+	options["default"] = default
+	var cancel := int(options.get("cancel", last))
+	if cancel < -1 or cancel > last:
+		log.warn(&"dialogue", "cancel %d is not a choice; using %d" % [cancel, last])
+		cancel = last
+	options["cancel"] = cancel
+	return answers
 
 
 func _checked(options: Dictionary) -> Dictionary:
