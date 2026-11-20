@@ -23,6 +23,10 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 ## Characters do not move by themselves while a screen is open, a warp runs,
 ## or the player is held by an interaction.
 @export var still_during_dialogue := true
+## Seconds a scripted walk waits for a cell before giving up.
+@export var patience := 2.0
+## Cells a path search visits at most.
+@export var path_cells := 400
 ## Input map action of each direction, of running and of interacting. Unset
 ## keys keep theirs.
 @export var actions: Dictionary[String, String] = DEFAULT_ACTIONS.duplicate()
@@ -35,6 +39,12 @@ func _validate() -> PackedStringArray:
 		if value <= 0.0:
 			problems.append("%s must be positive, got %s; using %s" % [field.to_camel_case(), value, DEFAULT_LENGTHS[field]])
 			set(field, DEFAULT_LENGTHS[field])
+	if patience < 0.0:
+		problems.append("patience cannot be negative, got %s; using 2" % patience)
+		patience = 2.0
+	if path_cells <= 0:
+		problems.append("pathCells must be positive, got %s; using 400" % path_cells)
+		path_cells = 400
 	if hold_seconds < 0.0:
 		problems.append("holdSeconds cannot be negative, got %s; using 0.12" % hold_seconds)
 		hold_seconds = 0.12

@@ -46,6 +46,10 @@ var is_moving := false
 var is_running := false
 var is_jumping := false
 var is_sliding := false
+## The direction of the step under way; zero at rest.
+var heading: Vector2i:
+	get:
+		return _heading if is_moving else Vector2i.ZERO
 
 var _cell := Vector2i.ZERO
 var _from := Vector2.ZERO
@@ -109,6 +113,8 @@ func advance(delta: float) -> void:
 			if is_sliding:
 				if not _start_step(_heading, _pace, false):
 					is_sliding = false
+			elif walkers.is_scripted(self):
+				walkers.drive_script(self, left)
 			elif controller != null and walkers.may_act(self):
 				controller._drive(self, left)
 			if not is_moving:
@@ -116,6 +122,9 @@ func advance(delta: float) -> void:
 		left = _move(left)
 		if left <= 0.0:
 			break
+	# A scripted walk whose last step just ended ends now, not next frame.
+	if not is_moving and walkers.is_scripted(self):
+		walkers.drive_script(self, 0.0)
 	_pushing = _pushed
 	_pushed = false
 	_animate()
@@ -128,6 +137,19 @@ func turn(direction: Vector2i) -> void:
 	if facing != direction:
 		_turning = true
 	_face(direction)
+
+
+## Faces `target`'s cell, along the axis it is furthest on.
+func turn_toward(target: Node2D) -> void:
+	var offset := walkers.tiles.cell_of(target.global_position) - _cell
+	if offset == Vector2i.ZERO:
+		return
+	turn(Vector2i(signi(offset.x), 0) if absi(offset.x) >= absi(offset.y) else Vector2i(0, signi(offset.y)))
+
+
+## True if a step in `direction` would start now: free, or a ledge to jump.
+func can_step(direction: Vector2i) -> bool:
+	return walkers.tiles.can_step(_cell, direction, level, self) or (jumps and _can_jump(direction))
 
 
 ## Starts a step in `direction`, running or not, facing it unless `face` is
