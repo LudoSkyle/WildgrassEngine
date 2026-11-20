@@ -31,6 +31,8 @@ var host: Node
 var is_changing := false
 ## True while neighbours load after a crossing.
 var is_loading_neighbours := false
+## True while `map_changed` announces a crossing, not a warp or a reload.
+var is_crossing := false
 
 var _paths: Paths
 var _log: Log
@@ -134,7 +136,9 @@ func cross() -> bool:
 		_neighbour_ids[shown] = link.map
 	_place(at)
 	_announce_zone(next)
+	is_crossing = true
 	map_changed.emit(current)
+	is_crossing = false
 	for map: WgMap in unused.keys():
 		_free_map(map)
 	_load_neighbours(missing)
