@@ -25,11 +25,12 @@ func _start_engine() -> Engine_:
 
 func test_the_autoload_provides_every_service() -> void:
 	var engine: Engine_ = get_tree().root.get_node("Wildgrass")
-	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue]:
+	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue]:
 		assert_object(service).is_not_null()
 	assert_bool(engine.config.is_registered(&"display")).is_true()
 	assert_bool(engine.config.is_registered(&"log")).is_true()
 	assert_bool(engine.config.is_registered(&"dialogue")).is_true()
+	assert_bool(engine.config.is_registered(&"language")).is_true()
 	assert_str(engine.screens.scene_path(&"message_box")).is_equal("res://addons/wildgrass/dialogue/message_box.tscn")
 
 
@@ -90,7 +91,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSign", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
+	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSign", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 
@@ -109,6 +110,14 @@ func test_display_config_and_log_config_are_applied_at_start() -> void:
 	assert_array(display.applied).has_size(1)
 	assert_int(display.applied[0].window_scale).is_equal(3)
 	assert_int(engine.log.level).is_equal(engine.log.Level.ERROR)
+
+
+func test_the_default_language_is_set_at_start() -> void:
+	var locale := TranslationServer.get_locale()
+	_sandbox.write_json("Data/configs/language_config.json", {"defaultLanguage": "es"})
+	add_child(_start_engine())
+	assert_str(TranslationServer.get_locale()).is_equal("es")
+	TranslationServer.set_locale(locale)
 
 
 func test_a_missing_asset_is_logged_once() -> void:

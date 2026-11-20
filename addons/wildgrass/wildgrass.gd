@@ -10,6 +10,7 @@ const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_regis
 const Display := preload("res://addons/wildgrass/core/display/display.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
+const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
@@ -27,6 +28,7 @@ var config: ConfigRegistry
 var display: Display
 var hooks: Hooks
 var clock: Clock
+var texts: Texts
 var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
@@ -45,6 +47,7 @@ func _init() -> void:
 	display = _service(&"display", Display)
 	hooks = _service(&"hooks", Hooks)
 	clock = _service(&"clock", Clock)
+	texts = _service(&"texts", Texts, [paths, log, config, hooks])
 	screen_layer = CanvasLayer.new()
 	screen_layer.name = "Screens"
 	screen_layer.layer = SCREEN_LAYER
@@ -61,6 +64,7 @@ func _init() -> void:
 	walkers.dialogue = dialogue
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
+	config.register(&"language", WgLanguageConfig, "language_config")
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
@@ -75,6 +79,7 @@ func _ready() -> void:
 	log.configure(config.get_config(&"log") as WgLogConfig)
 	if config.has_file(&"display"):
 		display.apply(config.get_config(&"display") as WgDisplayConfig, get_window())
+	texts.apply_default()
 	Clock.declare_shader_global()
 	clock.updates_shader_global = true
 	_start.call_deferred()
