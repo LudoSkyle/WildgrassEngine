@@ -94,7 +94,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
+	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 

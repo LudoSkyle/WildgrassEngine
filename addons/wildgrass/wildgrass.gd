@@ -95,6 +95,7 @@ func _init() -> void:
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
+	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.

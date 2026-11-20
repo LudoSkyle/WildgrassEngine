@@ -109,6 +109,12 @@ func summary(game_slot: int) -> Dictionary:
 	return shown if shown is Dictionary else {}
 
 
+## What the card of the game played would show, through the `save_summary`
+## hook.
+func summary_now(game_slot := slot) -> Variant:
+	return _hooks.filter(&"save_summary", {}, [game_slot])
+
+
 ## Writes the game in `game_slot`, else in `slot`, else in the first empty
 ## one. False, logged, leaving the old file as it was, if it cannot.
 func write(game_slot := 0) -> bool:
@@ -124,7 +130,7 @@ func write(game_slot := 0) -> bool:
 			log.error(&"save", "part '%s' cannot be written: %s" % [part["name"], problem])
 			return false
 		parts[str(part["name"])] = state
-	var shown: Variant = _hooks.filter(&"save_summary", {}, [target])
+	var shown: Variant = summary_now(target)
 	var unwritable := _not_json(shown) if shown is Dictionary else "it is not a dictionary"
 	if not unwritable.is_empty():
 		log.error(&"save", "the summary cannot be written: %s" % unwritable)
