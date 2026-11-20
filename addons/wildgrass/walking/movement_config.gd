@@ -7,6 +7,7 @@ const DEFAULT_LENGTHS: Dictionary[String, float] = {
 }
 const DEFAULT_ACTIONS: Dictionary[String, String] = {
 	"up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "run": "run",
+	"interact": "ui_accept",
 }
 
 ## Walking pace, in cells per second.
@@ -19,7 +20,8 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 @export var jump_height := 8.0
 ## How long a direction must be held, from a standstill, before walking.
 @export var hold_seconds := 0.12
-## Input map action of each direction, and of running. Unset keys keep theirs.
+## Input map action of each direction, of running and of interacting. Unset
+## keys keep theirs.
 @export var actions: Dictionary[String, String] = DEFAULT_ACTIONS.duplicate()
 
 

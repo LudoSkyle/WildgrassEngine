@@ -90,7 +90,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
+	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSign", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 

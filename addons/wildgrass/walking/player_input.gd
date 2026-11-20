@@ -1,5 +1,6 @@
 ## Drives its walker from the input actions of `movement_config.json`: tap to
-## turn, hold to walk, the last direction pressed wins, run while held.
+## turn, hold to walk, the last direction pressed wins, run while held; the
+## interact action talks to what the walker faces.
 class_name WgPlayerInput
 extends WgWalkerController
 
@@ -20,6 +21,10 @@ var _walker: WgWalker
 func _drive(walker: WgWalker, delta: float) -> void:
 	_listen(walker)
 	var walkers := walker.walkers
+	if walkers.is_busy(walker):
+		_active = Vector2i.ZERO
+		_held_for = 0.0
+		return
 	for action_key: String in DIRECTIONS:
 		var direction := DIRECTIONS[action_key]
 		if walkers.is_held(action_key):
@@ -34,7 +39,16 @@ func _drive(walker: WgWalker, delta: float) -> void:
 		if _held[index] != _blocked:
 			wanted = _held[index]
 			break
-	if wanted == Vector2i.ZERO or walkers.maps.is_changing or not walkers.screens.stack().is_empty():
+	if walkers.maps.is_changing or not walkers.screens.stack().is_empty() or walkers.screens.took_input():
+		_active = Vector2i.ZERO
+		_held_for = 0.0
+		return
+	if walkers.is_pressed("interact"):
+		_active = Vector2i.ZERO
+		_held_for = 0.0
+		walkers.interact(walker)
+		return
+	if wanted == Vector2i.ZERO:
 		_active = Vector2i.ZERO
 		_held_for = 0.0
 		return
