@@ -45,3 +45,15 @@ class RecordingClock extends Clock:
 
 	func _set_shader_global(value: float) -> void:
 		pushed.append(value)
+
+
+func test_play_time_is_kept_with_a_game_never_below_zero() -> void:
+	var clock := Clock.new()
+	clock.advance(42.0)
+	var saved: Variant = JSON.parse_string(JSON.stringify(clock.state()))
+	clock.reset()
+	assert_float(clock.seconds).is_equal(0.0)
+	clock.restore(saved)
+	assert_float(clock.seconds).is_equal(42.0)
+	clock.restore({"seconds": -5})
+	assert_float(clock.seconds).is_equal(0.0)

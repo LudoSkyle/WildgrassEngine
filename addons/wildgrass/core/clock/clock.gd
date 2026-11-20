@@ -32,6 +32,25 @@ func advance(delta: float) -> void:
 		_set_shader_global(_seconds)
 
 
+## The play time, as a dictionary JSON can hold: a part of the saved game.
+func state() -> Dictionary:
+	return {"seconds": _seconds}
+
+
+func restore(saved: Dictionary) -> void:
+	_seconds = maxf(float(saved.get("seconds", 0.0)), 0.0)
+
+
+func reset() -> void:
+	_seconds = 0.0
+
+
+## The `save_summary` hook: a game's card shows its play time.
+func save_summary(summary: Dictionary, _slot: int) -> Dictionary:
+	summary["seconds"] = _seconds
+	return summary
+
+
 func _set_shader_global(value: float) -> void:
 	RenderingServer.global_shader_parameter_set(SHADER_GLOBAL, value)
 
