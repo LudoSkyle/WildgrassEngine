@@ -1,0 +1,15 @@
+# Godot
+.godot/
+/android/
+*.translation
+
+# Editors
+.idea/
+.vscode/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Test reports
+/reports/
