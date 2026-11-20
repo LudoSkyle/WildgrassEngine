@@ -178,6 +178,17 @@ func test_crossing_makes_the_neighbour_current_with_no_warp() -> void:
 	assert_array(_events).is_equal(["zone route>island", "changed island"])
 
 
+func test_is_crossing_tells_a_crossing_from_a_warp() -> void:
+	_route()
+	var seen: Array[bool] = []
+	_maps.map_changed.connect(func(_map: WgMap) -> void: seen.append(_maps.is_crossing))
+	await _maps.go_to(&"route", &"Spawn")
+	_cross_to(Vector2(16, 128))
+	await _maps.reload(&"none")
+	assert_array(seen).is_equal([false, true, false])
+	assert_bool(_maps.is_crossing).is_false()
+
+
 func test_the_traveller_leaves_and_reenters_the_tree_when_crossing() -> void:
 	_route()
 	await _maps.go_to(&"route", &"Spawn")

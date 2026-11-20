@@ -25,10 +25,12 @@ func _start_engine() -> Engine_:
 
 func test_the_autoload_provides_every_service() -> void:
 	var engine: Engine_ = get_tree().root.get_node("Wildgrass")
-	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.screens, engine.maps, engine.tiles, engine.walkers]:
+	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue]:
 		assert_object(service).is_not_null()
 	assert_bool(engine.config.is_registered(&"display")).is_true()
 	assert_bool(engine.config.is_registered(&"log")).is_true()
+	assert_bool(engine.config.is_registered(&"dialogue")).is_true()
+	assert_str(engine.screens.scene_path(&"message_box")).is_equal("res://addons/wildgrass/dialogue/message_box.tscn")
 
 
 func test_engine_ready_hooks_run_after_the_scene_is_ready_then_the_signal() -> void:
@@ -88,7 +90,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDisplayConfig", "WgDoor", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
+	assert_array(names).is_equal(["WgCamera", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMessageBox", "WgMovementConfig", "WgPlayerInput", "WgScreen", "WgSpawnPoint", "WgTransition", "WgWalker", "WgWalkerController"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 

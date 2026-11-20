@@ -1,4 +1,5 @@
-## The services walkers need, built for one test, with a map to walk on.
+## The services walkers and dialogue need, built for one test, with a map to
+## walk on.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -9,6 +10,7 @@ const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_regi
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -19,6 +21,8 @@ var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
 var walkers: Walkers
+var dialogue: Dialogue
+var config: ConfigRegistry
 ## Parent of the maps and the screens; free it with the test.
 var root: Node2D
 var tile_set: TileSet
@@ -37,21 +41,26 @@ func _init(parent: Node, map_config := {}) -> void:
 	logged = lines
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		lines.append("%s %s" % [Log.Level.keys()[level], message]))
-	var config := ConfigRegistry.new(Paths.new(false), logger)
+	config = ConfigRegistry.new(Paths.new(false), logger)
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
+	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
-	var screen_layer := Node.new()
+	# Screens show at the game's size: 320×240.
+	var screen_layer := Control.new()
+	screen_layer.size = Vector2(320, 240)
 	root.add_child(screen_layer)
 	screens = ScreenRegistry.new(logger, screen_layer)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
+	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
 	tiles = Tiles.new(logger, config, hooks, maps)
 	walkers = Walkers.new(logger, config, hooks, screens, maps, tiles)
+	dialogue = Dialogue.new(logger, config, hooks, screens, maps)
 	tile_set = T.tile_set()
 
 

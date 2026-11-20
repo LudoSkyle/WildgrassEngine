@@ -14,6 +14,7 @@ const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_regi
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -30,6 +31,7 @@ var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
 var walkers: Walkers
+var dialogue: Dialogue
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -55,12 +57,15 @@ func _init() -> void:
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
+	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps])
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
+	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
+	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 
 
 func _ready() -> void:
