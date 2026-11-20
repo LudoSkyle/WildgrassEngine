@@ -159,6 +159,13 @@ func map_at(global_position: Vector2) -> WgMap:
 
 
 ## The global rectangle of `map`, from its size.
+## The id of a map on screen, current or neighbour; empty for another.
+func id_of(map: WgMap) -> StringName:
+	if map == current:
+		return current_id
+	return _neighbour_ids.get(map, &"")
+
+
 func rect(map: WgMap) -> Rect2:
 	return Rect2(map.global_position, Vector2(map.size * _tile_size()))
 
