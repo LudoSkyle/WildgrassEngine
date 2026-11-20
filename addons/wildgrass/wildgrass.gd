@@ -76,6 +76,7 @@ func _init() -> void:
 	walkers.dialogue = dialogue
 	walkers.story = story
 	story.add_tags(dialogue)
+	bag.add_tags(dialogue, screens)
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
@@ -86,6 +87,7 @@ func _init() -> void:
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
+	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 
 
 func _ready() -> void:
