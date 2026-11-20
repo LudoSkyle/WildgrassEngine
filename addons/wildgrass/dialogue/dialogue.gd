@@ -30,7 +30,7 @@ signal closed
 
 const OPTIONS: Array[String] = [
 	"speaker", "speaker_color", "portrait", "style", "place", "auto", "hold", "walk_away", "screen",
-	"default", "cancel",
+	"default", "cancel", "locked", "values", "min", "max",
 ]
 const PLACES: Array[String] = ["bottom", "top", "middle"]
 const DIRECTIONS: Dictionary[String, Vector2i] = {
@@ -44,14 +44,18 @@ class Request:
 	var options: Dictionary
 	## Each `{"text", "disabled"}`; empty unless a question.
 	var answers: Array[Dictionary] = []
+	## `{"min", "max", "default"}`; empty unless a number is asked.
+	var number: Dictionary = {}
 	var done := false
-	var result := 0
+	var result: Variant = 0
 
 	## What a question answers when it is cut short.
-	func cancelled() -> int:
+	func cancelled() -> Variant:
+		if not number.is_empty():
+			return null
 		return int(options["cancel"]) if not answers.is_empty() else 0
 
-	func finish(value: int) -> void:
+	func finish(value: Variant) -> void:
 		if done:
 			return
 		done = true
@@ -82,6 +86,7 @@ var _maps: Maps
 var _texts: Texts
 var _letters_per_second := -1.0
 var _tags: Dictionary[String, Callable] = {}
+var _narrating: Dictionary[String, bool] = {}
 var _queue: Array[Request] = []
 var _current: Request
 var _held_open := false
@@ -115,6 +120,22 @@ func ask(text: String, choices: Array, options := {}) -> int:
 		log.error(&"dialogue", "a question needs choices: \"%s\"" % text)
 		return -1
 	var request := _enqueue(text, options, choices)
+	if not request.done:
+		await request.finished
+	return int(request.result)
+
+
+## Asks `text`, then a number between options `min` (0) and `max` (99),
+## starting at `default` (`min`): up and down by one, left and right by ten,
+## wrapping. Returns it, or null when cancelled, closed or cut by a warp.
+func ask_number(text: String, options := {}) -> Variant:
+	var low := int(options.get("min", 0))
+	var high := int(options.get("max", 99))
+	if high < low:
+		log.warn(&"dialogue", "max %d is below min %d; using %d" % [high, low, low])
+		high = low
+	var asked := {"min": low, "max": high, "default": clampi(int(options.get("default", low)), low, high)}
+	var request := _enqueue(text, options, [], asked)
 	if not request.done:
 		await request.finished
 	return request.result
@@ -151,19 +172,23 @@ static func escape(text: String) -> String:
 
 ## Adds a tag a message may hold, `[name]` or `[name=value]`. `callable` gets
 ## the value as a String when writing reaches the tag; if it returns a signal,
-## writing waits for it. False, logged, for a name of Godot's BBCode, of the
-## engine's tags, or already taken.
-func add_tag(tag_name: StringName, callable: Callable) -> bool:
+## writing waits for it. A tag that `narrates` is the game's voice: a message
+## holding it shows no speaker. False, logged, for a name of Godot's BBCode,
+## of the engine's tags, or already taken.
+func add_tag(tag_name: StringName, callable: Callable, narrates := false) -> bool:
 	var key := str(tag_name)
 	if not key.is_valid_ascii_identifier() or key in MessageTags.ENGINE_TAGS or key in MessageTags.BBCODE_TAGS or _tags.has(key):
 		log.error(&"dialogue", "cannot add the tag [%s]: taken" % key)
 		return false
 	_tags[key] = callable
+	if narrates:
+		_narrating[key] = true
 	return true
 
 
 func remove_tag(tag_name: StringName) -> void:
 	_tags.erase(str(tag_name))
+	_narrating.erase(str(tag_name))
 
 
 func tag_names() -> Array:
@@ -209,7 +234,7 @@ func facing() -> Vector2i:
 
 
 ## Called by the box when the message under way ends.
-func _message_done(result: int) -> void:
+func _message_done(result: Variant) -> void:
 	var request := _current
 	if request == null:
 		return
@@ -224,10 +249,11 @@ func _message_done(result: int) -> void:
 			_next()
 
 
-func _enqueue(text: String, options: Dictionary, choices := []) -> Request:
+func _enqueue(text: String, options: Dictionary, choices := [], asked := {}) -> Request:
 	var request := Request.new()
 	request.text = text
 	request.options = _checked(options)
+	request.number = asked
 	if not choices.is_empty():
 		request.answers = _answers(choices, request.options)
 	_queue.append(request)
@@ -247,13 +273,18 @@ func _next() -> void:
 		var translated := _translated(request.text)
 		if translated != request.text:
 			_check_translation(request.text, translated)
-		var text := _texts.format(translated, true)
+		var values := {}
+		for value_name: Variant in request.options.get("values", {}):
+			values[str(value_name)] = _texts.format(str(request.options["values"][value_name]))
+		var text := _texts.format(translated, true, values)
 		if request.options.has("speaker"):
-			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])))
+			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])), false, values)
 		for answer: Dictionary in request.answers:
-			answer["text"] = _texts.format(_translated(answer["text"]))
+			answer["text"] = _texts.format(_translated(answer["text"]), false, values)
 		text = str(_hooks.filter(&"message_text", text, [request.options]))
-		box.show_message(text, request.options, request.answers)
+		if _narrates(text):
+			request.options["speaker"] = ""
+		box.show_message(text, request.options, request.answers, request.number)
 
 
 func _open_box(screen_name: StringName) -> bool:
@@ -291,6 +322,13 @@ func _check_translation(source: String, translated: String) -> void:
 			kept.erase(written)
 		else:
 			log.error(&"dialogue", "the translation of \"%s\" loses [%s]" % [source, written.trim_suffix("=")])
+
+
+func _narrates(text: String) -> bool:
+	for tag: Dictionary in MessageTags.split(text, tag_names(), [])["tags"]:
+		if _narrating.has(tag["name"]):
+			return true
+	return false
 
 
 static func _translated(text: String) -> String:
