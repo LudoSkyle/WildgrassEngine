@@ -13,3 +13,6 @@ Thumbs.db
 
 # Test reports
 /reports/
+
+# gdUnit4, installed by tools/install_gdunit4.sh
+/addons/gdUnit4/
