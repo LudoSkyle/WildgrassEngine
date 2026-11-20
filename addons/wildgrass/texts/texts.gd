@@ -33,6 +33,9 @@ var _files: Dictionary[int, Dictionary] = {}
 var _warned: Dictionary[String, bool] = {}
 var _values: Dictionary[StringName, Variant] = {}
 
+## What Studio writes in a cell not translated: `[~ 0]`, `[~ 1]`…
+static var _untranslated := RegEx.create_from_string("^\\[~ ?\\d+\\]$")
+
 static var _placeholder: RegEx
 static var _token: RegEx
 
@@ -158,14 +161,17 @@ func _studio_file(file: int) -> Dictionary:
 
 
 ## The cell of the current language, else of the fallback locale, else the
-## first one; `\nl` is a line break.
+## first one with a text; `\nl` is a line break.
 func _pick(header: PackedStringArray, row: PackedStringArray) -> String:
 	var fallback := str(ProjectSettings.get_setting("internationalization/locale/fallback", "en"))
 	for locale: String in [language, fallback]:
 		var index := _column(header, locale)
-		if index >= 0 and index < row.size() and not row[index].is_empty():
+		if index >= 0 and index < row.size() and not _is_empty(row[index]):
 			return row[index].replace("\\nl", "\n")
-	return row[0].replace("\\nl", "\n") if not row.is_empty() else ""
+	for cell in row:
+		if not _is_empty(cell):
+			return cell.replace("\\nl", "\n")
+	return ""
 
 
 ## The column of a Godot locale: mapped by `studioColumns`, or its own code,
@@ -177,6 +183,11 @@ func _column(header: PackedStringArray, locale: String) -> int:
 		if index >= 0:
 			return index
 	return -1
+
+
+## An empty cell, or one Studio left untranslated.
+static func _is_empty(cell: String) -> bool:
+	return cell.is_empty() or _untranslated.search(cell) != null
 
 
 func _warn_once(message: String) -> void:

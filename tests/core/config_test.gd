@@ -32,8 +32,9 @@ func test_an_int_accepts_a_whole_number_only() -> void:
 	assert_int(_config.count).is_equal(4)
 
 
-func test_an_unknown_key_is_reported_and_ignored() -> void:
+func test_an_unknown_key_is_reported_and_ignored_but_studio_s_klass() -> void:
 	assert_array(_config.load_data({"cuont": 3}, "s.json")).is_equal(["s.json: unknown key 'cuont'"])
+	assert_array(_config.load_data({"klass": "Configs::Project::Sample"}, "s.json")).is_empty()
 	assert_int(_config.count).is_equal(1)
 
 
