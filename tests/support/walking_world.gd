@@ -78,6 +78,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
 	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
+	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
