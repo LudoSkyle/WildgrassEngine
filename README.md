@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters, story, bag.
+dialogue, texts, characters, story, bag, save.
 
 ## Install
 
@@ -156,6 +156,18 @@ the pockets, and uses and tosses items.
 Wildgrass.bag.add(&"potion", 3)
 Wildgrass.items.add_use(&"repel", _repel)   # what using it does
 Wildgrass.screens.open(&"bag")
+```
+
+**Save**: games are JSON files in slots, as Studio's `save_config.json`
+sets them. The story, quests, the bag, the play time and where everyone
+stands are saved; add your own parts. The `save` screen asks before writing,
+`save_slots` chooses a game.
+
+```gdscript
+Wildgrass.save.add_part(&"pokedex", _state, _restore, _reset)
+Wildgrass.save.write()
+await Wildgrass.save.load_game(1)
+Wildgrass.screens.open(&"save_slots")
 ```
 
 ## License

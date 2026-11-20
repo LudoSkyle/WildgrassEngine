@@ -121,6 +121,7 @@ var rate := Wildgrass.hooks.filter(&"encounter_rate", 10, [map])
 | `graphics` | `res://graphics/` |
 | `audio` | `res://audio/` |
 | `maps` | `res://maps/` (feature 1) |
+| `saves` | `user://` (feature 9) |
 
 - Settings `wildgrass/paths/<key>`; a game can add keys.
 - `resolve(key, relative)`, `exists(path)`.
