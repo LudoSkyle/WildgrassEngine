@@ -13,6 +13,7 @@ const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
+const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -26,6 +27,7 @@ var walkers: Walkers
 var dialogue: Dialogue
 var texts: Texts
 var story: Story
+var quests: Quests
 var config: ConfigRegistry
 ## Parent of the maps and the screens; free it with the test.
 var root: Node2D
@@ -67,6 +69,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers = Walkers.new(logger, config, hooks, screens, maps, tiles)
 	texts = Texts.new(Paths.new(false), logger, config, hooks)
 	story = Story.new(logger, hooks, maps)
+	quests = Quests.new(logger, hooks)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
