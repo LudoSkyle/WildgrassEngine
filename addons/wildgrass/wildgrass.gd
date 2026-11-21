@@ -27,6 +27,7 @@ const Studio := preload("res://addons/wildgrass/studio/studio.gd")
 const Title := preload("res://addons/wildgrass/title/title.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -55,6 +56,7 @@ var options: Options
 var title: Title
 var species: SpeciesData
 var types: Types
+var pokedex: Pokedex
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -87,6 +89,7 @@ func _init() -> void:
 	items = _service(&"items", Items, [paths, log, config])
 	species = _service(&"species", SpeciesData, [paths, log])
 	types = _service(&"types", Types, [paths, log])
+	pokedex = _service(&"pokedex", Pokedex, [paths, log, config, species])
 	bag = _service(&"bag", Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
@@ -116,6 +119,7 @@ func _init() -> void:
 	config.register(&"dialogue", WgDialogueConfig, "dialogue")
 	config.register(&"studio", WgStudioConfig, "studio")
 	config.register(&"title", WgTitleConfig, "title")
+	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types)
@@ -139,9 +143,11 @@ func _add_parts() -> void:
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
+	hooks.add(&"save_summary", &"wildgrass_pokedex", pokedex.save_summary)
 
 
 ## The engine's entries of the pause menu, in order.

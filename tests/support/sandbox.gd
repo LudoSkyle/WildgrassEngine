@@ -28,6 +28,7 @@ func use_data_folder() -> String:
 	set_setting("wildgrass/paths/quests", root + "quests/")
 	set_setting("wildgrass/paths/pokemon", root + "pokemon/")
 	set_setting("wildgrass/paths/types", root + "types/")
+	set_setting("wildgrass/paths/dex", root + "dex/")
 	return root + "Data/"
 
 
