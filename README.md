@@ -7,7 +7,7 @@ GDScript only, ships no assets.
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
-layer, and the title screen.
+layer, the title screen, and Pokémon species and types.
 
 ## Install
 
@@ -36,7 +36,8 @@ what you change.
 ```
 
 **Folders** default to `res://config/`, `res://graphics/`, `res://audio/`,
-`res://maps/`, `res://items/` and `res://quests/`. Change them in *Project
+`res://maps/`, `res://items/`, `res://quests/`, `res://pokemon/` and
+`res://types/`. Change them in *Project
 Settings → wildgrass/paths*.
 
 **Studio projects**: a project with a `project.studio` file runs as it is.
@@ -208,6 +209,18 @@ Wildgrass.menu.add_entry(&"title", "Back to title", Wildgrass.title.back)
 
 Your own title is a scene extending `WgTitleScreen` (*wildgrass/screens/title*);
 your choice of a game one extending `WgSaveSlotsScreen`.
+
+**Species and types**: `WgSpecies` resources (a national number, texts, and
+`WgSpeciesForm`s: types, stats, breeding, abilities, evolutions, moves,
+pictures, cry) you register or put in `res://pokemon/<id>.tres`; `WgType`
+resources in `res://types/`. The engine ships none; a Studio project's come
+from the Studio layer.
+
+```gdscript
+var form := Wildgrass.species.form(&"rattata", 1)
+form.picture(&"front", true)                        # shiny, a Texture2D
+Wildgrass.types.factor(&"fire", form.types)         # how hard fire hits it
+```
 
 ## License
 
