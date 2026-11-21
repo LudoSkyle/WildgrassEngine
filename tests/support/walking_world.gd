@@ -18,6 +18,7 @@ const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
+const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -36,6 +37,7 @@ var items: Items
 var bag: Bag
 var clock: Clock
 var save: Save
+var menu: Menu
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
 var config: ConfigRegistry
@@ -79,6 +81,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
 	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
+	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -105,6 +108,12 @@ func _init(parent: Node, map_config := {}) -> void:
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
+	menu = Menu.new(logger, screens, story)
+	menu.services = {"bag": bag, "dialogue": dialogue, "texts": texts, "save": save}
+	walkers.menu = menu
+	menu.add_entry(&"exit", "{text:9000:26|Exit}", menu.exit)
+	menu.add_entry(&"bag", "{text:100014:2|Bag}", menu.open_bag)
+	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 

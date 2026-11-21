@@ -21,6 +21,7 @@ const Items := preload("res://addons/wildgrass/bag/items.gd")
 const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
+const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -44,6 +45,7 @@ var items: Items
 var bag: Bag
 var dialogue: Dialogue
 var save: Save
+var menu: Menu
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -82,6 +84,10 @@ func _init() -> void:
 	bag.add_tags(dialogue, screens)
 	save = _service(&"save", Save, [paths, log, config, hooks])
 	_add_parts()
+	menu = _service(&"menu", Menu, [log, screens, story])
+	menu.services = {"bag": bag, "dialogue": dialogue, "texts": texts, "save": save}
+	walkers.menu = menu
+	_add_entries()
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
@@ -97,6 +103,7 @@ func _init() -> void:
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
 	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
+	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.
@@ -108,6 +115,13 @@ func _add_parts() -> void:
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
+
+
+## The engine's entries of the pause menu, in order.
+func _add_entries() -> void:
+	menu.add_entry(&"exit", "{text:9000:26|Exit}", menu.exit)
+	menu.add_entry(&"bag", "{text:100014:2|Bag}", menu.open_bag)
+	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
 
 
 func _ready() -> void:

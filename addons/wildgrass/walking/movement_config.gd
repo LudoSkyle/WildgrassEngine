@@ -7,7 +7,7 @@ const DEFAULT_LENGTHS: Dictionary[String, float] = {
 }
 const DEFAULT_ACTIONS: Dictionary[String, String] = {
 	"up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "run": "run",
-	"interact": "ui_accept",
+	"interact": "ui_accept", "menu": "ui_cancel",
 }
 
 ## Walking pace, in cells per second.
