@@ -162,3 +162,21 @@ func test_wrong_calls_are_logged() -> void:
 	quests.complete(&"bell", 7)
 	quests.register(WgQuest.new())
 	assert_array(_world.logged).is_equal(["ERROR bell has no objective 7", "ERROR a quest needs an id"])
+
+
+func test_quests_are_registered_else_resources_of_the_quests_folder_else_a_source_s() -> void:
+	var folder := _world.sandbox.root + "quests/"
+	DirAccess.make_dir_recursive_absolute(folder)
+	ResourceSaver.save(_quest(&"bell", [_objective(&"speak_to", "9")]), folder + "bell.tres")
+	ResourceSaver.save(_quest(&"egg", [_objective(&"hatch_egg", "")]), folder + "egg.tres")
+	ResourceSaver.save(WgDisplayConfig.new(), folder + "odd.tres")
+	var asked := [0]
+	_world.quests.add_source(func() -> Array:
+		asked[0] += 1
+		return [_quest(&"egg", []), _quest(&"race", [_objective(&"custom", "1")]), "not a quest"])
+	assert_str(_world.quests.quest(&"bell").objectives[0].target).is_equal("0")
+	assert_str(_world.quests.quest(&"egg").objectives[0].kind).is_equal("hatch_egg")
+	assert_object(_world.quests.quest(&"race")).is_not_null()
+	_world.quests.quest(&"race")
+	assert_int(asked[0]).is_equal(1)
+	assert_array(_world.logged).is_equal(["ERROR odd.tres: not a WgQuest"])

@@ -24,6 +24,8 @@ func set_setting(key: String, value: Variant) -> void:
 func use_data_folder() -> String:
 	set_setting("wildgrass/paths/data", root + "Data/")
 	set_setting("wildgrass/paths/config", root + "config/")
+	set_setting("wildgrass/paths/items", root + "items/")
+	set_setting("wildgrass/paths/quests", root + "quests/")
 	return root + "Data/"
 
 

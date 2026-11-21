@@ -1,6 +1,6 @@
 ## Quests: started, counted toward, finished the moment their last objective
-## is done, failed, claimed. A Studio project's quest files are read as they
-## are.
+## is done, failed, claimed. Those the game registers, then its resources
+## (`res://quests/*.tres`), then what sources give.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -35,6 +35,7 @@ var log: Log
 var _hooks: Hooks
 var _paths: Paths
 var _studio_read := false
+var _sources: Array[Callable] = []
 var _quests: Dictionary[StringName, WgQuest] = {}
 var _givers: Dictionary[StringName, Callable] = {}
 var _checks: Dictionary[StringName, Callable] = {}
@@ -55,6 +56,12 @@ func register(quest: WgQuest) -> void:
 		log.error(&"quests", "a quest needs an id")
 		return
 	_quests[quest.id] = quest
+
+
+## Adds an origin of quests: `source` returns an array of `WgQuest`, asked
+## once, before any quest is asked for.
+func add_source(source: Callable) -> void:
+	_sources.append(source)
 
 
 func quest(id: StringName) -> WgQuest:
@@ -211,6 +218,13 @@ func _read_studio() -> void:
 	if _studio_read:
 		return
 	_studio_read = true
+	for found: WgQuest in _from_folder():
+		_add_once(found)
+	for source in _sources:
+		var given: Variant = source.call()
+		for found: Variant in given if given is Array else []:
+			if found is WgQuest:
+				_add_once(found)
 	var folder := _paths.resolve(&"data", STUDIO_FOLDER)
 	var dir := DirAccess.open(folder)
 	if dir == null:
@@ -222,9 +236,28 @@ func _read_studio() -> void:
 		if not data is Dictionary or not data.has("dbSymbol"):
 			log.error(&"quests", "%s: not a Studio quest" % (folder + file))
 			continue
-		var built := _from_studio(data)
-		if not _quests.has(built.id):
-			_quests[built.id] = built
+		_add_once(_from_studio(data))
+
+
+func _add_once(found: WgQuest) -> void:
+	if not found.id.is_empty() and not _quests.has(found.id):
+		_quests[found.id] = found
+
+
+func _from_folder() -> Array[WgQuest]:
+	var found: Array[WgQuest] = []
+	var folder := _paths.resolve(&"quests", "")
+	if not DirAccess.dir_exists_absolute(folder):
+		return found
+	var files := Array(DirAccess.get_files_at(folder)).filter(func(file: String) -> bool: return file.get_extension() == "tres")
+	files.sort()
+	for file: String in files:
+		var quest := load(folder + file) as WgQuest
+		if quest == null:
+			log.error(&"quests", "%s: not a WgQuest" % file)
+		else:
+			found.append(quest)
+	return found
 
 
 func _from_studio(data: Dictionary) -> WgQuest:

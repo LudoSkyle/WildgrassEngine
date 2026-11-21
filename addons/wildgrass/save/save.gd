@@ -216,6 +216,8 @@ func _used_numbers() -> Array[int]:
 	var numbers: Array[int] = []
 	var first := path_of(1)
 	var prefix := first.get_file().trim_suffix("1.json")
+	if not DirAccess.dir_exists_absolute(first.get_base_dir()):
+		return numbers
 	for file in DirAccess.get_files_at(first.get_base_dir()):
 		if file.begins_with(prefix) and file.ends_with(".json"):
 			var number := file.trim_prefix(prefix).trim_suffix(".json")

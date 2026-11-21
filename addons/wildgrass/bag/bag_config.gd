@@ -2,19 +2,18 @@
 class_name WgBagConfig
 extends WgConfig
 
-## Studio's pockets in Studio's order. `socket` is Studio's pocket number;
-## `reveal`: giving one of its items shows it.
-const STUDIO_POCKETS: Array[Dictionary] = [
-	{"id": "items", "name": "{text:100015:4|Other Items}", "socket": 1},
-	{"id": "balls", "name": "{text:100015:1|Poké Balls}", "socket": 2},
-	{"id": "medicine", "name": "{text:100015:0|Medicine}", "socket": 6},
-	{"id": "tms", "name": "{text:100015:5|TMs}", "socket": 3},
-	{"id": "key_items", "name": "{text:100015:8|Key Items}", "socket": 5, "reveal": true},
-	{"id": "berries", "name": "{text:100015:3|Berries}", "socket": 4},
+## The engine's pockets; `reveal`: giving one of its items shows it.
+const POCKETS: Array[Dictionary] = [
+	{"id": "items", "name": "Items"},
+	{"id": "medicine", "name": "Medicine"},
+	{"id": "balls", "name": "Poké Balls"},
+	{"id": "tms", "name": "TMs"},
+	{"id": "berries", "name": "Berries"},
+	{"id": "key_items", "name": "Key Items", "reveal": true},
 ]
 
-## Each `{"id", "name", "socket", "reveal"}`, in the order shown.
-@export var pockets: Array[Dictionary] = STUDIO_POCKETS.duplicate(true)
+## Each `{"id", "name", "reveal"}`, in the order shown; `name` is a label.
+@export var pockets: Array[Dictionary] = POCKETS.duplicate(true)
 ## The most of one item the bag holds; 0: no limit.
 @export var max_count := 99
 @export var max_money := 999999
@@ -41,14 +40,6 @@ func _validate() -> PackedStringArray:
 		problems.append("reveal_seconds cannot be negative, got %s; using 1" % reveal_seconds)
 		reveal_seconds = 1.0
 	return problems
-
-
-## The pocket of a Studio pocket number; empty if none shows it.
-func pocket_of_socket(socket: int) -> StringName:
-	for pocket: Dictionary in pockets:
-		if pocket.has("socket") and int(pocket["socket"]) == socket:
-			return StringName(str(pocket["id"]))
-	return &""
 
 
 func pocket(pocket_id: StringName) -> Dictionary:

@@ -1,11 +1,14 @@
-## What items there are: the game's, and a Studio project's, each read the
-## first time it is asked for. And what using one does.
+## What items there are: those the game registers, then its resources
+## (`res://items/<id>.tres`), then what sources give, each read the first time
+## it is asked for. And what using one does.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
 
+## Studio's pocket numbers, by pocket.
+const STUDIO_POCKETS: Dictionary[int, StringName] = {1: &"items", 2: &"balls", 3: &"tms", 4: &"berries", 5: &"key_items", 6: &"medicine"}
 ## Studio's item files, inside the data folder: `<id>.json`.
 const STUDIO_FOLDER := "Studio/items/"
 ## Studio's item icons, inside the graphics folder: `<icon>.png`.
@@ -26,6 +29,7 @@ var _config: ConfigRegistry
 var _items: Dictionary[StringName, WgItem] = {}
 var _uses: Dictionary[StringName, Callable] = {}
 var _unknown: Dictionary[StringName, bool] = {}
+var _sources: Array[Callable] = []
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
@@ -34,7 +38,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
 	_config = config_registry
 
 
-## Makes `item` known by its id; it wins over a Studio item of that id.
+## Makes `item` known by its id; it wins over a resource or a source's.
 func register(item: WgItem) -> void:
 	if item.id.is_empty():
 		log.error(&"items", "an item needs an id")
@@ -42,21 +46,51 @@ func register(item: WgItem) -> void:
 	_items[item.id] = item
 
 
-## The item of that id, the game's or Studio's; null, logged once, if unknown.
+## Adds an origin of items: `source` is given an id the engine does not have
+## and returns its `WgItem`, or null.
+func add_source(source: Callable) -> void:
+	_sources.append(source)
+
+
+## The item of that id; null, logged once, if unknown.
 func item(id: StringName) -> WgItem:
-	if not _items.has(id):
-		var read := _read_studio(id)
-		if read == null:
-			if not _unknown.has(id):
-				_unknown[id] = true
-				log.error(&"items", "unknown item '%s'" % id)
-			return null
-		_items[id] = read
-	return _items[id]
+	var found := _find(id)
+	if found == null and not _unknown.has(id):
+		_unknown[id] = true
+		log.error(&"items", "unknown item '%s'" % id)
+	return found
 
 
 func has(id: StringName) -> bool:
-	return _items.has(id) or FileAccess.file_exists(_studio_path(id))
+	return _find(id) != null
+
+
+func _find(id: StringName) -> WgItem:
+	if _items.has(id):
+		return _items[id]
+	var found := _from_folder(id)
+	for source in _sources:
+		if found != null:
+			break
+		found = source.call(id) as WgItem
+	if found == null:
+		found = _read_studio(id)
+	if found == null:
+		return null
+	if found.id.is_empty():
+		found.id = id
+	_items[id] = found
+	return found
+
+
+func _from_folder(id: StringName) -> WgItem:
+	var path := _paths.resolve(&"items", "%s.tres" % id)
+	if not ResourceLoader.exists(path):
+		return null
+	var found := load(path) as WgItem
+	if found == null:
+		log.error(&"items", "%s: not a WgItem" % path.get_file())
+	return found
 
 
 ## `use` is what using an item does, by its id or its kind: called with the
@@ -97,7 +131,7 @@ func _read_studio(id: StringName) -> WgItem:
 	read.name = "{text:%d:%d}" % [NAME_TEXTS, number]
 	read.description = "{text:%d:%d}" % [DESCRIPTION_TEXTS, number]
 	read.plural = "{text:%d:%d}" % [PLURAL_TEXTS, number]
-	read.pocket = bag_config().pocket_of_socket(int(data.get("socket", 0)))
+	read.pocket = STUDIO_POCKETS.get(int(data.get("socket", 0)), &"")
 	read.position = int(data.get("position", 0))
 	read.price = int(data.get("price", 0))
 	read.consumed = bool(data.get("isLimited", true))
