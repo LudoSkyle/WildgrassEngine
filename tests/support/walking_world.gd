@@ -22,6 +22,7 @@ const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Options := preload("res://addons/wildgrass/options/options.gd")
 const Title := preload("res://addons/wildgrass/title/title.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -47,6 +48,7 @@ var options: Options
 ## Its `title` screen is registered by the tests that show it.
 var title: Title
 var species: SpeciesData
+var types: Types
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -109,6 +111,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	paths = Paths.new(false)
 	items = Items.new(paths, logger, config)
 	species = SpeciesData.new(paths, logger)
+	types = Types.new(paths, logger)
 	bag = Bag.new(logger, hooks, items, quests)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
