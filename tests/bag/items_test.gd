@@ -99,3 +99,11 @@ func test_pockets_and_limits_come_from_the_config() -> void:
 	assert_str(_world.items.item(&"potion").pocket).is_equal("stuff")
 	assert_int(_world.items.bag_config().max_count).is_equal(99)
 	assert_int(_world.logged.size()).is_equal(2)
+
+
+func test_the_default_pockets_show_studio_s_names_else_english_ones() -> void:
+	var names: Array[String] = []
+	for pocket: Dictionary in _world.items.bag_config().pockets:
+		names.append(_world.texts.format(pocket["name"]))
+	assert_array(names).is_equal(["Other Items", "Poké Balls", "Medicine", "TMs", "Key Items", "Berries"])
+	assert_array(_world.logged).is_empty()

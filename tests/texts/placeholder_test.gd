@@ -77,6 +77,23 @@ func test_text_inserts_a_studio_text() -> void:
 	assert_str(_format("{text:abc:1}")).is_equal("{text:abc:1}")
 
 
+func test_a_studio_text_with_a_fallback_shows_it_translated_when_the_text_is_missing() -> void:
+	var french := Translation.new()
+	french.locale = "fr"
+	french.add_message("Bag", "Sac à dos")
+	TranslationServer.add_translation(french)
+	_world.texts.language = "fr"
+	assert_str(_format("{text:100014:2|Bag}")).is_equal("Sac à dos")
+	_world.sandbox.write("Data/Text/Dialogs/100015.csv", "en,fr\nMedicine,Soins\n[~ 1],[~ 1]\n")
+	assert_str(_format("{text:100015:0|Medicine}")).is_equal("Soins")
+	assert_str(_format("{text:100015:1|Poké Balls}")).is_equal("Poké Balls")
+	assert_str(_format("{text:100015:7|Ingredients}")).is_equal("Ingredients")
+	assert_array(_world.logged).is_empty()
+	assert_str(_format("{text:100014:2}")).is_empty()
+	assert_array(_world.logged).is_equal(["WARN no Studio text file %sData/Text/Dialogs/100014.csv" % _world.sandbox.root])
+	TranslationServer.remove_translation(french)
+
+
 func test_studio_tokens_read_values_and_vanish_without_one() -> void:
 	_world.texts.set_value(&"pkname_0", "Pikachu")
 	assert_str(_format("The wild [VAR PKNAME(0000)] used [VAR 1002]Pound!")).is_equal("The wild Pikachu used Pound!")
