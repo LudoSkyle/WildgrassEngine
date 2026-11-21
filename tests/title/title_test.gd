@@ -107,8 +107,10 @@ func test_start_shows_each_splash_then_the_title_and_skips_a_missing_one_reporte
 	assert_object(_world.title.screen).is_same(_world.screens.top())
 
 
-func test_the_title_screen_is_given_the_services_and_the_title() -> void:
+func test_the_title_screen_is_given_the_services_and_the_title_and_opens_once() -> void:
 	var screen := _world.title.show_title() as RecordingScreen
+	assert_object(_world.title.show_title()).is_same(screen)
+	assert_array(_open_names()).is_equal([&"title"])
 	assert_object(screen.opened_with["title"]).is_same(_world.title)
 	assert_object(screen.opened_with["save"]).is_same(_world.save)
 	assert_object(screen.opened_with["dialogue"]).is_same(_world.dialogue)
