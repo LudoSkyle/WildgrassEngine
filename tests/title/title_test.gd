@@ -237,6 +237,10 @@ func test_play_with_a_game_opens_the_choice_of_a_game_and_continuing_leaves_the_
 	var playing := func() -> void: played[0] = await _world.title.play()
 	playing.call()
 	assert_array(_open_names()).is_equal([&"title", &"save_slots"])
+	var slots_screen := _world.screens.top() as WgSaveSlotsScreen
+	slots_screen.options_card = true
+	slots_screen.refresh()
+	assert_array(slots_screen.slots).is_equal([1, 2, WgSaveSlotsScreen.OPTIONS_CARD])
 	RecordingTransition.calls.clear()
 	var title_screen := _world.title.screen
 	_world.screens.screen_closed.connect(func(screen_name: StringName) -> void:

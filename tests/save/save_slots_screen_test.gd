@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 
 const World := preload("res://tests/support/walking_world.gd")
+const CustomSaveSlots := preload("res://tests/support/custom_save_slots.gd")
 
 signal restored_late
 
@@ -124,7 +125,7 @@ func test_erasing_asks_no_first_then_empties_the_card() -> void:
 	_answer()
 	_press("ui_down")
 	_answer()
-	assert_str(_world.dialogue.box.shown_text()).is_equal("Erase this file?")
+	assert_str(_world.dialogue.box.shown_text()).is_equal("Erase file 1?")
 	_answer()
 	assert_bool(_world.save.has(1)).is_true()
 	await get_tree().process_frame
@@ -175,6 +176,99 @@ func test_keys_wait_while_a_game_loads() -> void:
 	restored_late.emit()
 	assert_bool(screen.is_closed()).is_true()
 	assert_array(_chosen).is_equal(["1 continue"])
+
+
+func test_a_row_moves_left_and_right_and_may_go_round() -> void:
+	_world.sandbox.write_json("config/save.json", {"slots": 3})
+	var screen := _open()
+	screen.horizontal = true
+	_press("ui_down")
+	assert_int(screen.selected()).is_equal(1)
+	_press("ui_right")
+	_press("ui_right")
+	_press("ui_right")
+	assert_int(screen.selected()).is_equal(3)
+	_press("ui_left")
+	assert_int(screen.selected()).is_equal(2)
+	screen.wrap = true
+	_press("ui_right")
+	_press("ui_right")
+	assert_int(screen.selected()).is_equal(1)
+	_press("ui_left")
+	assert_int(screen.selected()).is_equal(3)
+
+
+func test_one_new_game_card_for_the_first_free_slot_after_the_games() -> void:
+	_world.sandbox.write_json("config/save.json", {"slots": 3})
+	_world.save.write(3)
+	var screen := _open()
+	screen.new_game_card = "first_free"
+	screen.refresh()
+	assert_array(screen.slots).is_equal([3, 1])
+	assert_array(_cards(screen)).is_equal(["File 3\nharbour   0:00", "File 1\nNew game"])
+	_world.save.write(1)
+	_world.save.write(2)
+	screen.refresh()
+	assert_array(screen.slots).is_equal([1, 2, 3])
+
+
+func test_with_no_maximum_the_new_game_card_is_the_next_slot() -> void:
+	_world.save.write(1)
+	_world.save.write(2)
+	var screen := _open()
+	screen.new_game_card = "first_free"
+	screen.refresh()
+	assert_array(screen.slots).is_equal([1, 2, 3])
+
+
+func test_an_options_card_comes_last_and_writes_the_cards_again_once_back() -> void:
+	var translation := Translation.new()
+	translation.locale = "fr"
+	translation.add_message("Options", "Réglages")
+	TranslationServer.add_translation(translation)
+	_world.texts.language = "en"
+	var screen := _open()
+	screen.options_card = true
+	screen.refresh()
+	assert_array(screen.slots).is_equal([1])
+	screen.close()
+	var opened: Array[String] = []
+	screen = _world.screens.open(&"save_slots", {"save": _world.save, "dialogue": _world.dialogue, "texts": _world.texts, "open_options": func() -> void:
+		opened.append("options")
+		_world.texts.language = "fr"}) as WgSaveSlotsScreen
+	screen.options_card = true
+	screen.refresh()
+	assert_array(screen.slots).is_equal([1, WgSaveSlotsScreen.OPTIONS_CARD])
+	assert_array(_cards(screen)).is_equal(["File 1\nNew game", "Options"])
+	_press("ui_down")
+	assert_int(screen.selected()).is_equal(WgSaveSlotsScreen.OPTIONS_CARD)
+	_press("ui_accept")
+	await get_tree().process_frame
+	assert_array(opened).is_equal(["options"])
+	assert_array(_cards(screen)).is_equal(["File 1\nNew game", "Réglages"])
+	assert_bool(screen.is_closed()).is_false()
+	TranslationServer.remove_translation(translation)
+	TranslationServer.set_locale("en")
+
+
+func test_a_game_s_scene_makes_its_cards_and_asks_its_own_questions() -> void:
+	_world.sandbox.write_json("config/save.json", {"slots": 3})
+	_world.save.write(2)
+	_world.sandbox.write("saves/saves/game-3.json", "nope")
+	_world.screens.set_scene(&"save_slots", _world.sandbox.scene("slots.tscn", CustomSaveSlots))
+	var screen := _open() as CustomSaveSlots
+	assert_array(screen.made).is_equal(["1 []", "2 [\"seconds\", \"map\", \"zone\"]", "3 [\"damaged\"]"])
+	assert_array(screen.selections.slice(-1)).is_equal(["Card2"])
+	_press("ui_accept")
+	screen.erase = true
+	screen.action = &"erase"
+	_press("ui_accept")
+	assert_array(screen.asked).is_equal(["action 2", "action 2", "erase 2"])
+	assert_bool(_world.save.has(2)).is_false()
+	_press("ui_up")
+	_press("ui_accept")
+	assert_array(screen.asked.slice(-1)).is_equal(["new 1"])
+	assert_array(_chosen).is_equal(["2 erase", "1 new_game"])
 
 
 func test_opened_by_name_alone_it_uses_the_engine_s_services() -> void:
