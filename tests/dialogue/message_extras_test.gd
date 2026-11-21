@@ -124,3 +124,16 @@ func test_the_number_sits_against_the_frame_and_a_bad_range_is_logged() -> void:
 	assert_float(shown.end.y).is_equal(frame.position.y)
 	assert_str(_number()).is_equal("4")
 	assert_array(_world.logged).is_equal(["WARN max 2 is below min 4; using 4"])
+
+
+func test_a_message_s_values_are_translated_as_labels() -> void:
+	var french := Translation.new()
+	french.locale = "fr"
+	french.add_message("Bell", "Clochette")
+	TranslationServer.add_translation(french)
+	TranslationServer.set_locale("fr")
+	_world.dialogue.say("{item}!", {"values": {"item": "Bell"}})
+	_box().advance(10.0)
+	assert_str(_box().shown_text()).is_equal("Clochette!")
+	TranslationServer.remove_translation(french)
+	TranslationServer.set_locale("en")

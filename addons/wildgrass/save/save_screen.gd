@@ -92,7 +92,7 @@ func _ask_file(current: int) -> int:
 		var summary := save.summary(number)
 		var values := describe(summary)
 		values["slot"] = number
-		choices.append(texts.format(new_file_choice if summary.is_empty() or summary.has("damaged") else file_choice, false, values))
+		choices.append(texts.label(new_file_choice if summary.is_empty() or summary.has("damaged") else file_choice, values))
 	choices.append(cancel_choice)
 	var picked := await dialogue.ask(file_text, choices, {"default": maxi(shown.find(current), 0)})
 	return shown[picked] if picked >= 0 and picked < shown.size() else 0

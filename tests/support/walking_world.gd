@@ -117,13 +117,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu = Menu.new(logger, screens, story)
 	menu.services = {"bag": bag, "dialogue": dialogue, "texts": texts, "save": save}
 	walkers.menu = menu
-	menu.add_entry(&"exit", "{text:9000:26|Exit}", menu.exit)
-	menu.add_entry(&"bag", "{text:100014:2|Bag}", menu.open_bag)
-	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
+	menu.add_entry(&"exit", "Exit", menu.exit)
+	menu.add_entry(&"bag", "Bag", menu.open_bag)
+	menu.add_entry(&"save", "Save", menu.open_save, "!save_disabled")
 	options = Options.new(paths, logger, config)
 	options.file_path = sandbox.root + "options.json"
 	menu.services["options"] = options
-	menu.add_entry(&"options", "{text:100014:5|Options}", menu.open_options, "", &"save")
+	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 

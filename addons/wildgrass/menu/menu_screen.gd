@@ -76,7 +76,7 @@ func refresh() -> void:
 	_buttons.clear()
 	for entry in _shown:
 		var button := Button.new()
-		button.text = texts.format(entry["text"])
+		button.text = texts.label(entry["text"])
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.toggle_mode = true
 		button.focus_mode = Control.FOCUS_NONE

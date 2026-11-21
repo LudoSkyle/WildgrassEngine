@@ -156,24 +156,24 @@ func add_engine_options(dialogue: Dialogue, texts: Texts) -> void:
 	_dialogue = dialogue
 	_texts = texts
 	add_option(&"message_speed", {
-		"name": "{text:100042:3|Text speed}",
-		"description": "{text:100042:7|Choose how fast messages are written.}",
+		"name": "Text speed",
+		"description": "Choose how fast messages are written.",
 		"values": [1, 2, 3],
-		"texts": ["{text:100042:4|Slow}", "{text:100042:5|Normal}", "{text:100042:6|Fast}"],
+		"texts": ["Slow", "Normal", "Fast"],
 		"default": 2,
 		"apply": _apply_speed,
 	})
 	add_option(&"message_frame", {
-		"name": "{text:9000:165|Message frame}",
-		"description": "{text:9000:166|Choose the frame of the message box.}",
+		"name": "Message frame",
+		"description": "Choose the frame of the message box.",
 		"values": _frame_styles,
 		"texts": _frame_names(),
 		"default": "",
 		"apply": _apply_frame,
 	})
 	add_option(&"volume", {
-		"name": "{text:9000:29|Volume}",
-		"description": "{text:9000:30|Set the volume of the music and sound effects.}",
+		"name": "Volume",
+		"description": "Set the volume of the music and sound effects.",
 		"values": range(0, 101, 5),
 		"slider": true,
 		"format": "%d%%",
@@ -181,8 +181,8 @@ func add_engine_options(dialogue: Dialogue, texts: Texts) -> void:
 		"apply": _apply_volume,
 	})
 	add_option(&"language", {
-		"name": "{text:9000:167|Language}",
-		"description": "{text:9000:168|Choose the language of the game.}",
+		"name": "Language",
+		"description": "Choose the language of the game.",
 		"values": texts.languages,
 		"texts": texts.languages().map(texts.language_name),
 		"default": texts.language if texts.language in texts.languages() else (texts.languages()[0] if not texts.languages().is_empty() else ""),

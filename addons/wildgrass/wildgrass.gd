@@ -92,7 +92,7 @@ func _init() -> void:
 	_add_entries()
 	options = _service(&"options", Options, [paths, log, config])
 	menu.services["options"] = options
-	menu.add_entry(&"options", "{text:100014:5|Options}", menu.open_options, "", &"save")
+	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	config.register(&"log", WgLogConfig, "log")
 	config.register(&"display", WgDisplayConfig, "display")
 	config.register(&"language", WgLanguageConfig, "language")
@@ -126,9 +126,9 @@ func _add_parts() -> void:
 
 ## The engine's entries of the pause menu, in order.
 func _add_entries() -> void:
-	menu.add_entry(&"exit", "{text:9000:26|Exit}", menu.exit)
-	menu.add_entry(&"bag", "{text:100014:2|Bag}", menu.open_bag)
-	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
+	menu.add_entry(&"exit", "Exit", menu.exit)
+	menu.add_entry(&"bag", "Bag", menu.open_bag)
+	menu.add_entry(&"save", "Save", menu.open_save, "!save_disabled")
 
 
 func _ready() -> void:

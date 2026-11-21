@@ -39,6 +39,8 @@ static var _untranslated := RegEx.create_from_string("^\\[~ ?\\d+\\]$")
 static var _placeholder: RegEx
 static var _token: RegEx
 static var _studio: RegEx
+## Placeholders plugins add: name -> callable given the argument.
+var _placeholders: Dictionary[String, Callable] = {}
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
@@ -124,10 +126,12 @@ func value(value_name: StringName) -> Variant:
 
 
 ## `text` with its placeholders filled: `{name}`, `{name?yes|no}`,
-## `{key:action}`, `{text:file:line}`, and Studio's `[VAR …]` tokens. With
-## `escape`, what values put in is escaped for messages: it never reads as a
-## tag. `values` come first: one text's own.
+## `{key:action}`, those plugins add, `{text:file:line}`, and Studio's
+## `[VAR …]` tokens; the filter hook `text_tokens(text)` may rewrite it first.
+## With `escape`, what values put in is escaped for messages: it never reads
+## as a tag. `values` come first: one text's own.
 func format(text: String, escape := false, values := {}) -> String:
+	text = str(_hooks.filter(&"text_tokens", text))
 	if _placeholder == null:
 		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
 		_token = RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
@@ -136,6 +140,19 @@ func format(text: String, escape := false, values := {}) -> String:
 	var result := _replace(_studio, text, _studio_reference)
 	result = _replace(_token, result, _fill_token.bind(escape, values))
 	return _replace(_placeholder, result, _fill_placeholder.bind(escape, values))
+
+
+## A label of the game or the engine, written in English: translated through
+## Godot's translations, then its placeholders filled.
+func label(text: String, values := {}) -> String:
+	return format(TranslationServer.translate(text), false, values)
+
+
+## Adds a placeholder `{name:argument}`: `callable` is given the argument and
+## returns what shows, or null to leave it as written. A name taken again is
+## replaced.
+func add_placeholder(placeholder_name: String, callable: Callable) -> void:
+	_placeholders[placeholder_name] = callable
 
 
 func config() -> WgLanguageConfig:
@@ -233,7 +250,9 @@ func _fill_placeholder(found: RegExMatch, escape: bool, values: Dictionary) -> S
 	var shown: Variant = null
 	if value_name == "text" and not argument.is_empty():
 		return found.get_string()
-	if value_name == "key" and not argument.is_empty():
+	if _placeholders.has(value_name) and not argument.is_empty():
+		shown = (_placeholders[value_name] as Callable).call(argument)
+	elif value_name == "key" and not argument.is_empty():
 		shown = _key_name(argument)
 	elif argument.is_empty():
 		shown = values[value_name] if values.has(value_name) else value(StringName(value_name))

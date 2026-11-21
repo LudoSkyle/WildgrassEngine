@@ -158,12 +158,16 @@ func test_save_closes_the_menu_once_saved_only() -> void:
 	assert_bool(screen.is_closed()).is_true()
 
 
-func test_its_labels_follow_the_language() -> void:
-	_world.sandbox.write("Data/Text/Dialogs/100014.csv", "en,fr\nPOKÉMON,Pokémon\nPOKÉDEX,Pokédex\nBAG,Sac\n")
+func test_its_labels_are_translated_and_follow_the_language() -> void:
+	var french := Translation.new()
+	french.locale = "fr"
+	french.add_message("Bag", "Sac")
+	TranslationServer.add_translation(french)
 	var screen := _world.menu.open() as WgMenuScreen
-	assert_array(_labels(screen)).is_equal(["BAG", "Options", "Save", "Exit"])
+	assert_array(_labels(screen)).is_equal(["Bag", "Options", "Save", "Exit"])
 	_world.texts.language = "fr"
 	assert_array(_labels(screen)).is_equal(["Sac", "Options", "Save", "Exit"])
+	TranslationServer.remove_translation(french)
 
 
 func test_opened_alone_the_screen_uses_the_engine_s_services() -> void:

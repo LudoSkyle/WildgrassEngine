@@ -116,7 +116,7 @@ func card_of(number: int) -> String:
 		text = empty_card_text
 	elif summary.get("damaged", false):
 		text = damaged_card_text
-	return texts.format(text, false, values)
+	return texts.label(text, values)
 
 
 func _move(step: int) -> void:
