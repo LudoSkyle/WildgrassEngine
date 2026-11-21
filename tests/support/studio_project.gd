@@ -11,5 +11,5 @@ static func install(world: RefCounted) -> Studio:
 	world.sandbox.write("project.studio", "{}")
 	world.config.register(&"studio", WgStudioConfig, "studio")
 	var studio := Studio.new(world.paths, world.logger, world.config, world.hooks)
-	studio.install(world.texts, world.items, world.quests, world.species, world.types)
+	studio.install(world.texts, world.items, world.quests, world.species, world.types, world.pokedex)
 	return studio

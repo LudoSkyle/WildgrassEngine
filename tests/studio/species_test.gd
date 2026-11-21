@@ -155,3 +155,27 @@ func test_studio_s_types_become_the_engine_s() -> void:
 	assert_that(fire.damage).is_equal({&"grass": 2.0, &"water": 0.5})
 	assert_float(_world.types.factor(&"fire", [&"grass", &"water"])).is_equal(1.0)
 	assert_array(_world.types.ids()).contains_exactly_in_any_order([&"fire", &"grass", &"water"])
+
+
+func test_studio_s_pokedexes_become_the_engine_s_the_regional_one_shown_first() -> void:
+	_rattata()
+	_world.sandbox.write_json("Data/Studio/dex/regional.json", {"klass": "Dex", "dbSymbol": "regional", "id": 1, "csv": {"csvFileId": 100063, "csvTextIndex": 7}, "startId": 0,
+		"creatures": [{"dbSymbol": "rattata", "form": 1}, {"dbSymbol": "pikachu", "form": 0}]})
+	_world.sandbox.write("Data/Studio/dex/broken.json", "[]")
+	var mine := WgDex.new()
+	mine.id = &"mine"
+	_world.pokedex.register(mine)
+	_studio = StudioProject.install(_world)
+	var regional := _world.pokedex.find(&"regional")
+	assert_str(regional.name).is_equal("{text:100063:7}")
+	assert_int(regional.start).is_equal(0)
+	assert_that(regional.creatures).is_equal([{"species": &"rattata", "form": 1}, {"species": &"pikachu", "form": 0}])
+	assert_array(_world.pokedex.dexes).is_equal([&"regional"])
+	assert_object(_world.pokedex.find(&"broken")).is_null()
+	assert_object(_world.pokedex.find(&"mine")).is_same(mine)
+	assert_str(_world.logged[0]).is_equal("ERROR broken.json: not a Studio Pokédex")
+
+
+func test_without_a_regional_pokedex_the_national_one_is_shown() -> void:
+	_studio = StudioProject.install(_world)
+	assert_array(_world.pokedex.dexes).is_equal([&"national"])

@@ -1,6 +1,7 @@
-## A Studio project's species (`Data/Studio/pokemon/<dbSymbol>.json`) and
-## types (`Data/Studio/types/<dbSymbol>.json`), read as they are the first
-## time they are asked for: sources of the species and types services.
+## A Studio project's species (`Data/Studio/pokemon/<dbSymbol>.json`), types
+## (`Data/Studio/types/<dbSymbol>.json`) and Pokédexes
+## (`Data/Studio/dex/<dbSymbol>.json`), read as they are the first time they
+## are asked for: sources of the species, types and Pokédex services.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -8,6 +9,7 @@ const Log := preload("res://addons/wildgrass/core/log/log.gd")
 
 const SPECIES := "Studio/pokemon/"
 const TYPES := "Studio/types/"
+const DEXES := "Studio/dex/"
 const NAME_TEXTS := 100000
 const GENUS_TEXTS := 100001
 const DESCRIPTION_TEXTS := 100002
@@ -81,6 +83,32 @@ func read_type(id: StringName) -> WgType:
 		if hit is Dictionary:
 			type.damage[StringName(str(hit.get("defensiveType", "")))] = float(hit.get("factor", 1.0))
 	return type
+
+
+## The Pokédex of `id`, or null if the project has none.
+func read_dex(id: StringName) -> WgDex:
+	var data := _file(DEXES, id, "Pokédex")
+	if data.is_empty():
+		return null
+	var dex := WgDex.new()
+	dex.id = id
+	var csv: Variant = data.get("csv", {})
+	if csv is Dictionary:
+		dex.name = "{text:%d:%d}" % [int(csv.get("csvFileId", 0)), int(csv.get("csvTextIndex", 0))]
+	dex.start = int(data.get("startId", 1))
+	for creature: Variant in _list(data, "creatures"):
+		if creature is Dictionary:
+			dex.creatures.append({"species": StringName(str(creature.get("dbSymbol", ""))), "form": int(creature.get("form", 0))})
+	return dex
+
+
+func dex_ids() -> Array[StringName]:
+	return _ids(DEXES)
+
+
+## True if the project has a regional Pokédex.
+func has_regional() -> bool:
+	return FileAccess.file_exists(_paths.resolve(&"data", DEXES + "regional.json"))
 
 
 func species_ids() -> Array[StringName]:
