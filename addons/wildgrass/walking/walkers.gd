@@ -387,7 +387,7 @@ func _known(action_key: String) -> bool:
 		return true
 	if action not in _missing_actions:
 		_missing_actions.append(action)
-		log.warn(&"walking", "no input action '%s' (movement_config.json actions.%s)" % [action, action_key])
+		log.warn(&"walking", "no input action '%s' (movement config, actions.%s)" % [action, action_key])
 	return false
 
 

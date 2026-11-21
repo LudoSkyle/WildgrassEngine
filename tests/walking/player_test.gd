@@ -122,13 +122,13 @@ func test_nothing_is_read_while_a_screen_is_open_or_a_warp_runs() -> void:
 
 
 func test_an_action_missing_from_the_input_map_is_logged_once() -> void:
-	_world.sandbox.write_json("Data/configs/movement_config.json", {"actions": {"run": "dash"}})
+	_world.sandbox.write_json("config/movement.json", {"actions": {"run": "dash"}})
 	_field()
 	var walker: WgWalker = await _player(&"field", &"Spawn")
 	Input.action_press("ui_right")
 	for frame in 5:
 		walker.advance(0.1)
-	assert_array(_world.logged.filter(func(line: String) -> bool: return line.contains("dash"))).is_equal(["WARN no input action 'dash' (movement_config.json actions.run)"])
+	assert_array(_world.logged.filter(func(line: String) -> bool: return line.contains("dash"))).is_equal(["WARN no input action 'dash' (movement config, actions.run)"])
 	assert_bool(walker.is_running).is_false()
 
 

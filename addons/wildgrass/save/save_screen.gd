@@ -68,7 +68,7 @@ func _run() -> void:
 	if is_closed():
 		return
 	var target := save.slot if save.slot > 0 else save.first_empty()
-	if save.config().is_can_save_on_any_save:
+	if save.config().save_anywhere:
 		target = await _ask_file(target)
 		if target <= 0:
 			_end(false)

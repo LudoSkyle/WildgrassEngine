@@ -63,13 +63,13 @@ func _pressed(screen: WgSaveSlotsScreen) -> int:
 
 
 func test_each_slot_shows_a_card_from_its_summary_the_game_s_selected() -> void:
-	_world.sandbox.write_json("Data/configs/save_config.json", {"maximumSave": 3})
+	_world.sandbox.write_json("config/save.json", {"slots": 3})
 	_world.hooks.add(&"save_summary", &"test", func(summary: Dictionary, _slot: int) -> Dictionary:
 		summary["name"] = "Ludo"
 		return summary)
 	_world.clock.advance(3725.0)
 	_world.save.write(2)
-	_world.sandbox.write("saves/Saves/Pokemon_Party-3.json", "nope")
+	_world.sandbox.write("saves/saves/game-3.json", "nope")
 	var screen := _open()
 	assert_array(_cards(screen)).is_equal(["File 1\nNew game", "File 2\nharbour   1:02", "File 3\nThis file is damaged."])
 	assert_float(((screen.get_node("Panel") as Panel).get_theme_stylebox(&"panel") as StyleBoxFlat).bg_color.a).is_equal(1.0)
@@ -140,7 +140,7 @@ func test_erasing_asks_no_first_then_empties_the_card() -> void:
 
 
 func test_a_damaged_file_may_only_be_erased_and_a_failed_load_says_so() -> void:
-	_world.sandbox.write("saves/Saves/Pokemon_Party-1.json", "nope")
+	_world.sandbox.write("saves/saves/game-1.json", "nope")
 	_world.save.add_part(&"guard", func() -> Dictionary: return {}, func(_state: Dictionary) -> void: pass, func() -> void: pass,
 		func(_state: Dictionary) -> bool: return false)
 	_world.save.write(2)

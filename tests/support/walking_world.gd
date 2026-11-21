@@ -54,9 +54,9 @@ func _init(parent: Node, map_config := {}) -> void:
 	sandbox = Sandbox.new()
 	sandbox.use_data_folder()
 	sandbox.set_setting("wildgrass/paths/saves", sandbox.root + "saves/")
-	var levels := {"solidLayers": [1, 2], "edgeLayers": [4, 5]}
+	var levels := {"solid_layers": [1, 2], "edge_layers": [4, 5]}
 	levels.merge(map_config, true)
-	sandbox.write_json("Data/configs/map_config.json", levels)
+	sandbox.write_json("config/map.json", levels)
 	var logger := Log.new()
 	logger.echo = false
 	# A local array: a lambda reaching `self` would keep this world alive.
@@ -65,13 +65,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		lines.append("%s %s" % [Log.Level.keys()[level], message]))
 	config = ConfigRegistry.new(Paths.new(false), logger)
-	config.register(&"map", WgMapConfig, "map_config")
-	config.register(&"movement", WgMovementConfig, "movement_config")
-	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
-	config.register(&"language", WgLanguageConfig, "language_config")
-	config.register(&"bag", WgBagConfig, "bag_config")
-	config.register(&"save", WgSaveConfig, "save_config")
-	config.register(&"game_options", WgGameOptionsConfig, "game_options_config")
+	config.register(&"map", WgMapConfig, "map")
+	config.register(&"movement", WgMovementConfig, "movement")
+	config.register(&"dialogue", WgDialogueConfig, "dialogue")
+	config.register(&"language", WgLanguageConfig, "language")
+	config.register(&"bag", WgBagConfig, "bag")
+	config.register(&"save", WgSaveConfig, "save")
+	config.register(&"options", WgOptionsConfig, "options")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)

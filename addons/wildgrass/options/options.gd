@@ -35,8 +35,8 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
 	file_path = paths.user_file("options.json")
 
 
-func config() -> WgGameOptionsConfig:
-	return _config.get_config(&"game_options") as WgGameOptionsConfig
+func config() -> WgOptionsConfig:
+	return _config.get_config(&"options") as WgOptionsConfig
 
 
 ## Adds an option: `values` (an array, or a callable returning one),

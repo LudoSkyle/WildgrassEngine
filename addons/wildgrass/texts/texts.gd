@@ -50,14 +50,14 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_regi
 
 ## Sets the default language of the config, if it has one.
 func apply_default() -> void:
-	var code := config().default_language
+	var code := config().default
 	if not code.is_empty():
 		language = code
 
 
 ## The languages the player may choose, in order.
 func languages() -> Array[String]:
-	var codes := config().choosable_language_code
+	var codes := config().choosable
 	if not codes.is_empty():
 		return codes.duplicate()
 	var loaded: Array[String] = []
@@ -69,9 +69,9 @@ func languages() -> Array[String]:
 ## else Godot's.
 func language_name(code: String) -> String:
 	var settings := config()
-	var index := settings.choosable_language_code.find(code)
-	if index >= 0 and index < settings.choosable_language_texts.size() and not settings.choosable_language_texts[index].is_empty():
-		return settings.choosable_language_texts[index]
+	var index := settings.choosable.find(code)
+	if index >= 0 and index < settings.names.size() and not settings.names[index].is_empty():
+		return settings.names[index]
 	return TranslationServer.get_locale_name(code)
 
 

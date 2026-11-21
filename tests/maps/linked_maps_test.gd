@@ -35,7 +35,7 @@ func before_test() -> void:
 		_logged.append("%s %s" % [Log.Level.keys()[level], message]))
 	var paths := Paths.new(false)
 	var config := ConfigRegistry.new(paths, logger)
-	config.register(&"map", WgMapConfig, "map_config")
+	config.register(&"map", WgMapConfig, "map")
 	_hooks = Hooks.new()
 	var layer: Node = auto_free(Node.new())
 	add_child(layer)

@@ -1,5 +1,5 @@
-## `game_options_config.json` (Studio's): the options shown, in order.
-class_name WgGameOptionsConfig
+## The `options` config: the options shown, in order.
+class_name WgOptionsConfig
 extends WgConfig
 
 ## Option ids; one no option has is skipped.

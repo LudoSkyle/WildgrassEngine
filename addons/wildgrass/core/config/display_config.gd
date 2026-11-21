@@ -1,4 +1,4 @@
-## `display_config.json`: window size and fullscreen.
+## The `display` config: window size and fullscreen.
 class_name WgDisplayConfig
 extends WgConfig
 
@@ -15,6 +15,6 @@ func _validate() -> PackedStringArray:
 		problems.append("resolution must be positive, got %s; using 320 x 240" % resolution)
 		resolution = Vector2i(320, 240)
 	if window_scale < 1:
-		problems.append("windowScale must be at least 1, got %d; using 1" % window_scale)
+		problems.append("window_scale must be at least 1, got %d; using 1" % window_scale)
 		window_scale = 1
 	return problems

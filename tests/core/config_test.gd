@@ -15,8 +15,8 @@ func test_missing_keys_keep_their_defaults() -> void:
 	assert_str(_config.title).is_equal("default")
 
 
-func test_camel_case_keys_fill_snake_case_fields() -> void:
-	var problems := _config.load_data({"layer2Name": "top", "ratio": 2, "enabled": true, "title": "t", "id": "x"}, "s.json")
+func test_keys_are_the_fields_own_names() -> void:
+	var problems := _config.load_data({"layer_2_name": "top", "ratio": 2, "enabled": true, "title": "t", "id": "x"}, "s.json")
 	assert_array(problems).is_empty()
 	assert_str(_config.layer_2_name).is_equal("top")
 	assert_float(_config.ratio).is_equal(2.0)
@@ -32,9 +32,8 @@ func test_an_int_accepts_a_whole_number_only() -> void:
 	assert_int(_config.count).is_equal(4)
 
 
-func test_an_unknown_key_is_reported_and_ignored_but_studio_s_klass() -> void:
-	assert_array(_config.load_data({"cuont": 3}, "s.json")).is_equal(["s.json: unknown key 'cuont'"])
-	assert_array(_config.load_data({"klass": "Configs::Project::Sample"}, "s.json")).is_empty()
+func test_an_unknown_key_is_reported_and_ignored() -> void:
+	assert_array(_config.load_data({"cuont": 3, "layer2Name": "top"}, "s.json")).is_equal(["s.json: unknown key 'cuont'", "s.json: unknown key 'layer2Name'"])
 	assert_int(_config.count).is_equal(1)
 
 

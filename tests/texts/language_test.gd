@@ -14,7 +14,7 @@ func after_test() -> void:
 
 
 func _config(values: Dictionary) -> void:
-	_world.sandbox.write_json("Data/configs/language_config.json", values)
+	_world.sandbox.write_json("config/language.json", values)
 
 
 func test_setting_the_language_sets_godot_locale_and_announces_it_once() -> void:
@@ -32,7 +32,7 @@ func test_the_default_language_applies_only_when_set() -> void:
 	_world.texts.apply_default()
 	assert_str(_world.texts.language).is_equal("it")
 	var other := TextWorld.new()
-	other.sandbox.write_json("Data/configs/language_config.json", {"defaultLanguage": "es"})
+	other.sandbox.write_json("config/language.json", {"default": "es"})
 	other.texts.apply_default()
 	assert_str(TranslationServer.get_locale()).is_equal("es")
 	other.sandbox.cleanup()
@@ -45,14 +45,14 @@ func test_the_choosable_languages_keep_their_order_else_godot_gives_its_own() ->
 	assert_array(_world.texts.languages()).contains(["it"])
 	TranslationServer.remove_translation(italian)
 	var chosen := TextWorld.new()
-	chosen.sandbox.write_json("Data/configs/language_config.json", {"choosableLanguageCode": ["fr", "en"]})
+	chosen.sandbox.write_json("config/language.json", {"choosable": ["fr", "en"]})
 	assert_array(chosen.texts.languages()).is_equal(["fr", "en"])
 	chosen.sandbox.cleanup()
 
 
 func test_a_language_is_named_in_its_own_language_else_by_godot() -> void:
-	_config({"choosableLanguageCode": ["fr", "en", "de"], "choosableLanguageTexts": ["Français", ""]})
+	_config({"choosable": ["fr", "en", "de"], "names": ["Français", ""]})
 	assert_str(_world.texts.language_name("fr")).is_equal("Français")
 	assert_str(_world.texts.language_name("en")).is_equal("English")
 	assert_str(_world.texts.language_name("de")).is_equal("German")
-	assert_array(_world.logged).is_equal(["WARN language_config.json: choosableLanguageTexts has 2 names for 3 codes"])
+	assert_array(_world.logged).is_equal(["WARN language.json: names has 2 names for 3 languages"])

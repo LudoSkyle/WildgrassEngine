@@ -193,7 +193,7 @@ func test_nobody_moves_by_themselves_during_a_screen_a_warp_or_an_interaction() 
 
 
 func test_characters_may_move_during_dialogue_if_the_config_says_so() -> void:
-	_world.sandbox.write_json("Data/configs/movement_config.json", {"stillDuringDialogue": false})
+	_world.sandbox.write_json("config/movement.json", {"still_during_dialogue": false})
 	_world.map({}, Vector2i(20, 20))
 	var walker := _world.walker(Vector2i(5, 5), _wander())
 	_world.screens.register(&"menu", _world.sandbox.scene("menu.tscn", RecordingScreen))

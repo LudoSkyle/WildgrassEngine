@@ -180,7 +180,7 @@ func test_characters_do_not_block_a_path_search() -> void:
 
 
 func test_walk_to_gives_up_without_a_path_within_path_cells() -> void:
-	_world.sandbox.write_json("Data/configs/movement_config.json", {"pathCells": 30})
+	_world.sandbox.write_json("config/movement.json", {"path_cells": 30})
 	var cells := {Vector2i(14, 13): T.WALL, Vector2i(14, 15): T.WALL, Vector2i(13, 14): T.WALL, Vector2i(15, 14): T.WALL}
 	_world.map(cells, Vector2i(20, 20))
 	var walker := _world.walker(Vector2i(2, 2))
@@ -218,7 +218,7 @@ func test_a_walker_may_step_into_a_cell_another_is_leaving() -> void:
 
 
 func test_wrong_options_and_config_are_logged() -> void:
-	_world.sandbox.write_json("Data/configs/movement_config.json", {"patience": -1, "pathCells": 0})
+	_world.sandbox.write_json("config/movement.json", {"patience": -1, "path_cells": 0})
 	_world.map({}, Vector2i(20, 20))
 	var walker := _world.walker(Vector2i(5, 5))
 	_walk(walker, [RIGHT], {"jump": true})
@@ -226,6 +226,6 @@ func test_wrong_options_and_config_are_logged() -> void:
 	assert_int(_world.walkers.movement().path_cells).is_equal(400)
 	assert_array(_world.logged).is_equal([
 		"WARN unknown walk option 'jump'",
-		"WARN movement_config.json: patience cannot be negative, got -1.0; using 2",
-		"WARN movement_config.json: pathCells must be positive, got 0; using 400",
+		"WARN movement.json: patience cannot be negative, got -1.0; using 2",
+		"WARN movement.json: path_cells must be positive, got 0; using 400",
 	])

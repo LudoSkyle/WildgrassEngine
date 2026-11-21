@@ -210,7 +210,7 @@ func is_action(event: InputEvent, key: String) -> bool:
 	if not InputMap.has_action(action):
 		if action not in _missing_actions:
 			_missing_actions.append(action)
-			log.warn(&"dialogue", "no input action '%s' (dialogue_config.json actions.%s)" % [action, key])
+			log.warn(&"dialogue", "no input action '%s' (dialogue config, actions.%s)" % [action, key])
 		return false
 	return event.is_action_pressed(action)
 

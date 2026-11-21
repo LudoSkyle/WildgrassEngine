@@ -7,8 +7,8 @@ var _world: World
 
 func before_test() -> void:
 	_world = World.new(self)
-	_world.sandbox.write_json("Data/configs/dialogue_config.json", {"frames": [{"style": "", "name": "Plain"}, {"style": "gold", "name": "Gold"}]})
-	_world.sandbox.write_json("Data/configs/language_config.json", {"choosableLanguageCode": ["en", "fr"], "choosableLanguageTexts": ["English", "Français"]})
+	_world.sandbox.write_json("config/dialogue.json", {"frames": [{"style": "", "name": "Plain"}, {"style": "gold", "name": "Gold"}]})
+	_world.sandbox.write_json("config/language.json", {"choosable": ["en", "fr"], "names": ["English", "Français"]})
 	_world.options.add_engine_options(_world.dialogue, _world.texts)
 
 

@@ -106,7 +106,7 @@ func test_a_character_moved_or_turned_meanwhile_does_not_turn_back() -> void:
 
 
 func test_its_controller_waits_while_it_talks() -> void:
-	_world.sandbox.write_json("Data/configs/movement_config.json", {"stillDuringDialogue": false})
+	_world.sandbox.write_json("config/movement.json", {"still_during_dialogue": false})
 	var controller := SteadyController.new()
 	controller.direction = Vector2i.UP
 	var walker := _character(Vector2i(5, 4), Vector2i.LEFT, "Hi!", controller)

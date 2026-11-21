@@ -30,7 +30,7 @@ func test_a_line_is_read_in_the_current_language() -> void:
 
 
 func test_a_regional_locale_reads_its_language_and_a_mapped_one_its_column() -> void:
-	_world.sandbox.write_json("Data/configs/language_config.json", {"studioColumns": {"ja": "kana"}})
+	_world.sandbox.write_json("config/language.json", {"studio_columns": {"ja": "kana"}})
 	_world.texts.language = "fr_FR"
 	assert_str(_studio(0)).is_equal("Œuf")
 	_world.texts.language = "ja"

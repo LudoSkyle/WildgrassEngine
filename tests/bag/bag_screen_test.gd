@@ -10,7 +10,7 @@ var _potion_icon: Texture2D
 
 func before_test() -> void:
 	_world = World.new(self)
-	_world.sandbox.write_json("Data/configs/bag_config.json", {"pockets": [
+	_world.sandbox.write_json("config/bag.json", {"pockets": [
 		{"id": "medicine", "name": "Medicine"},
 		{"id": "key_items", "name": "Key Items"},
 		{"id": "berries", "name": "Berries"},
@@ -122,7 +122,7 @@ func test_it_shows_a_pocket_with_counts_and_turns_round_the_pockets_each_keeping
 
 
 func test_a_long_count_widens_its_column() -> void:
-	_world.sandbox.write_json("Data/configs/bag_config.json", {"maxCount": 0, "pockets": [{"id": "medicine", "name": "Medicine"}]})
+	_world.sandbox.write_json("config/bag.json", {"max_count": 0, "pockets": [{"id": "medicine", "name": "Medicine"}]})
 	_world.bag.add(&"potion", 5000)
 	var tree := _open().get_node("Box/List") as Tree
 	var shown := tree.get_theme_font(&"font").get_string_size("×5000", HORIZONTAL_ALIGNMENT_LEFT, -1, tree.get_theme_font_size(&"font_size")).x
@@ -238,7 +238,7 @@ func test_opened_by_name_alone_it_uses_the_engine_s_services() -> void:
 
 
 func test_a_bag_with_no_pocket_is_logged_and_shows_nothing() -> void:
-	_world.sandbox.write_json("Data/configs/bag_config.json", {"pockets": []})
+	_world.sandbox.write_json("config/bag.json", {"pockets": []})
 	assert_bool(_open().is_closed()).is_true()
 	assert_object(_world.screens.top()).is_null()
 	assert_array(_world.logged).is_equal(["WARN the bag has no pocket to show"])

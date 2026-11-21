@@ -272,7 +272,7 @@ func test_feet_go_on_from_step_to_step_and_freeze_on_ice() -> void:
 
 func test_movement_config_resets_impossible_values_and_keeps_unset_actions() -> void:
 	var config := WgMovementConfig.new()
-	var problems := config.load_data({"walkPace": 0, "jumpHeight": -2, "holdSeconds": -1, "actions": {"run": "dash", "jump": "x"}}, "movement_config.json")
+	var problems := config.load_data({"walk_pace": 0, "jump_height": -2, "hold_seconds": -1, "actions": {"run": "dash", "jump": "x"}}, "movement.json")
 	assert_array(problems).has_size(4)
 	assert_float(config.walk_pace).is_equal(4.0)
 	assert_float(config.jump_height).is_equal(8.0)

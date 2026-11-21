@@ -143,7 +143,7 @@ func test_the_mouse_takes_a_choice() -> void:
 
 
 func test_only_the_actions_of_the_config_move_the_selection() -> void:
-	_world.sandbox.write_json("Data/configs/dialogue_config.json", {"actions": {"down": "ui_page_down"}})
+	_world.sandbox.write_json("config/dialogue.json", {"actions": {"down": "ui_page_down"}})
 	_ask("Pick?", ["A", "B"])
 	_world.dialogue.box.advance(1.0)
 	assert_int(_buttons()[0].focus_mode).is_equal(Control.FOCUS_NONE)
@@ -154,7 +154,7 @@ func test_only_the_actions_of_the_config_move_the_selection() -> void:
 
 
 func test_a_long_list_scrolls_keeping_the_selection_in_view() -> void:
-	_world.sandbox.write_json("Data/configs/dialogue_config.json", {"maxChoices": 3})
+	_world.sandbox.write_json("config/dialogue.json", {"max_choices": 3})
 	_ask("Pick?", ["A", "B", "C", "D", "E"])
 	_world.dialogue.box.advance(1.0)
 	assert_array(_shown()).is_equal(["A", "B", "C"])
