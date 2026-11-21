@@ -97,13 +97,16 @@ Wildgrass.quests.claim(&"bell")                # its earnings, once
 ```
 
 - **Defined** as a `WgQuest` resource the game registers
-  (`Wildgrass.quests.register(quest)`), named by its `id`, with `name`,
-  `description`, `primary`, objectives and earnings. **A Studio project's
-  `Data/Studio/quests/*.json` are read as they are** into the same resources:
-  `id` is its `dbSymbol`, `primary` its `isPrimary`, its name and description
-  the placeholders `{text:100045:<id>}` and `{text:100046:<id>}`, shown
-  through `Wildgrass.texts.format()` so that they follow the language; an
-  objective's kind is its method name without `objective_` (`speak_to`,
+  (`Wildgrass.quests.register(quest)`), else found in `res://quests/*.tres`
+  (paths, `quests`), else given by a source
+  (`Wildgrass.quests.add_source(callable)`, returning an array of quests);
+  named by its `id`, with `name`, `description`, `primary`, objectives and
+  earnings. **A Studio project's `Data/Studio/quests/*.json` come from the
+  Studio layer's source** (feature 10 bis) into the same resources: `id` is
+  its `dbSymbol`, `primary` its `isPrimary`, its name and description the
+  placeholders `{text:100045:<id>}` and `{text:100046:<id>}`, shown through
+  `Wildgrass.texts.format()` so that they follow the language; an objective's
+  kind is its method name without `objective_` (`speak_to`,
   `catch_pokemon`…), its target and amount taken from its arguments as each
   kind writes them, its arguments kept whole for the game's quest book.
 - An objective has a `kind`, a `target`, an `amount` (1) and may start
@@ -135,10 +138,10 @@ Wildgrass.quests.claim(&"bell")                # its earnings, once
 
 ## Studio projects, as they really are
 
-Read from a real Studio project, things feature 5 missed are fixed first:
-every JSON file of a Studio project has a `"klass"` key, which configs now
-ignore instead of logging it; a Studio text not translated holds `[~ 0]`,
-`[~ 1]`…, which is read as an empty cell, so the fallback applies; past the
+Read from a real Studio project, things feature 5 missed were fixed, now in
+the Studio layer (feature 10 bis): every JSON file of a Studio project has a
+`"klass"` key, which the layer ignores; a Studio text not translated holds
+`[~ 0]`, `[~ 1]`…, read as an empty cell, so the fallback applies; past the
 fallback locale, the first column that has a text is said rather than
 nothing.
 
@@ -151,7 +154,7 @@ nothing.
 
 ## Tests
 
-Maps, flags, characters, quests and Studio files are built by the tests.
+Maps, flags, characters and quests are built by the tests.
 Covered: flags and their signal, values apart from flags and refused types,
 local flags on a map shown as a neighbour; every kind of term, `!`, `,`,
 `local:`, game terms and unknown ones; the state through JSON, `restored`;
@@ -163,6 +166,5 @@ dropping it; a guarded passage's current text; translations losing tags; the
 story's tags keeping no service alive; quests finishing at once, what counts
 before start and while hidden, starting and restarting, earnings once and a
 kind nobody gives, matched and empty targets, quest terms, progress through
-JSON, wrong calls; Studio quest files read, their names in each language,
-played, the game's winning, bad files and kinds; Studio's `klass` key and
-untranslated cells.
+JSON, wrong calls, quests registered, in the quests folder or from a source.
+Studio quest files: feature 10 bis.

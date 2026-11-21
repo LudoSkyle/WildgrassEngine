@@ -1,12 +1,13 @@
 # Wildgrass Engine
 
-Godot 4 engine for Pokémon fan games. Reads Pokémon Studio data.
+Godot 4 engine for Pokémon fan games. Runs Pokémon Studio projects too.
 GDScript only, ships no assets.
 
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters, story, bag, save, menu and options.
+dialogue, texts, characters, story, bag, save, menu and options, and the
+Studio layer.
 
 ## Install
 
@@ -17,22 +18,32 @@ dialogue, texts, characters, story, bag, save, menu and options.
 
 Everything goes through the `Wildgrass` autoload.
 
-**Configs** are JSON files in `Data/configs/`. Only set what you change.
+**Configs** are files in `res://config/`, one per name: a resource
+(`display.tres`, a `WgConfig` edited in the inspector) or JSON
+(`display.json`), the resource winning. Keys are the fields' names. Only set
+what you change.
 
-`display_config.json` (without it, the window is left as your project sets it):
+`config/display.json` (without it, the window is left as your project sets it):
 
 ```json
-{ "resolution": { "x": 320, "y": 240 }, "windowScale": 4, "fullscreen": false }
+{ "resolution": { "x": 320, "y": 240 }, "window_scale": 4, "fullscreen": false }
 ```
 
-`log_config.json`:
+`config/log.json`:
 
 ```json
 { "level": "info", "channels": { "screens": "debug" } }
 ```
 
-**Folders** default to `res://Data/`, `res://graphics/` and `res://audio/`.
-Change them in *Project Settings → wildgrass/paths*.
+**Folders** default to `res://config/`, `res://graphics/`, `res://audio/`,
+`res://maps/`, `res://items/` and `res://quests/`. Change them in *Project
+Settings → wildgrass/paths*.
+
+**Studio projects**: a project with a `project.studio` file runs as it is.
+The Studio layer (`Wildgrass.studio`) reads its configs, texts, items, pockets
+and quests from `Data/` and gives them to the engine; a file of your own in
+`res://config/` wins field by field. Setting *wildgrass/studio/enabled*:
+`auto`, `on`, `off`.
 
 **Hooks**:
 
@@ -53,7 +64,7 @@ await Wildgrass.maps.go_to(&"town", &"Spawn")
 await Wildgrass.maps.use(door)
 ```
 
-`map_config.json`: `{ "tileSize": 16, "fadeSeconds": 0.25 }`.
+`config/map.json`: `{ "tile_size": 16, "fade_seconds": 0.25 }`.
 
 **Linked maps** show against each other's sides and are walked into with no
 transition. On each `WgMap`, set `size` (in tiles) and add a `WgMapLink` per
@@ -80,7 +91,7 @@ var sandy: Variant = Wildgrass.tiles.data(cell, &"sand")
 `run_up`…), a `WgCamera` and a `WgPlayerInput`. Make it the traveller; it
 walks, runs, jumps ledges, slides on ice, takes doors and crosses linked maps
 by itself. Add a `run` action to the input map. Paces and actions:
-`movement_config.json`.
+`config/movement.json`.
 
 ```gdscript
 Wildgrass.maps.traveller = player
@@ -102,22 +113,22 @@ layer makes a tile say its text (bookshelves); a `counter` one reaches across
 it. To restyle the box, inherit `addons/wildgrass/dialogue/message_box.tscn`
 and set *wildgrass/screens/message_box* to your scene; a sign's frame is the
 `MessageFrame_sign` theme type variation. Paces and actions:
-`dialogue_config.json`.
+`config/dialogue.json`.
 
 **Texts**: translate your game as any Godot project (`.po` or `.csv` in
-*Project Settings → Localization*). Studio's text files in
-`Data/Text/Dialogs/` are read as data; the plugin keeps Godot from importing
-them as translations.
+*Project Settings → Localization*). The engine's labels are English
+("Bag"), translated the same way. In a Studio project, the Studio layer reads
+`Data/Text/Dialogs/` as data (the plugin keeps Godot from importing them as
+translations) and shows the labels in Studio's words.
 
 ```gdscript
 Wildgrass.texts.language = "fr"
-var name := Wildgrass.texts.studio(100000, 25)   # file, line: "Pikachu"
+var bag := Wildgrass.texts.label("Bag")
 Wildgrass.texts.set_value(&"player", "Ludo")
 await Wildgrass.dialogue.say("Welcome, {player}! Press {key:ui_accept}.")
 ```
 
-`language_config.json` (Studio's): `defaultLanguage`,
-`choosableLanguageCode`, `choosableLanguageTexts`.
+`config/language.json`: `default`, `choosable`, `names`.
 
 **Characters**: a scene whose root is a `WgWalker`, with a
 `WgCharacterSprite` (a 4 × 4 character sheet), a controller (`WgWander` in an
@@ -143,12 +154,12 @@ Wildgrass.quests.start(&"bell")
 Wildgrass.quests.complete(&"bell", 0)
 ```
 
-Quests are `WgQuest` resources you register, or a Studio project's
-`Data/Studio/quests/*.json`, read as they are.
+Quests are `WgQuest` resources you register or put in `res://quests/`; a
+Studio project's come from the Studio layer.
 
-**Bag**: items are `WgItem` resources you register, or a Studio project's
-`Data/Studio/items/*.json`, read when first asked for. Pockets and limits:
-`bag_config.json`. Messages give and take with `[give=potion*3]` and
+**Bag**: items are `WgItem` resources you register or put in
+`res://items/<id>.tres`, read when first asked for; a Studio project's come
+from the Studio layer. Pockets and limits: `config/bag.json`. Messages give and take with `[give=potion*3]` and
 `[take=potion]`; a `WgItemBall` lays an item on a map. The `bag` screen lists
 the pockets, and uses and tosses items.
 
@@ -158,8 +169,8 @@ Wildgrass.items.add_use(&"repel", _repel)   # what using it does
 Wildgrass.screens.open(&"bag")
 ```
 
-**Save**: games are JSON files in slots, as Studio's `save_config.json`
-sets them. The story, quests, the bag, the play time and where everyone
+**Save**: games are JSON files in slots (`user://saves/game-1.json`), as
+`config/save.json` sets them (`slots`, `file`, `save_anywhere`). The story, quests, the bag, the play time and where everyone
 stands are saved; add your own parts. The `save` screen asks before writing,
 `save_slots` chooses a game.
 
@@ -173,9 +184,8 @@ Wildgrass.screens.open(&"save_slots")
 **Menu and options**: the `menu` action (Escape by default) opens the pause
 menu: Bag, Options, Save, Exit; add your entries, each shown while its story
 condition holds. Options (text speed, message frame, volume, language, and
-yours) are kept on the player's machine, in the order of Studio's
-`game_options_config.json`. Labels are Studio's texts, with English
-fallbacks: `{text:100014:2|Bag}`.
+yours) are kept on the player's machine, shown in the order of
+`config/options.json`.
 
 ```gdscript
 Wildgrass.menu.add_entry(&"pokedex", "Pokédex", _open_dex, "has_dex", &"bag")
