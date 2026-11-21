@@ -16,6 +16,8 @@ const DEFAULTS: Dictionary[StringName, String] = {
 	&"config": "res://config/",
 	&"items": "res://items/",
 	&"quests": "res://quests/",
+	&"pokemon": "res://pokemon/",
+	&"types": "res://types/",
 	&"studio": "res://",
 }
 
