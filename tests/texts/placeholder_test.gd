@@ -117,3 +117,25 @@ func test_escaping_applies_to_what_values_put_in_only() -> void:
 	_world.texts.set_value(&"flag", true)
 	assert_str(_format("{player} [b]x[/b] {flag?[i]y[/i]|} [VAR PKNAME(0000)]", true)).is_equal("[lb]page]Bob [b]x[/b] [i]y[/i] [lb]wait]")
 	assert_str(_format("{player}")).is_equal("[page]Bob")
+
+
+func _shout(argument: String) -> Variant:
+	return argument.to_upper() if argument != "none" else null
+
+
+func test_a_plugin_adds_placeholders_and_rewrites_texts_first() -> void:
+	_world.texts.add_placeholder("shout", _shout)
+	assert_str(_format("Hey {shout:you}! {shout:none}")).is_equal("Hey YOU! {shout:none}")
+	_world.hooks.add(&"text_tokens", &"test", func(text: String) -> String: return text.replace("<<", "{shout:").replace(">>", "}"))
+	assert_str(_format("<<loud>>")).is_equal("LOUD")
+	assert_array(_world.logged).is_equal(["WARN no value for {shout:none}"])
+
+
+func test_a_label_is_translated_then_filled() -> void:
+	var french := Translation.new()
+	french.locale = "fr"
+	french.add_message("File {slot}", "Partie {slot}")
+	TranslationServer.add_translation(french)
+	_world.texts.language = "fr"
+	assert_str(_world.texts.label("File {slot}", {"slot": 2})).is_equal("Partie 2")
+	TranslationServer.remove_translation(french)

@@ -111,7 +111,7 @@ func refresh() -> void:
 	_cursors[pocket] = clampi(_cursors.get(pocket, 0), 0, maxi(_shown.size() - 1, 0))
 	var name_label := get_node_or_null(pocket_name) as Label
 	if name_label != null:
-		name_label.text = texts.format(bag.config().pocket(pocket).get("name", String(pocket)))
+		name_label.text = texts.label(bag.config().pocket(pocket).get("name", String(pocket)))
 	var tree := get_node_or_null(list) as Tree
 	if tree != null:
 		tree.clear()
@@ -122,7 +122,7 @@ func refresh() -> void:
 		for id in _shown:
 			var item := bag.item(id)
 			var row := tree.create_item(root)
-			row.set_text(0, texts.format(item.name))
+			row.set_text(0, texts.label(item.name))
 			if tree.columns > 1:
 				var count := "×%d" % bag.count(id) if item.consumed else ""
 				row.set_text(1, count)
@@ -158,7 +158,7 @@ func _show_selected() -> void:
 		shown_icon.texture = item.icon if item != null else null
 	var shown_description := get_node_or_null(description) as Label
 	if shown_description != null:
-		shown_description.text = texts.format(item.description) if item != null else ""
+		shown_description.text = texts.label(item.description) if item != null else ""
 
 
 ## Asks what to do with the item under the cursor, and does it.

@@ -88,9 +88,9 @@ func refresh() -> void:
 		var root := tree.create_item()
 		for id in rows:
 			var row := tree.create_item(root)
-			row.set_text(0, texts.format(str(options.option(id).get("name", id))))
+			row.set_text(0, texts.label(str(options.option(id).get("name", id))))
 			if tree.columns > 1:
-				row.set_text(1, texts.format(options.text_of(id)))
+				row.set_text(1, texts.label(options.text_of(id)))
 				row.set_text_alignment(1, HORIZONTAL_ALIGNMENT_RIGHT)
 	_show_cursor()
 
@@ -123,7 +123,7 @@ func _show_cursor() -> void:
 		tree.scroll_to_item(row)
 	var shown := get_node_or_null(description) as Label
 	if shown != null:
-		shown.text = texts.format(str(options.option(selected()).get("description", ""))) if not rows.is_empty() else ""
+		shown.text = texts.label(str(options.option(selected()).get("description", ""))) if not rows.is_empty() else ""
 
 
 ## On `message_frame`, a message in the frame chosen, already applied.

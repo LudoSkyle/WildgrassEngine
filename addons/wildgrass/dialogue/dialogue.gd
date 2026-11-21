@@ -283,7 +283,7 @@ func _next() -> void:
 			_check_translation(request.text, translated)
 		var values := {}
 		for value_name: Variant in request.options.get("values", {}):
-			values[str(value_name)] = _texts.format(str(request.options["values"][value_name]))
+			values[str(value_name)] = _texts.label(str(request.options["values"][value_name]))
 		var text := _texts.format(translated, true, values)
 		if request.options.has("speaker"):
 			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])), false, values)
