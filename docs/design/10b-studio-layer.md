@@ -80,12 +80,11 @@ ignored), each a source of an engine config:
 | `save_config`: `maximumSave`, `baseFilename`, `isCanSaveOnAnySave` (`saveKey` set: logged) | `save`: `slots`, `file`, `save_anywhere` |
 | `game_options_config`: `order` | `options`: `order` |
 | `settings_config`: `maxBagItemCount` | `bag`: `max_count` |
+| `scene_title_config`, `infos_config` | `title` (feature 11) |
 
 A file that is not a JSON object is logged. A Studio key the engine has no
-use for yet is read when its feature comes: `scene_title_config`
-(`additionalSplashes`, `isLanguageSelectionEnabled`, `controlWaitTime`) and
-`infos_config` (`gameTitle`) with the title (feature 11), `introMovieMapId`
-with maps, the Pokémon settings with Pokémon.
+use for yet is read when its feature comes: `introMovieMapId` with maps, the
+Pokémon settings with Pokémon.
 
 **Texts** (`Data/Text/Dialogs/*.csv`), `Wildgrass.studio.texts`:
 

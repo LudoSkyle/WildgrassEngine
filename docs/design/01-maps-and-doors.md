@@ -64,6 +64,7 @@ Wildgrass.maps.go_to(&"start_island", &"Spawn")   # warp with no transition
 Wildgrass.maps.go_to_cell(&"town", Vector2i(3, 4), Vector2i.LEFT)   # a loaded game
 Wildgrass.maps.has_map(&"town")   # true if its scene exists
 Wildgrass.maps.reload()           # same map, traveller stays
+Wildgrass.maps.clear()            # no map: back to the title
 Wildgrass.maps.current            # WgMap or null
 Wildgrass.maps.traveller = player # any Node2D, set by feature 3
 ```
@@ -94,6 +95,10 @@ A warp, in order:
 - `reload()` loads the current map and its neighbours again, in place: the
   maps and the traveller keep their position, the traveller its facing. It
   runs the map hooks, but neither `traveller_arrived` nor `zone_changed`.
+- `clear()` frees every map on screen, hook `map_leaving(map)` for each,
+  drops the neighbours loading, takes the traveller out of the tree and
+  forgets the zone: the next warp starts afresh. Signal `cleared`; it ends
+  every interaction and scripted walk (feature 11).
 - Saves store positions local to the current map: it is not always at the
   origin.
 

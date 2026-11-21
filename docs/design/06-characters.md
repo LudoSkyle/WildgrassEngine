@@ -61,7 +61,8 @@ guard.turn_toward(player)   # along the axis it is furthest on
 - `walk_to()` takes world cells, like `walker.cell`. It searches a path
   through what `can_step` allows, over a few frames, visiting at most
   `path_cells` cells (config, 400); none: `false`.
-- Cut short: a warp or a reload, the walker freed, or another `walk()` for it,
+- Cut short: a warp, a reload or back to the title, the walker freed, or
+  another `walk()` for it,
   which takes over. The service holds the wait, so the caller always resumes.
 
 ## Talking

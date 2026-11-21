@@ -4,8 +4,8 @@ Status: implemented.
 
 The menu the player opens on the map, the entries a game or a plugin adds to
 it, and the options: what can be set, kept on the player's machine apart from
-any saved game, and the screen that sets them. The title screen that also
-opens the options is feature 11.
+any saved game, and the screen that sets them. The title screen also opens
+the options (feature 11).
 
 ## English labels
 
@@ -104,6 +104,9 @@ and for the screen `name`, `description`, `texts` (one per value),
   `message_frame`, `volume`, `language`. An option with fewer than two values
   is not shown.
 - `text_of(id)`: the value's text, else its format, else the value.
+- `was_kept(id)`: the player's machine holds a value for it, read or
+  written; the title asks the language at first launch only when none was
+  kept (feature 11).
 - The engine's options, with Studio's ids; names, descriptions and value
   texts are labels:
 
@@ -132,8 +135,7 @@ of the option under the cursor below.
   (`frame_sample_text`).
 - A language changed, by the screen or otherwise, the rows are written again
   in it.
-- `Wildgrass.screens.open(&"options")`; the menu opens it, the title screen
-  will (feature 11).
+- `Wildgrass.screens.open(&"options")`; the menu and the title open it.
 
 The screens that cover the whole screen (the bag, the choice of a game, the
 options) have an opaque background: Godot's default panel shows what lies
@@ -141,14 +143,12 @@ beneath.
 
 ## Later
 
-- The title screen opening the options, asking the language at first
-  launch: feature 11.
 - `battle_animation`, `battle_style`: with battles; `auto_run`: with an
   option for running.
 - Music, cries and effects volumes apart: with sound (feature 15).
 - The trainer card entry, Pokémon and Pokédex entries: with their features.
 - Keys held to scroll a list: with the screens that need it.
-- Back to the title from the menu: feature 11.
+- Back to the title from the menu: a game adds the entry (feature 11).
 
 ## Tests
 
