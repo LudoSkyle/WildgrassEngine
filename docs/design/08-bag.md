@@ -168,8 +168,8 @@ Toss (a consumed item only; how many, then Yes / No), Cancel.
 - Shops (buying, selling at half price): with the towns that have them.
 - Registering an item to a key, favourites, sorting by name: with the options
   (feature 10).
-- A TM's name with its move's: with moves (feature 12).
-- Studio's Pokémon settings: with Pokémon (feature 12); its
+- A TM's name with its move's: with moves, as data.
+- Studio's Pokémon settings: with the party; its
   `maxBagItemCount` is the bag's `max_count` (the Studio layer).
 - Filling the bag for testing: the debug tools (feature 20).
 

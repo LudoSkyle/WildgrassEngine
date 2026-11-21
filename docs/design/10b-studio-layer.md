@@ -84,7 +84,7 @@ ignored), each a source of an engine config:
 
 A file that is not a JSON object is logged. A Studio key the engine has no
 use for yet is read when its feature comes: `introMovieMapId` with maps, the
-Pokémon settings with Pokémon.
+Pokémon settings with the party.
 
 **Texts** (`Data/Text/Dialogs/*.csv`), `Wildgrass.studio.texts`:
 
@@ -117,7 +117,10 @@ stay in the layer.
 read as before (names `{text:100045:<id>}`, descriptions
 `{text:100046:<id>}`).
 
-**Later**, with their features: maps (the importer), zones, Pokémon data, the
+**Species and types** (`Data/Studio/pokemon`, `types`): sources of the
+species and types services (feature 12).
+
+**Later**, with their features: maps (the importer), zones, the
 introduction map, music.
 
 ## A Studio project and a game's own

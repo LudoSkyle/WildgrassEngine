@@ -130,6 +130,7 @@ var rate := Wildgrass.hooks.filter(&"encounter_rate", 10, [map])
 | `maps` | `res://maps/` (feature 1) |
 | `saves` | `user://` (feature 9) |
 | `items`, `quests` | `res://items/`, `res://quests/` (features 8, 7) |
+| `pokemon`, `types` | `res://pokemon/`, `res://types/` (feature 12) |
 | `data`, `studio` | `res://Data/`, `res://`: the Studio layer's (feature 10 bis) |
 
 - Settings `wildgrass/paths/<key>`; a game can add keys.
