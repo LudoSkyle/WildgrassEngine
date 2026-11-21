@@ -7,7 +7,7 @@ GDScript only, ships no assets.
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
-layer, the title screen, and Pokémon species and types.
+layer, the title screen, Pokémon species and types, and the Pokédex.
 
 ## Install
 
@@ -36,8 +36,8 @@ what you change.
 ```
 
 **Folders** default to `res://config/`, `res://graphics/`, `res://audio/`,
-`res://maps/`, `res://items/`, `res://quests/`, `res://pokemon/` and
-`res://types/`. Change them in *Project
+`res://maps/`, `res://items/`, `res://quests/`, `res://pokemon/`,
+`res://types/` and `res://dex/`. Change them in *Project
 Settings → wildgrass/paths*.
 
 **Studio projects**: a project with a `project.studio` file runs as it is.
@@ -220,6 +220,17 @@ from the Studio layer.
 var form := Wildgrass.species.form(&"rattata", 1)
 form.picture(&"front", true)                        # shiny, a Texture2D
 Wildgrass.types.factor(&"fire", form.types)         # how hard fire hits it
+```
+
+**Pokédex**: what is seen and caught, form by form, saved with the game;
+Pokédexes (`WgDex`, a region's species in order) in `res://dex/`, the
+national one made by the engine; the `pokedex` screen from the pause menu.
+`config/pokedex.json` sets the Pokédexes of a new game.
+
+```gdscript
+Wildgrass.pokedex.see(&"rattata", 1)
+Wildgrass.pokedex.catch(&"pikachu")
+Wildgrass.pokedex.add_dex(&"national")
 ```
 
 ## License

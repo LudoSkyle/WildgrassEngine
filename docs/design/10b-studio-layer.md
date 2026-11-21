@@ -118,7 +118,9 @@ read as before (names `{text:100045:<id>}`, descriptions
 `{text:100046:<id>}`).
 
 **Species and types** (`Data/Studio/pokemon`, `types`): sources of the
-species and types services (feature 12).
+species and types services (feature 12). **Pokédexes**
+(`Data/Studio/dex`): the Pokédex service's, the regional one shown first
+(feature 13).
 
 **Later**, with their features: maps (the importer), zones, the
 introduction map, music.
