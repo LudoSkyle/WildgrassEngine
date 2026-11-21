@@ -5,12 +5,12 @@ extends WgConfig
 ## Studio's pockets in Studio's order. `socket` is Studio's pocket number;
 ## `reveal`: giving one of its items shows it.
 const STUDIO_POCKETS: Array[Dictionary] = [
-	{"id": "items", "name": "{text:100015:4}", "socket": 1},
-	{"id": "balls", "name": "{text:100015:1}", "socket": 2},
-	{"id": "medicine", "name": "{text:100015:0}", "socket": 6},
-	{"id": "tms", "name": "{text:100015:5}", "socket": 3},
-	{"id": "key_items", "name": "{text:100015:8}", "socket": 5, "reveal": true},
-	{"id": "berries", "name": "{text:100015:3}", "socket": 4},
+	{"id": "items", "name": "{text:100015:4|Other Items}", "socket": 1},
+	{"id": "balls", "name": "{text:100015:1|Poké Balls}", "socket": 2},
+	{"id": "medicine", "name": "{text:100015:0|Medicine}", "socket": 6},
+	{"id": "tms", "name": "{text:100015:5|TMs}", "socket": 3},
+	{"id": "key_items", "name": "{text:100015:8|Key Items}", "socket": 5, "reveal": true},
+	{"id": "berries", "name": "{text:100015:3|Berries}", "socket": 4},
 ]
 
 ## Each `{"id", "name", "socket", "reveal"}`, in the order shown.

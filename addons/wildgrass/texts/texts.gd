@@ -38,6 +38,7 @@ static var _untranslated := RegEx.create_from_string("^\\[~ ?\\d+\\]$")
 
 static var _placeholder: RegEx
 static var _token: RegEx
+static var _studio: RegEx
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
@@ -78,12 +79,17 @@ func language_name(code: String) -> String:
 ## column, else the fallback locale's, else the first. "" if missing, logged
 ## once.
 func studio(file: int, line: int) -> String:
-	var data := _studio_file(file)
+	return _studio_text(file, line, true)
+
+
+func _studio_text(file: int, line: int, report: bool) -> String:
+	var data := _studio_file(file, report)
 	if data.is_empty():
 		return ""
 	var rows: Array = data["rows"]
 	if line < 0 or line >= rows.size():
-		_warn_once("no line %d in Studio text file %d" % [line, file])
+		if report:
+			_warn_once("no line %d in Studio text file %d" % [line, file])
 		return ""
 	return _pick(data["header"], rows[line])
 
@@ -125,10 +131,9 @@ func format(text: String, escape := false, values := {}) -> String:
 	if _placeholder == null:
 		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
 		_token = RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
-	var result := _replace(_placeholder, text, func(found: RegExMatch) -> String:
-		if found.get_string(1) == "text" and not found.get_string(2).is_empty():
-			return _studio_reference(found)
-		return found.get_string())
+	if _studio == null:
+		_studio = RegEx.create_from_string("\\{text:([^{}|]*)(?:\\|([^{}]*))?\\}")
+	var result := _replace(_studio, text, _studio_reference)
 	result = _replace(_token, result, _fill_token.bind(escape, values))
 	return _replace(_placeholder, result, _fill_placeholder.bind(escape, values))
 
@@ -137,14 +142,17 @@ func config() -> WgLanguageConfig:
 	return _config.get_config(&"language") as WgLanguageConfig
 
 
-func _studio_file(file: int) -> Dictionary:
+func _studio_file(file: int, report := true) -> Dictionary:
 	if _files.has(file):
+		if report and _files[file].is_empty():
+			_warn_once("no Studio text file %s" % _paths.resolve(&"data", STUDIO_FOLDER + "%d.csv" % file))
 		return _files[file]
 	var path := _paths.resolve(&"data", STUDIO_FOLDER + "%d.csv" % file)
 	var data := {}
 	var csv := FileAccess.open(path, FileAccess.READ) if FileAccess.file_exists(path) else null
 	if csv == null:
-		_warn_once("no Studio text file %s" % path)
+		if report:
+			_warn_once("no Studio text file %s" % path)
 	else:
 		var header := PackedStringArray()
 		for code: String in csv.get_csv_line():
@@ -206,12 +214,17 @@ static func _replace(pattern: RegEx, text: String, fill: Callable) -> String:
 	return result + text.substr(from)
 
 
+## `{text:file:line}`, or `{text:file:line|fallback}`: the fallback, through
+## `tr()`, when the file or the line is missing or the cell empty, unlogged.
 func _studio_reference(found: RegExMatch) -> String:
-	var parts := found.get_string(2).split(":")
+	var parts := found.get_string(1).split(":")
 	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
 		_warn_once("bad Studio text reference %s" % found.get_string())
 		return found.get_string()
-	return studio(parts[0].to_int(), parts[1].to_int())
+	if found.get_start(2) < 0:
+		return studio(parts[0].to_int(), parts[1].to_int())
+	var shown := _studio_text(parts[0].to_int(), parts[1].to_int(), false)
+	return shown if not shown.is_empty() else TranslationServer.translate(found.get_string(2))
 
 
 func _fill_placeholder(found: RegExMatch, escape: bool, values: Dictionary) -> String:
