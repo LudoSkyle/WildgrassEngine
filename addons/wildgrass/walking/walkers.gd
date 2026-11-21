@@ -11,6 +11,7 @@ const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Bag := preload("res://addons/wildgrass/bag/bag.gd")
+const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
@@ -25,6 +26,8 @@ var dialogue: Dialogue
 var story: Story
 ## Item balls give through it; set once the bag service exists.
 var bag: Bag
+## The pause menu, opened by the player's `menu` action.
+var menu: Menu
 
 ## Walker -> the [cell, level] pairs it holds: where it stands, and where its
 ## step goes.
