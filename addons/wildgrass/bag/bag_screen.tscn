@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" path="res://addons/wildgrass/bag/bag_screen.gd" id="1"]
 
+[sub_resource type="StyleBoxFlat" id="Backdrop"]
+bg_color = Color(0.12, 0.12, 0.12, 1)
+
 [node name="BagScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -18,6 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("Backdrop")
 
 [node name="Box" type="VBoxContainer" parent="."]
 layout_mode = 1
