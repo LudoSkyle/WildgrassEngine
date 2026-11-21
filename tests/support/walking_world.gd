@@ -19,6 +19,7 @@ const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
 const Menu := preload("res://addons/wildgrass/menu/menu.gd")
+const Options := preload("res://addons/wildgrass/options/options.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -38,6 +39,9 @@ var bag: Bag
 var clock: Clock
 var save: Save
 var menu: Menu
+## Its engine options are added by the tests that need them, once their
+## configs are written.
+var options: Options
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
 var config: ConfigRegistry
@@ -67,6 +71,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"language", WgLanguageConfig, "language_config")
 	config.register(&"bag", WgBagConfig, "bag_config")
 	config.register(&"save", WgSaveConfig, "save_config")
+	config.register(&"game_options", WgGameOptionsConfig, "game_options_config")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -114,6 +119,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu.add_entry(&"exit", "{text:9000:26|Exit}", menu.exit)
 	menu.add_entry(&"bag", "{text:100014:2|Bag}", menu.open_bag)
 	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
+	options = Options.new(paths, logger, config)
+	options.file_path = sandbox.root + "options.json"
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 

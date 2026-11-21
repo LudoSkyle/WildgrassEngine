@@ -25,6 +25,9 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 @export var max_choices := 6
 ## Input map action of each key of the box. Unset keys keep theirs.
 @export var actions: Dictionary[String, String] = DEFAULT_ACTIONS.duplicate()
+## The frames the player may pick in the options, each `{"style", "name"}`:
+## the box's `style` (feature 4), and its name, a text.
+@export var frames: Array[Dictionary] = []
 
 
 func _validate() -> PackedStringArray:
@@ -45,4 +48,11 @@ func _validate() -> PackedStringArray:
 	for key: String in DEFAULT_ACTIONS:
 		if not actions.has(key):
 			actions[key] = DEFAULT_ACTIONS[key]
+	var kept: Array[Dictionary] = []
+	for frame: Dictionary in frames:
+		if not frame.get("style") is String:
+			problems.append("frames: a frame needs a style, got %s" % JSON.stringify(frame))
+			continue
+		kept.append(frame)
+	frames = kept
 	return problems

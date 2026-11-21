@@ -22,6 +22,7 @@ const Bag := preload("res://addons/wildgrass/bag/bag.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
 const Menu := preload("res://addons/wildgrass/menu/menu.gd")
+const Options := preload("res://addons/wildgrass/options/options.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -46,6 +47,7 @@ var bag: Bag
 var dialogue: Dialogue
 var save: Save
 var menu: Menu
+var options: Options
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -88,11 +90,13 @@ func _init() -> void:
 	menu.services = {"bag": bag, "dialogue": dialogue, "texts": texts, "save": save}
 	walkers.menu = menu
 	_add_entries()
+	options = _service(&"options", Options, [paths, log, config])
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
 	config.register(&"bag", WgBagConfig, "bag_config")
 	config.register(&"save", WgSaveConfig, "save_config")
+	config.register(&"game_options", WgGameOptionsConfig, "game_options_config")
 	config.register(&"map", WgMapConfig, "map_config")
 	config.register(&"movement", WgMovementConfig, "movement_config")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue_config")
@@ -131,6 +135,8 @@ func _ready() -> void:
 	if config.has_file(&"display"):
 		display.apply(config.get_config(&"display") as WgDisplayConfig, get_window())
 	texts.apply_default()
+	options.read()
+	options.add_engine_options(dialogue, texts)
 	Clock.declare_shader_global()
 	clock.updates_shader_global = true
 	_start.call_deferred()
