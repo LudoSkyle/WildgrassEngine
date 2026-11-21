@@ -45,6 +45,8 @@ var _neighbour_ids: Dictionary[WgMap, StringName] = {}
 var _ids: Dictionary[WgMap, StringName] = {}
 ## Bumped whenever the maps on screen are replaced: older loads are dropped.
 var _generation := 0
+## Background loads asked for and not collected yet: path -> requests.
+var _requested: Dictionary[String, int] = {}
 
 
 func _init(paths: Paths, logger: Log, config: ConfigRegistry, hooks: Hooks, screens: ScreenRegistry, map_host: Node) -> void:
@@ -54,6 +56,16 @@ func _init(paths: Paths, logger: Log, config: ConfigRegistry, hooks: Hooks, scre
 	_hooks = hooks
 	_screens = screens
 	host = map_host
+
+
+## Dropped mid-load, the loading coroutine never resumes: collect what it
+## waited for, or Godot keeps it until the game quits. No method of this
+## object can run here.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		for path: String in _requested:
+			for _request in _requested[path]:
+				ResourceLoader.load_threaded_get(path)
 
 
 ## Moves the traveller to `point` of map `map_id` (empty: this map), plus
@@ -323,11 +335,12 @@ func _load_neighbours(links: Array[WgMapLink]) -> void:
 			_log.error(&"maps", "unknown map '%s' (no %s)" % [link.map, path])
 			continue
 		ResourceLoader.load_threaded_request(path)
+		_requested[path] = _requested.get(path, 0) + 1
 		waiting[link] = path
 	while not waiting.is_empty():
 		if not _host_alive():
 			for path: String in waiting.values():
-				ResourceLoader.load_threaded_get(path)
+				_collect(path)
 			if generation == _generation:
 				is_loading_neighbours = false
 			return
@@ -337,7 +350,7 @@ func _load_neighbours(links: Array[WgMapLink]) -> void:
 			if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 				continue
 			waiting.erase(link)
-			var packed := ResourceLoader.load_threaded_get(path) as PackedScene
+			var packed := _collect(path)
 			if generation != _generation or not _host_alive():
 				continue
 			var neighbour := _instantiate_scene(packed, path, link.map)
@@ -346,6 +359,14 @@ func _load_neighbours(links: Array[WgMapLink]) -> void:
 	if generation == _generation and _host_alive():
 		is_loading_neighbours = false
 		neighbours_loaded.emit()
+
+
+## Ends one background load of `path`, waiting for it if needed.
+func _collect(path: String) -> PackedScene:
+	_requested[path] -= 1
+	if _requested[path] == 0:
+		_requested.erase(path)
+	return ResourceLoader.load_threaded_get(path) as PackedScene
 
 
 ## False once the host has left the game: loads still finish, unused.

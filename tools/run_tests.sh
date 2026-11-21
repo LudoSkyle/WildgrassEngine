@@ -29,6 +29,16 @@ else
 fi
 # A remote debugger nobody listens to: a script error fails the test instead of
 # stopping at the console debugger prompt forever.
+log="$(mktemp)"
+trap 'rm -f "$log"' EXIT
+status=0
 "$godot" --headless --path "$root" -s -d --remote-debug tcp://127.0.0.1:0 \
 	res://addons/gdUnit4/bin/GdUnitCmdTool.gd \
-	-a "$target" -c --ignoreHeadlessMode -- --test
+	-a "$target" -c --ignoreHeadlessMode -- --test 2>&1 | tee "$log" || status=$?
+
+# Godot only warns about objects left alive at exit: fail on it.
+if grep -q "leaked at exit" "$log"; then
+	echo "Objects leaked at exit: run Godot with --verbose to name them." >&2
+	[ "$status" -ne 0 ] || status=1
+fi
+exit "$status"
