@@ -4,7 +4,8 @@ extends Node2D
 
 ## Node the traveller is put in. Y-sorted in most maps.
 @export var entities: NodePath = ^"Entities"
-## Pokémon Studio zone id: map-wide data shared by several maps.
+## Zone id: map-wide data shared by several maps (a place's name, its
+## weather…).
 @export var zone: StringName = &""
 ## Width and height in tiles. Required by links; zero: the map has no edges.
 @export var size := Vector2i.ZERO

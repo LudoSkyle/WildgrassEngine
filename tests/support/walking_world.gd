@@ -42,6 +42,7 @@ var menu: Menu
 ## Its engine options are added by the tests that need them, once their
 ## configs are written.
 var options: Options
+var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
 var config: ConfigRegistry
@@ -57,7 +58,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	var levels := {"solid_layers": [1, 2], "edge_layers": [4, 5]}
 	levels.merge(map_config, true)
 	sandbox.write_json("config/map.json", levels)
-	var logger := Log.new()
+	logger = Log.new()
 	logger.echo = false
 	# A local array: a lambda reaching `self` would keep this world alive.
 	var lines: Array[String] = []
@@ -65,6 +66,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		lines.append("%s %s" % [Log.Level.keys()[level], message]))
 	config = ConfigRegistry.new(Paths.new(false), logger)
+	config.register(&"display", WgDisplayConfig, "display")
 	config.register(&"map", WgMapConfig, "map")
 	config.register(&"movement", WgMovementConfig, "movement")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue")

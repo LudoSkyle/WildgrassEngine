@@ -54,11 +54,11 @@ func test_a_message_holding_a_narrating_tag_shows_no_speaker() -> void:
 
 
 func test_a_message_s_own_values_fill_its_placeholders_and_may_hold_some() -> void:
-	_world.sandbox.write("Data/Text/Dialogs/100012.csv", "en,fr\nThing,Chose\nPotion,Potion\n")
 	_world.texts.set_value(&"item", "nothing")
-	_world.dialogue.say("Found {item} x{count}!", {"values": {"item": "{text:100012:1}", "count": 3}})
+	_world.texts.set_value(&"rival", "Gary")
+	_world.dialogue.say("Found {item} x{count}!", {"values": {"item": "{rival}'s Potion", "count": 3}})
 	_box().advance(10.0)
-	assert_str(_box().shown_text()).is_equal("Found Potion x3!")
+	assert_str(_box().shown_text()).is_equal("Found Gary's Potion x3!")
 	_press("ui_accept")
 	_world.dialogue.say("Hi {item}, {who}!", {"values": {"who": "[wait]Bob"}})
 	_box().advance(10.0)

@@ -13,6 +13,8 @@ var sandbox: Sandbox
 var logged: Array[String] = []
 var hooks: Hooks
 var texts: Texts
+var logger: Log
+var config: ConfigRegistry
 var _locale: String
 
 
@@ -20,15 +22,16 @@ func _init() -> void:
 	_locale = TranslationServer.get_locale()
 	sandbox = Sandbox.new()
 	sandbox.use_data_folder()
-	var logger := Log.new()
+	logger = Log.new()
 	logger.echo = false
 	# A local array: a lambda reaching `self` would keep this world alive.
 	var lines: Array[String] = []
 	logged = lines
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		lines.append("%s %s" % [Log.Level.keys()[level], message]))
-	var config := ConfigRegistry.new(Paths.new(false), logger)
+	config = ConfigRegistry.new(Paths.new(false), logger)
 	config.register(&"language", WgLanguageConfig, "language")
+	config.register(&"studio", WgStudioConfig, "studio")
 	hooks = Hooks.new()
 	texts = Texts.new(Paths.new(false), logger, config, hooks)
 

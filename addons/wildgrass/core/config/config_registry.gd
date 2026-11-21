@@ -55,6 +55,11 @@ func has_file(config_name: StringName) -> bool:
 	return _paths.exists(file_path(config_name))
 
 
+## True if the project's file or a source gives this config values.
+func is_given(config_name: StringName) -> bool:
+	return has_file(config_name) or not _sources.get(config_name, []).is_empty()
+
+
 ## Adds a source of a config's fields: `source` returns a dictionary of them,
 ## applied over the defaults, before the project's own file. It is asked
 ## once, when the config is first read.

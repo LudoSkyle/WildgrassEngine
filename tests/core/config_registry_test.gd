@@ -89,10 +89,12 @@ func test_registering_again_discards_the_loaded_config() -> void:
 
 
 func test_sources_come_over_the_defaults_and_the_project_s_file_over_them_field_by_field() -> void:
+	assert_bool(_registry.is_given(&"sample")).is_false()
 	var asked := [0]
 	_registry.add_source(&"sample", func() -> Dictionary:
 		asked[0] += 1
 		return {"count": 5, "title": "from a source", "cuont": 2})
+	assert_bool(_registry.is_given(&"sample")).is_true()
 	var config := _registry.get_config(&"sample") as SampleConfig
 	assert_int(config.count).is_equal(5)
 	assert_str(config.title).is_equal("from a source")

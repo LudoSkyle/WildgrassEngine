@@ -23,6 +23,7 @@ const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
 const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Options := preload("res://addons/wildgrass/options/options.gd")
+const Studio := preload("res://addons/wildgrass/studio/studio.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -48,6 +49,8 @@ var dialogue: Dialogue
 var save: Save
 var menu: Menu
 var options: Options
+## The Studio layer, installed when the project is a Studio project.
+var studio: Studio
 ## Parent of every open screen, above the game.
 var screen_layer: CanvasLayer
 ## Default parent of the maps on screen; y-sorted, so the lower map draws on top.
@@ -102,6 +105,10 @@ func _init() -> void:
 	config.register(&"map", WgMapConfig, "map")
 	config.register(&"movement", WgMovementConfig, "movement")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue")
+	config.register(&"studio", WgStudioConfig, "studio")
+	studio = _service(&"studio", Studio, [paths, log, config, hooks])
+	if studio.is_project():
+		studio.install(texts, items, quests)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
@@ -135,7 +142,7 @@ func _ready() -> void:
 	paths.asset_missing.connect(func(path: String, requester: String) -> void:
 		log.warn(&"paths", "%s, requested by %s" % [path, requester]))
 	log.configure(config.get_config(&"log") as WgLogConfig)
-	if config.has_file(&"display"):
+	if config.is_given(&"display"):
 		display.apply(config.get_config(&"display") as WgDisplayConfig, get_window())
 	texts.apply_default()
 	options.read()

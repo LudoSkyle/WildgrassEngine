@@ -1,78 +1,82 @@
 extends GdUnitTestSuite
 
 const TextWorld := preload("res://tests/support/text_world.gd")
-const StudioImport := preload("res://addons/wildgrass/texts/studio_import.gd")
+const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const StudioImport := preload("res://addons/wildgrass/studio/studio_import.gd")
+const StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
 
 ## Species: a header, then one line per text.
 const SPECIES := "en,fr,kana\nEgg,Œuf,タマゴ\nBulbasaur,Bulbizarre,フシギダネ\n\"Seed, Pokémon\\nlof grass\",,\n"
 
 var _world: TextWorld
+var _studio: StudioTexts
 
 
 func before_test() -> void:
 	_world = TextWorld.new()
 	_world.sandbox.write("Data/Text/Dialogs/100000.csv", SPECIES)
+	_studio = StudioTexts.new(Paths.new(false), _world.logger, _world.config)
 
 
 func after_test() -> void:
 	_world.cleanup()
 
 
-func _studio(line: int) -> String:
-	return _world.texts.studio(100000, line)
+func _line(at: int) -> String:
+	return _studio.line(100000, at)
 
 
 func test_a_line_is_read_in_the_current_language() -> void:
 	_world.texts.language = "fr"
-	assert_str(_studio(1)).is_equal("Bulbizarre")
+	assert_str(_line(1)).is_equal("Bulbizarre")
 	_world.texts.language = "en"
-	assert_str(_studio(1)).is_equal("Bulbasaur")
+	assert_str(_line(1)).is_equal("Bulbasaur")
 
 
 func test_a_regional_locale_reads_its_language_and_a_mapped_one_its_column() -> void:
-	_world.sandbox.write_json("config/language.json", {"studio_columns": {"ja": "kana"}})
+	_world.sandbox.write_json("config/studio.json", {"columns": {"ja": "kana"}})
 	_world.texts.language = "fr_FR"
-	assert_str(_studio(0)).is_equal("Œuf")
+	assert_str(_line(0)).is_equal("Œuf")
 	_world.texts.language = "ja"
-	assert_str(_studio(0)).is_equal("タマゴ")
+	assert_str(_line(0)).is_equal("タマゴ")
 
 
 func test_an_empty_cell_falls_back_to_the_fallback_locale_then_the_first_column() -> void:
 	_world.texts.language = "fr"
-	assert_str(_studio(2)).is_equal("Seed, Pokémon\nof grass")
+	assert_str(_line(2)).is_equal("Seed, Pokémon\nof grass")
 	_world.sandbox.write("Data/Text/Dialogs/9001.csv", "de,en,fr\nBälle,Balls,\nNur,,\n")
-	assert_str(_world.texts.studio(9001, 0)).is_equal("Balls")
-	assert_str(_world.texts.studio(9001, 1)).is_equal("Nur")
+	assert_str(_studio.line(9001, 0)).is_equal("Balls")
+	assert_str(_studio.line(9001, 1)).is_equal("Nur")
 
 
 func test_a_cell_studio_left_untranslated_falls_back_as_an_empty_one() -> void:
 	_world.sandbox.write("Data/Text/Dialogs/100045.csv", "en,fr,it\nThe Tower,La Tour,[~ 0]\n[~ 1],Les étages,[~ 1]\n[~ 2],[~ 2],[~ 2]\n")
 	_world.texts.language = "it"
-	assert_str(_world.texts.studio(100045, 0)).is_equal("The Tower")
-	assert_str(_world.texts.studio(100045, 1)).is_equal("Les étages")
-	assert_str(_world.texts.studio(100045, 2)).is_empty()
+	assert_str(_studio.line(100045, 0)).is_equal("The Tower")
+	assert_str(_studio.line(100045, 1)).is_equal("Les étages")
+	assert_str(_studio.line(100045, 2)).is_empty()
 
 
 func test_a_whole_file_is_given_in_the_current_language() -> void:
 	_world.texts.language = "fr"
-	assert_array(Array(_world.texts.studio_file(100000))).is_equal(["Œuf", "Bulbizarre", "Seed, Pokémon\nof grass"])
+	assert_array(Array(_studio.file_lines(100000))).is_equal(["Œuf", "Bulbizarre", "Seed, Pokémon\nof grass"])
 
 
 func test_a_file_is_read_once_and_serves_every_language() -> void:
 	_world.texts.language = "fr"
-	assert_str(_studio(1)).is_equal("Bulbizarre")
+	assert_str(_line(1)).is_equal("Bulbizarre")
 	_world.sandbox.write("Data/Text/Dialogs/100000.csv", "en,fr\nX,Y\nX,Y\n")
 	_world.texts.language = "en"
-	assert_str(_studio(1)).is_equal("Bulbasaur")
+	assert_str(_line(1)).is_equal("Bulbasaur")
 
 
 func test_a_missing_file_or_line_gives_nothing_logged_once() -> void:
-	assert_str(_world.texts.studio(100099, 0)).is_empty()
-	assert_str(_world.texts.studio(100099, 1)).is_empty()
-	assert_array(Array(_world.texts.studio_file(100099))).is_empty()
-	assert_str(_studio(3)).is_empty()
-	assert_str(_studio(3)).is_empty()
-	assert_str(_studio(-1)).is_empty()
+	assert_str(_studio.line(100099, 0)).is_empty()
+	assert_str(_studio.line(100099, 1)).is_empty()
+	assert_array(Array(_studio.file_lines(100099))).is_empty()
+	assert_str(_line(3)).is_empty()
+	assert_str(_line(3)).is_empty()
+	assert_str(_line(-1)).is_empty()
 	assert_array(_world.logged).is_equal([
 		"WARN no Studio text file %sData/Text/Dialogs/100099.csv" % _world.sandbox.root,
 		"WARN no line 3 in Studio text file 100000",
@@ -97,3 +101,15 @@ func test_studio_text_files_are_set_to_keep_file() -> void:
 		assert_str(settings.get_value("remap", "importer", "")).is_equal("keep")
 	assert_array(Array(StudioImport.keep_files(folder))).is_empty()
 	assert_array(Array(StudioImport.keep_files(folder + "none/"))).is_empty()
+
+
+func test_a_studio_text_and_studio_s_tokens_show_in_any_text() -> void:
+	_world.texts.add_placeholder("text", _studio.text_reference)
+	_world.hooks.add(&"text_tokens", &"studio", _studio.tokens)
+	_world.texts.language = "fr"
+	assert_str(_world.texts.format("A wild {text:100000:1}!")).is_equal("A wild Bulbizarre!")
+	assert_str(_world.texts.format("{text:abc:1}")).is_equal("{text:abc:1}")
+	_world.texts.set_value(&"pkname_0", "[wait]Pikachu")
+	_world.texts.set_value(&"trname", "Ludo")
+	assert_str(_world.texts.format("The wild [VAR PKNAME(0000)] used [VAR 1002]Pound on [VAR TRNAME]!", true)).is_equal("The wild [lb]wait]Pikachu used Pound on Ludo!")
+	assert_array(_world.logged).is_equal(["WARN bad Studio text reference {text:abc:1}"])

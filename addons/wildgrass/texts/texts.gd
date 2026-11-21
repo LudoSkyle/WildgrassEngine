@@ -1,5 +1,4 @@
-## The language of the game, and the texts it shows: Studio's text files are
-## read here, as data, and placeholders filled.
+## The language of the game, and the texts it shows, placeholders filled.
 extends RefCounted
 
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -9,9 +8,6 @@ const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
 ## The language changed.
 signal language_changed(code: String)
-
-## Studio's text files, `<file>.csv`, inside the data folder.
-const STUDIO_FOLDER := "Text/Dialogs/"
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
@@ -28,17 +24,10 @@ var language: String:
 var _paths: Paths
 var _config: ConfigRegistry
 var _hooks: Hooks
-## File -> `{"header": its language codes, "rows": its lines}`; empty if missing.
-var _files: Dictionary[int, Dictionary] = {}
 var _warned: Dictionary[String, bool] = {}
 var _values: Dictionary[StringName, Variant] = {}
 
-## What Studio writes in a cell not translated: `[~ 0]`, `[~ 1]`…
-static var _untranslated := RegEx.create_from_string("^\\[~ ?\\d+\\]$")
-
 static var _placeholder: RegEx
-static var _token: RegEx
-static var _studio: RegEx
 ## Placeholders plugins add: name -> callable given the argument.
 var _placeholders: Dictionary[String, Callable] = {}
 
@@ -77,36 +66,6 @@ func language_name(code: String) -> String:
 	return TranslationServer.get_locale_name(code)
 
 
-## Line `line` of Studio's text file `file`, in the current language: its
-## column, else the fallback locale's, else the first. "" if missing, logged
-## once.
-func studio(file: int, line: int) -> String:
-	return _studio_text(file, line, true)
-
-
-func _studio_text(file: int, line: int, report: bool) -> String:
-	var data := _studio_file(file, report)
-	if data.is_empty():
-		return ""
-	var rows: Array = data["rows"]
-	if line < 0 or line >= rows.size():
-		if report:
-			_warn_once("no line %d in Studio text file %d" % [line, file])
-		return ""
-	return _pick(data["header"], rows[line])
-
-
-## Every line of Studio's text file `file`, in the current language.
-func studio_file(file: int) -> PackedStringArray:
-	var data := _studio_file(file)
-	var lines := PackedStringArray()
-	if data.is_empty():
-		return lines
-	for row: PackedStringArray in data["rows"]:
-		lines.append(_pick(data["header"], row))
-	return lines
-
-
 ## Sets the value of `{name}`: anything shown as text, or a Callable called
 ## each time it is shown. `null` removes it.
 func set_value(value_name: StringName, value: Variant) -> void:
@@ -126,20 +85,15 @@ func value(value_name: StringName) -> Variant:
 
 
 ## `text` with its placeholders filled: `{name}`, `{name?yes|no}`,
-## `{key:action}`, those plugins add, `{text:file:line}`, and Studio's
-## `[VAR …]` tokens; the filter hook `text_tokens(text)` may rewrite it first.
+## `{key:action}`, and those plugins add; the filter hook `text_tokens(text)`
+## may rewrite it first.
 ## With `escape`, what values put in is escaped for messages: it never reads
 ## as a tag. `values` come first: one text's own.
 func format(text: String, escape := false, values := {}) -> String:
 	text = str(_hooks.filter(&"text_tokens", text))
 	if _placeholder == null:
 		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
-		_token = RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
-	if _studio == null:
-		_studio = RegEx.create_from_string("\\{text:([^{}|]*)(?:\\|([^{}]*))?\\}")
-	var result := _replace(_studio, text, _studio_reference)
-	result = _replace(_token, result, _fill_token.bind(escape, values))
-	return _replace(_placeholder, result, _fill_placeholder.bind(escape, values))
+	return _replace(_placeholder, text, _fill_placeholder.bind(escape, values))
 
 
 ## A label of the game or the engine, written in English: translated through
@@ -159,62 +113,6 @@ func config() -> WgLanguageConfig:
 	return _config.get_config(&"language") as WgLanguageConfig
 
 
-func _studio_file(file: int, report := true) -> Dictionary:
-	if _files.has(file):
-		if report and _files[file].is_empty():
-			_warn_once("no Studio text file %s" % _paths.resolve(&"data", STUDIO_FOLDER + "%d.csv" % file))
-		return _files[file]
-	var path := _paths.resolve(&"data", STUDIO_FOLDER + "%d.csv" % file)
-	var data := {}
-	var csv := FileAccess.open(path, FileAccess.READ) if FileAccess.file_exists(path) else null
-	if csv == null:
-		if report:
-			_warn_once("no Studio text file %s" % path)
-	else:
-		var header := PackedStringArray()
-		for code: String in csv.get_csv_line():
-			header.append(code.strip_edges().to_lower())
-		var rows: Array[PackedStringArray] = []
-		while not csv.eof_reached():
-			var row := csv.get_csv_line()
-			if csv.eof_reached() and row.size() <= 1 and (row.is_empty() or row[0].is_empty()):
-				break
-			rows.append(row)
-		data = {"header": header, "rows": rows}
-	_files[file] = data
-	return data
-
-
-## The cell of the current language, else of the fallback locale, else the
-## first one with a text; `\nl` is a line break.
-func _pick(header: PackedStringArray, row: PackedStringArray) -> String:
-	var fallback := str(ProjectSettings.get_setting("internationalization/locale/fallback", "en"))
-	for locale: String in [language, fallback]:
-		var index := _column(header, locale)
-		if index >= 0 and index < row.size() and not _is_empty(row[index]):
-			return row[index].replace("\\nl", "\n")
-	for cell in row:
-		if not _is_empty(cell):
-			return cell.replace("\\nl", "\n")
-	return ""
-
-
-## The column of a Godot locale: mapped by `studioColumns`, or its own code,
-## or its language alone (`fr_FR` -> `fr`).
-func _column(header: PackedStringArray, locale: String) -> int:
-	var columns := config().studio_columns
-	for code: String in [locale, locale.get_slice("_", 0)]:
-		var index := header.find(columns.get(code, code).to_lower())
-		if index >= 0:
-			return index
-	return -1
-
-
-## An empty cell, or one Studio left untranslated.
-static func _is_empty(cell: String) -> bool:
-	return cell.is_empty() or _untranslated.search(cell) != null
-
-
 func _warn_once(message: String) -> void:
 	if _warned.has(message):
 		return
@@ -231,25 +129,10 @@ static func _replace(pattern: RegEx, text: String, fill: Callable) -> String:
 	return result + text.substr(from)
 
 
-## `{text:file:line}`, or `{text:file:line|fallback}`: the fallback, through
-## `tr()`, when the file or the line is missing or the cell empty, unlogged.
-func _studio_reference(found: RegExMatch) -> String:
-	var parts := found.get_string(1).split(":")
-	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
-		_warn_once("bad Studio text reference %s" % found.get_string())
-		return found.get_string()
-	if found.get_start(2) < 0:
-		return studio(parts[0].to_int(), parts[1].to_int())
-	var shown := _studio_text(parts[0].to_int(), parts[1].to_int(), false)
-	return shown if not shown.is_empty() else TranslationServer.translate(found.get_string(2))
-
-
 func _fill_placeholder(found: RegExMatch, escape: bool, values: Dictionary) -> String:
 	var value_name := found.get_string(1)
 	var argument := found.get_string(2)
 	var shown: Variant = null
-	if value_name == "text" and not argument.is_empty():
-		return found.get_string()
 	if _placeholders.has(value_name) and not argument.is_empty():
 		shown = (_placeholders[value_name] as Callable).call(argument)
 	elif value_name == "key" and not argument.is_empty():
@@ -261,19 +144,6 @@ func _fill_placeholder(found: RegExMatch, escape: bool, values: Dictionary) -> S
 		return found.get_string()
 	if found.get_start(3) >= 0:
 		return found.get_string(3) if _is_true(shown) else found.get_string(4)
-	return _escaped(str(shown), escape)
-
-
-## `[VAR NAME(000n, …)]` is the value `name_n`; `[VAR NAME]`, `name`.
-func _fill_token(found: RegExMatch, escape: bool, values: Dictionary) -> String:
-	var value_name := found.get_string(1).to_lower()
-	var index := found.get_string(2).get_slice(",", 0).strip_edges()
-	if index.is_valid_hex_number():
-		value_name += "_%d" % index.hex_to_int()
-	var shown: Variant = values[value_name] if values.has(value_name) else value(StringName(value_name))
-	if shown == null:
-		_warn_once("no value for Studio token %s" % found.get_string())
-		return ""
 	return _escaped(str(shown), escape)
 
 
