@@ -6,8 +6,8 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters, story, bag, save, menu and options, and the
-Studio layer.
+dialogue, texts, characters, story, bag, save, menu and options, the Studio
+layer, and the title screen.
 
 ## Install
 
@@ -191,6 +191,23 @@ yours) are kept on the player's machine, shown in the order of
 Wildgrass.menu.add_entry(&"pokedex", "Pokédex", _open_dex, "has_dex", &"bag")
 Wildgrass.options.add_option(&"auto_run", {"values": [false, true], "default": false, "apply": _set_auto_run})
 ```
+
+**Title**: splashes, the language at first launch, the title screen and
+its choices (Play, Options, Quit, and yours), a new game on the start map,
+a game continued, back to the title. `config/title.json`:
+
+```json
+{ "show_at_start": true, "start_map": "bedroom", "splashes": ["res://graphics/titles/studio.png"] }
+```
+
+```gdscript
+Wildgrass.maps.traveller = player              # before a new game
+Wildgrass.title.add_choice(&"credits", "Credits", _roll_credits)
+Wildgrass.menu.add_entry(&"title", "Back to title", Wildgrass.title.back)
+```
+
+Your own title is a scene extending `WgTitleScreen` (*wildgrass/screens/title*);
+your choice of a game one extending `WgSaveSlotsScreen`.
 
 ## License
 

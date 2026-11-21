@@ -93,5 +93,6 @@ crossing back, signal order, the traveller re-entering the tree, the camera
 after a crossing, neighbours processing, kept and freed neighbours, background
 loading and `neighbours_loaded`, hooks for neighbours, warps to a neighbour,
 reloads away from the origin, a warp or a freed host during loading, every
+map and their loading dropped by `clear()`, every
 error above. The ground rule is checked in a window: it cannot be seen without
 one.

@@ -18,6 +18,7 @@ Wildgrass.save.write()                # in `slot`; false if refused
 await Wildgrass.save.load_game(2)     # plays slot 2 where it was left
 Wildgrass.save.new_game(2)            # empties every part; slot 2 is the game's
 Wildgrass.save.erase(2)
+Wildgrass.save.reset()                # empties every part, no game played
 ```
 
 - A slot is a number from 1. The `save` config (`config/save.json`) sets
@@ -36,6 +37,8 @@ Wildgrass.save.erase(2)
   `slots` it is refused, logged. Signal `written(slot)`.
 - `erase(slot)` removes the file; the game played keeps its slot. Signal
   `erased(slot)`.
+- `reset()` empties every part and forgets the game played (`slot` 0),
+  telling no one: back to the title (feature 11).
 
 ## What a game holds
 
@@ -152,14 +155,16 @@ their own.
 - Keys wait while a game loads; cancel closes it. Signal
   `chosen(slot, action)`: `continue`, `new_game`, `erase`, or `cancel` with
   slot 0.
+- A game's scene changes how it looks, not what it does (feature 11): its
+  layout settings, its cards, its questions.
 
-The title screen (feature 11) opens it; until then
+The title opens it (feature 11), giving `new_game` and `continue` callables
+in place of the save service's, and `open_options`; else
 `Wildgrass.screens.open(&"save_slots")`.
 
 ## Later
 
 - Options (message speed, volume, language): their own file, feature 10.
-- The title screen, continuing the last game played: feature 11.
 - Pokémon, the party, the Pokédex as parts: features 12 and after.
 - Reading Studio's binary saves, encrypting them: not planned.
 - Autosave, saving anywhere from a debug key: the debug tools (feature 20).
@@ -182,4 +187,5 @@ map, a traveller that is no walker; the save screen's summary, saving, the
 saved text held, overwriting on Yes only, No and cancel, a write that fails,
 picking a file and the game's selected, the engine's services; the choice's
 cards and templates, moving, continuing, a new game, erasing with No first, a
-damaged file, a failed load, keys waiting for a load, the engine's services.
+damaged file, a failed load, keys waiting for a load, the engine's services;
+reset emptying every part and what no one added.
