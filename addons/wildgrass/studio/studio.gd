@@ -13,6 +13,9 @@ const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
 const StudioItems := preload("res://addons/wildgrass/studio/studio_items.gd")
 const StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
+const StudioSpecies := preload("res://addons/wildgrass/studio/studio_species.gd")
+const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 
 ## The project setting turning the layer on: `auto` (when the project has
 ## `project.studio`), `on`, `off`.
@@ -56,6 +59,7 @@ var _hooks: Hooks
 var _texts: Texts
 var _items: StudioItems
 var _quests: StudioQuests
+var _species: StudioSpecies
 ## Studio config file -> its data, read once.
 var _files: Dictionary[String, Dictionary] = {}
 var _translations: Array[Translation] = []
@@ -69,6 +73,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_regi
 	texts = StudioTexts.new(paths, logger, config_registry)
 	_items = StudioItems.new(paths, logger)
 	_quests = StudioQuests.new(paths, logger)
+	_species = StudioSpecies.new(paths, logger)
 
 
 ## True when the project is a Studio project, as the setting says.
@@ -82,8 +87,8 @@ func is_project() -> bool:
 
 
 ## Plugs the project into the engine: its configs as sources, its texts, its
-## items, pockets and quests. Done once.
-func install(engine_texts: Texts, items: Items, quests: Quests) -> void:
+## items, pockets, quests, species and types. Done once.
+func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types) -> void:
 	if installed:
 		return
 	installed = true
@@ -98,6 +103,8 @@ func install(engine_texts: Texts, items: Items, quests: Quests) -> void:
 	_hooks.add(&"text_tokens", &"wildgrass_studio", texts.tokens)
 	items.add_source(_items.read)
 	quests.add_source(_quests.read_all)
+	species.add_source(_species.read_species, _species.species_ids)
+	types.add_source(_species.read_type, _species.type_ids)
 	_add_translations()
 
 
