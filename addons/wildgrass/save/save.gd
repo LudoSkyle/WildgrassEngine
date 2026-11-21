@@ -66,7 +66,7 @@ func part_names() -> Array[StringName]:
 ## The file of a slot.
 func path_of(game_slot: int) -> String:
 	var settings := config()
-	var file := settings.base_filename + ("" if settings.maximum_save == 1 else "-%d" % game_slot) + ".json"
+	var file := settings.file + ("" if settings.slots == 1 else "-%d" % game_slot) + ".json"
 	return _paths.resolve(&"saves", ("test_" if _paths.testing else "") + file)
 
 
@@ -78,7 +78,7 @@ func has(game_slot: int) -> bool:
 ## The slots to show: every one up to `maximumSave`; with no maximum, those
 ## up to the last used, then a new one.
 func slots() -> Array[int]:
-	var count := config().maximum_save
+	var count := config().slots
 	if count == 0:
 		count = 1
 		for found in _used_numbers():
@@ -120,7 +120,7 @@ func summary_now(game_slot := slot) -> Variant:
 func write(game_slot := 0) -> bool:
 	var target := game_slot if game_slot > 0 else (slot if slot > 0 else first_empty())
 	if not _valid(target):
-		log.error(&"save", "no slot %d to write in (maximumSave %d)" % [target, config().maximum_save])
+		log.error(&"save", "no slot %d to write in (slots %d)" % [target, config().slots])
 		return false
 	var parts := _kept.duplicate(true)
 	for part: Dictionary in _parts:
@@ -207,7 +207,7 @@ func erase(game_slot: int) -> bool:
 
 
 func _valid(game_slot: int) -> bool:
-	var count := config().maximum_save
+	var count := config().slots
 	return game_slot >= 1 and (count == 0 or game_slot <= count)
 
 

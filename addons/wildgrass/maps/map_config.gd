@@ -1,4 +1,4 @@
-## `map_config.json`: tile size, default fade, and the physics layers of each
+## The `map` config: tile size, default fade, and the physics layers of each
 ## level.
 class_name WgMapConfig
 extends WgConfig
@@ -16,13 +16,13 @@ extends WgConfig
 func _validate() -> PackedStringArray:
 	var problems := PackedStringArray()
 	if tile_size < 1:
-		problems.append("tileSize must be at least 1, got %d; using 16" % tile_size)
+		problems.append("tile_size must be at least 1, got %d; using 16" % tile_size)
 		tile_size = 16
 	if fade_seconds < 0.0:
-		problems.append("fadeSeconds cannot be negative, got %s; using 0" % fade_seconds)
+		problems.append("fade_seconds cannot be negative, got %s; using 0" % fade_seconds)
 		fade_seconds = 0.0
 	if not _valid_layers():
-		problems.append("solidLayers and edgeLayers need one layer from 1 to 32 per level, as many of each, got %s and %s; using [1] and [4]" % [solid_layers, edge_layers])
+		problems.append("solid_layers and edge_layers need one layer from 1 to 32 per level, as many of each, got %s and %s; using [1] and [4]" % [solid_layers, edge_layers])
 		solid_layers = [1]
 		edge_layers = [4]
 	return problems

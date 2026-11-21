@@ -28,7 +28,7 @@ func _init() -> void:
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		lines.append("%s %s" % [Log.Level.keys()[level], message]))
 	var config := ConfigRegistry.new(Paths.new(false), logger)
-	config.register(&"language", WgLanguageConfig, "language_config")
+	config.register(&"language", WgLanguageConfig, "language")
 	hooks = Hooks.new()
 	texts = Texts.new(Paths.new(false), logger, config, hooks)
 

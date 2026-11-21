@@ -50,17 +50,17 @@ func test_entities_falls_back_to_the_map_itself() -> void:
 
 func test_map_config_resets_impossible_values() -> void:
 	var config := WgMapConfig.new()
-	assert_array(config.load_data({"tileSize": 0, "fadeSeconds": -1}, "map_config.json")).has_size(2)
+	assert_array(config.load_data({"tile_size": 0, "fade_seconds": -1}, "map.json")).has_size(2)
 	assert_int(config.tile_size).is_equal(16)
 	assert_float(config.fade_seconds).is_equal(0.0)
 
 
 func test_map_config_needs_one_solid_and_one_edge_layer_from_1_to_32_per_level() -> void:
 	var config := WgMapConfig.new()
-	assert_array(config.load_data({"solidLayers": [1, 2], "edgeLayers": [4, 5]}, "map_config.json")).is_empty()
+	assert_array(config.load_data({"solid_layers": [1, 2], "edge_layers": [4, 5]}, "map.json")).is_empty()
 	assert_array(config.solid_layers).is_equal([1, 2])
-	for bad: Dictionary in [{"solidLayers": [1, 2], "edgeLayers": [4]}, {"solidLayers": [], "edgeLayers": []}, {"solidLayers": [0], "edgeLayers": [4]}, {"solidLayers": [1], "edgeLayers": [33]}]:
+	for bad: Dictionary in [{"solid_layers": [1, 2], "edge_layers": [4]}, {"solid_layers": [], "edge_layers": []}, {"solid_layers": [0], "edge_layers": [4]}, {"solid_layers": [1], "edge_layers": [33]}]:
 		config = WgMapConfig.new()
-		assert_array(config.load_data(bad, "map_config.json")).has_size(1)
+		assert_array(config.load_data(bad, "map.json")).has_size(1)
 		assert_array(config.solid_layers).is_equal([1])
 		assert_array(config.edge_layers).is_equal([4])

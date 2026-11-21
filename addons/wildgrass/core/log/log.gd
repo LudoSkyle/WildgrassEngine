@@ -55,7 +55,7 @@ func write(message_level: Level, channel: StringName, message: String) -> void:
 		push_error("%s %s" % [head, message])
 
 
-## Applies the levels of `log_config.json`.
+## Applies the levels of the `log` config.
 func configure(config: WgLogConfig) -> void:
 	level = config.level
 	channel_levels.clear()

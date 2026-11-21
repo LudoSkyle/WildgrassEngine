@@ -27,14 +27,14 @@ var _set: TileSet
 func before_test() -> void:
 	_sandbox = Sandbox.new()
 	_sandbox.use_data_folder()
-	_sandbox.write_json("Data/configs/map_config.json", {"solidLayers": [1, 2], "edgeLayers": [4, 5]})
+	_sandbox.write_json("config/map.json", {"solid_layers": [1, 2], "edge_layers": [4, 5]})
 	var logger := Log.new()
 	logger.echo = false
 	_logged = []
 	logger.logged.connect(func(level: Log.Level, _channel: StringName, message: String) -> void:
 		_logged.append("%s %s" % [Log.Level.keys()[level], message]))
 	var config := ConfigRegistry.new(Paths.new(false), logger)
-	config.register(&"map", WgMapConfig, "map_config")
+	config.register(&"map", WgMapConfig, "map")
 	_hooks = Hooks.new()
 	var layer: Node = auto_free(Node.new())
 	add_child(layer)
@@ -90,7 +90,7 @@ func test_a_tile_of_several_cells_blocks_the_cells_its_polygon_covers() -> void:
 
 func test_flipped_and_turned_tiles_block_exactly_where_godot_physics_does() -> void:
 	# World cells of 4 px: four by four of them sample each 16 px tile.
-	_sandbox.write_json("Data/configs/map_config.json", {"tileSize": 4})
+	_sandbox.write_json("config/map.json", {"tile_size": 4})
 	var cells := {}
 	var flags := [0, TileSetAtlasSource.TRANSFORM_FLIP_H, TileSetAtlasSource.TRANSFORM_FLIP_V, TileSetAtlasSource.TRANSFORM_TRANSPOSE]
 	var index := 0
@@ -214,8 +214,8 @@ func test_bad_directions_and_unknown_levels_are_logged_and_refused() -> void:
 	assert_array(_logged).is_equal([
 		"ERROR (1, 1) is not up, down, left or right",
 		"ERROR (0, 0) is not up, down, left or right",
-		"ERROR no level 2 in map_config.json",
-		"ERROR no level -1 in map_config.json",
+		"ERROR no level 2 in the map config",
+		"ERROR no level -1 in the map config",
 	])
 
 

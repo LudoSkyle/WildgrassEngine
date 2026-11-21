@@ -95,7 +95,7 @@ func test_a_use_is_found_by_the_item_s_id_else_its_kind() -> void:
 
 
 func test_pockets_and_limits_come_from_the_config() -> void:
-	_world.sandbox.write_json("Data/configs/bag_config.json", {"pockets": [{"id": "stuff", "socket": 6}, {"name": "no id"}], "maxCount": -1})
+	_world.sandbox.write_json("config/bag.json", {"pockets": [{"id": "stuff", "socket": 6}, {"name": "no id"}], "max_count": -1})
 	assert_str(_world.items.item(&"potion").pocket).is_equal("stuff")
 	assert_int(_world.items.bag_config().max_count).is_equal(99)
 	assert_int(_world.logged.size()).is_equal(2)

@@ -1,10 +1,8 @@
 ## Base of every configuration. Its fields are its `@export` variables, read
-## from a JSON object whose keys are the same names in camelCase.
+## from a resource of its class or from a JSON object whose keys are their
+## names.
 class_name WgConfig
 extends Resource
-
-## Keys every Studio file carries, which configs ignore.
-const STUDIO_KEYS: Array[String] = ["klass"]
 
 
 ## Reads `data` into this config. Returns the problems found; a field with a
@@ -13,9 +11,7 @@ func load_data(data: Dictionary, source: String) -> PackedStringArray:
 	var problems := PackedStringArray()
 	var fields := _fields()
 	for key: Variant in data:
-		if str(key) in STUDIO_KEYS:
-			continue
-		var field := str(key).to_snake_case()
+		var field := str(key)
 		if not fields.has(field):
 			problems.append("%s: unknown key '%s'" % [source, key])
 			continue
@@ -35,6 +31,18 @@ func load_data(data: Dictionary, source: String) -> PackedStringArray:
 			set(field, result["value"])
 	for problem: String in _validate():
 		problems.append("%s: %s" % [source, problem])
+	return problems
+
+
+## Takes from `own` every field that differs from `defaults`: a resource of
+## the project, over what sources gave. Returns the problems found.
+func take_from(own: WgConfig, defaults: WgConfig) -> PackedStringArray:
+	for field: String in _fields():
+		if own.get(field) != defaults.get(field):
+			set(field, own.get(field))
+	var problems := PackedStringArray()
+	for problem: String in _validate():
+		problems.append("%s: %s" % [own.resource_path.get_file(), problem])
 	return problems
 
 

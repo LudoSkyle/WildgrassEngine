@@ -1,4 +1,4 @@
-## Drives its walker from the input actions of `movement_config.json`: tap to
+## Drives its walker from the input actions of the `movement` config: tap to
 ## turn, hold to walk, the last direction pressed wins, run while held; the
 ## interact action talks to what the walker faces, the menu action opens the
 ## pause menu.

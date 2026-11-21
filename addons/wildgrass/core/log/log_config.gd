@@ -1,4 +1,4 @@
-## `log_config.json`: minimum log levels, globally and per channel.
+## The `log` config: minimum log levels, globally and per channel.
 class_name WgLogConfig
 extends WgConfig
 

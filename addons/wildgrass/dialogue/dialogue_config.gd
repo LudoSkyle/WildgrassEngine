@@ -1,4 +1,4 @@
-## `dialogue_config.json`: how fast text is written, how it goes on, the
+## The `dialogue` config: how fast text is written, how it goes on, the
 ## input actions of the message box.
 class_name WgDialogueConfig
 extends WgConfig
@@ -33,13 +33,13 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 func _validate() -> PackedStringArray:
 	var problems := PackedStringArray()
 	if letters_per_second < 0.0:
-		problems.append("lettersPerSecond cannot be negative, got %s; using 50" % letters_per_second)
+		problems.append("letters_per_second cannot be negative, got %s; using 50" % letters_per_second)
 		letters_per_second = 50.0
 	if scroll_speed <= 0.0:
-		problems.append("scrollSpeed must be positive, got %s; using 60" % scroll_speed)
+		problems.append("scroll_speed must be positive, got %s; using 60" % scroll_speed)
 		scroll_speed = 60.0
 	if max_choices <= 0:
-		problems.append("maxChoices must be positive, got %s; using 6" % max_choices)
+		problems.append("max_choices must be positive, got %s; using 6" % max_choices)
 		max_choices = 6
 	for key: String in actions.keys():
 		if not DEFAULT_ACTIONS.has(key):

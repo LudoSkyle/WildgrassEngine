@@ -242,7 +242,7 @@ func _valid_direction(direction: Vector2i) -> bool:
 func _has_level(level: int) -> bool:
 	if level >= 0 and level < _config_of().solid_layers.size():
 		return true
-	_log.error(&"tiles", "no level %d in map_config.json" % level)
+	_log.error(&"tiles", "no level %d in the map config" % level)
 	return false
 
 

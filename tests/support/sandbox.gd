@@ -20,9 +20,10 @@ func set_setting(key: String, value: Variant) -> void:
 	ProjectSettings.set_setting(key, value)
 
 
-## Points the engine's data folder at this sandbox.
+## Points the engine's data and config folders at this sandbox.
 func use_data_folder() -> String:
 	set_setting("wildgrass/paths/data", root + "Data/")
+	set_setting("wildgrass/paths/config", root + "config/")
 	return root + "Data/"
 
 

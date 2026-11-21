@@ -36,7 +36,7 @@ func test_the_autoload_provides_every_service() -> void:
 	assert_array(engine.hooks.names(&"save_summary")).is_equal([&"wildgrass_clock", &"wildgrass_map"])
 	assert_array(engine.menu.entries()).is_equal([&"bag", &"options", &"save", &"exit"])
 	assert_object(engine.walkers.menu).is_same(engine.menu)
-	assert_bool(engine.config.is_registered(&"game_options")).is_true()
+	assert_bool(engine.config.is_registered(&"options")).is_true()
 	for id: StringName in [&"message_speed", &"message_frame", &"volume", &"language"]:
 		assert_bool(engine.options.has_option(id)).is_true()
 	assert_str(engine.options.file_path).is_equal("user://test_options.json")
@@ -100,7 +100,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgGameOptionsConfig", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
+	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 
@@ -111,8 +111,8 @@ func test_the_map_host_is_y_sorted_so_the_lower_map_draws_on_top() -> void:
 
 func test_display_config_and_log_config_are_applied_at_start() -> void:
 	_sandbox.set_setting("wildgrass/services/display", "res://tests/support/recording_display.gd")
-	_sandbox.write_json("Data/configs/display_config.json", {"windowScale": 3})
-	_sandbox.write_json("Data/configs/log_config.json", {"level": "error"})
+	_sandbox.write_json("config/display.json", {"window_scale": 3})
+	_sandbox.write_json("config/log.json", {"level": "error"})
 	var engine := _start_engine()
 	add_child(engine)
 	var display := engine.display as RecordingDisplay
@@ -123,7 +123,7 @@ func test_display_config_and_log_config_are_applied_at_start() -> void:
 
 func test_the_default_language_is_set_at_start() -> void:
 	var locale := TranslationServer.get_locale()
-	_sandbox.write_json("Data/configs/language_config.json", {"defaultLanguage": "es"})
+	_sandbox.write_json("config/language.json", {"default": "es"})
 	add_child(_start_engine())
 	assert_str(TranslationServer.get_locale()).is_equal("es")
 	TranslationServer.set_locale(locale)

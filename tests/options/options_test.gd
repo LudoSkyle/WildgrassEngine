@@ -82,7 +82,7 @@ func test_a_kept_value_no_longer_allowed_takes_the_default_and_unknown_ones_are_
 
 
 func test_the_config_orders_the_options_shown_skipping_unknown_ids_and_lone_values() -> void:
-	_world.sandbox.write_json("Data/configs/game_options_config.json", {"order": ["volume", "battle_style", "auto_run", "message_frame", "message_speed", "language"]})
+	_world.sandbox.write_json("config/options.json", {"order": ["volume", "battle_style", "auto_run", "message_frame", "message_speed", "language"]})
 	_world.options.add_engine_options(_world.dialogue, _world.texts)
 	_auto_run(_world.options)
 	assert_array(_world.options.shown()).is_equal([&"volume", &"auto_run", &"message_speed"])
@@ -101,8 +101,8 @@ func test_a_value_shows_its_text_else_its_format_else_itself() -> void:
 
 
 func test_the_engine_s_options_apply_to_the_dialogue_the_sound_and_the_language() -> void:
-	_world.sandbox.write_json("Data/configs/dialogue_config.json", {"lettersPerSecond": 40, "frames": [{"style": "", "name": "Plain"}, {"style": "gold", "name": "Gold"}, {"name": "no style"}]})
-	_world.sandbox.write_json("Data/configs/language_config.json", {"choosableLanguageCode": ["en", "fr"], "choosableLanguageTexts": ["English", "Français"]})
+	_world.sandbox.write_json("config/dialogue.json", {"letters_per_second": 40, "frames": [{"style": "", "name": "Plain"}, {"style": "gold", "name": "Gold"}, {"name": "no style"}]})
+	_world.sandbox.write_json("config/language.json", {"choosable": ["en", "fr"], "names": ["English", "Français"]})
 	var options := _world.options
 	options.add_engine_options(_world.dialogue, _world.texts)
 	assert_float(_world.dialogue.letters_per_second).is_equal(40.0)
@@ -124,4 +124,4 @@ func test_the_engine_s_options_apply_to_the_dialogue_the_sound_and_the_language(
 	assert_str(_world.texts.language).is_equal("fr")
 	assert_str(options.text_of(&"language")).is_equal("Français")
 	assert_array(options.shown()).is_equal([&"message_speed", &"message_frame", &"volume", &"language"])
-	assert_array(_world.logged).is_equal(["WARN dialogue_config.json: frames: a frame needs a style, got {\"name\":\"no style\"}"])
+	assert_array(_world.logged).is_equal(["WARN dialogue.json: frames: a frame needs a style, got {\"name\":\"no style\"}"])

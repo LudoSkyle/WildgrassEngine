@@ -50,7 +50,7 @@ func _press(action: String) -> void:
 
 
 func _config(values: Dictionary) -> void:
-	_world.sandbox.write_json("Data/configs/dialogue_config.json", values)
+	_world.sandbox.write_json("config/dialogue.json", values)
 
 
 func _record(value: String, tag_name: String) -> void:
@@ -148,7 +148,7 @@ func test_a_page_tag_starts_a_new_page() -> void:
 
 
 func test_in_scroll_mode_lines_slide_up_one_by_one() -> void:
-	_config({"advance": "scroll", "scrollSpeed": 46})
+	_config({"advance": "scroll", "scroll_speed": 46})
 	_say("one\ntwo\nthree\nfour")
 	var bar := (_box().get_node("Frame/Margin/Text") as RichTextLabel).get_v_scroll_bar()
 	var line := (_box().get_node("Frame/Margin/Text") as RichTextLabel).get_line_height(0)
@@ -177,7 +177,7 @@ func test_a_page_tag_clears_the_box_in_scroll_mode_too() -> void:
 
 
 func test_pause_stops_writing_for_its_seconds() -> void:
-	_config({"lettersPerSecond": 10})
+	_config({"letters_per_second": 10})
 	_say("ab[pause=0.5]cd")
 	_box().advance(0.25)
 	assert_str(_shown()).is_equal("ab")
@@ -190,7 +190,7 @@ func test_pause_stops_writing_for_its_seconds() -> void:
 
 
 func test_speed_changes_the_pace_and_alone_brings_it_back() -> void:
-	_config({"lettersPerSecond": 10})
+	_config({"letters_per_second": 10})
 	_say("ab[speed=2]cdef[speed]gh")
 	_box().advance(0.3)
 	assert_str(_shown()).is_equal("abcd")
@@ -486,7 +486,7 @@ func test_unknown_options_and_places_are_logged() -> void:
 
 
 func test_config_errors_are_logged_and_reset() -> void:
-	_config({"lettersPerSecond": -1, "scrollSpeed": 0, "maxChoices": 0, "advance": "slide", "actions": {"jump": "x"}})
+	_config({"letters_per_second": -1, "scroll_speed": 0, "max_choices": 0, "advance": "slide", "actions": {"jump": "x"}})
 	var config := _world.dialogue.config()
 	assert_float(config.letters_per_second).is_equal(50.0)
 	assert_float(config.scroll_speed).is_equal(60.0)
@@ -502,4 +502,4 @@ func test_a_missing_confirm_action_is_logged_once() -> void:
 	_press("ui_accept")
 	_press("ui_accept")
 	assert_bool(done[0]).is_false()
-	assert_array(_world.logged).is_equal(["WARN no input action 'talk' (dialogue_config.json actions.confirm)"])
+	assert_array(_world.logged).is_equal(["WARN no input action 'talk' (dialogue config, actions.confirm)"])

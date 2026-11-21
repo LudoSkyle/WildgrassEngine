@@ -110,7 +110,7 @@ func test_a_game_that_cannot_be_written_says_so_and_the_key_closes_it() -> void:
 
 
 func test_when_any_file_may_be_written_the_player_picks_one() -> void:
-	_world.sandbox.write_json("Data/configs/save_config.json", {"isCanSaveOnAnySave": true, "maximumSave": 2})
+	_world.sandbox.write_json("config/save.json", {"save_anywhere": true, "slots": 2})
 	_world.save.write(1)
 	var screen := await _open()
 	assert_str(_text()).is_equal("Save in which file?")

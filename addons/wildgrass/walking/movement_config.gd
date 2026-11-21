@@ -1,4 +1,4 @@
-## `movement_config.json`: paces, jumps, the tap that turns, input actions.
+## The `movement` config: paces, jumps, the tap that turns, input actions.
 class_name WgMovementConfig
 extends WgConfig
 
@@ -37,16 +37,16 @@ func _validate() -> PackedStringArray:
 	for field: String in DEFAULT_LENGTHS:
 		var value: float = get(field)
 		if value <= 0.0:
-			problems.append("%s must be positive, got %s; using %s" % [field.to_camel_case(), value, DEFAULT_LENGTHS[field]])
+			problems.append("%s must be positive, got %s; using %s" % [field, value, DEFAULT_LENGTHS[field]])
 			set(field, DEFAULT_LENGTHS[field])
 	if patience < 0.0:
 		problems.append("patience cannot be negative, got %s; using 2" % patience)
 		patience = 2.0
 	if path_cells <= 0:
-		problems.append("pathCells must be positive, got %s; using 400" % path_cells)
+		problems.append("path_cells must be positive, got %s; using 400" % path_cells)
 		path_cells = 400
 	if hold_seconds < 0.0:
-		problems.append("holdSeconds cannot be negative, got %s; using 0.12" % hold_seconds)
+		problems.append("hold_seconds cannot be negative, got %s; using 0.12" % hold_seconds)
 		hold_seconds = 0.12
 	for key: String in actions.keys():
 		if not DEFAULT_ACTIONS.has(key):

@@ -21,6 +21,9 @@ func test_resolve_uses_the_studio_folders_by_default() -> void:
 	assert_str(paths.resolve(&"audio", "a.ogg")).is_equal("res://audio/a.ogg")
 	assert_str(paths.resolve(&"maps", "town.tscn")).is_equal("res://maps/town.tscn")
 	assert_str(paths.resolve(&"saves", "Saves/game.json")).is_equal("user://Saves/game.json")
+	assert_str(paths.resolve(&"config", "save.json")).is_equal("res://config/save.json")
+	assert_str(paths.resolve(&"items", "potion.tres")).is_equal("res://items/potion.tres")
+	assert_str(paths.resolve(&"quests", "bell.tres")).is_equal("res://quests/bell.tres")
 
 
 func test_resolve_follows_the_project_setting_with_or_without_trailing_slash() -> void:

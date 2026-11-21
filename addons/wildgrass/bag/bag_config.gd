@@ -1,4 +1,4 @@
-## `bag_config.json`: the pockets, in order, and the limits of the bag.
+## The `bag` config: the pockets, in order, and the limits of the bag.
 class_name WgBagConfig
 extends WgConfig
 
@@ -32,13 +32,13 @@ func _validate() -> PackedStringArray:
 		kept.append(pocket)
 	pockets = kept
 	if max_count < 0:
-		problems.append("maxCount cannot be negative, got %d; using 99" % max_count)
+		problems.append("max_count cannot be negative, got %d; using 99" % max_count)
 		max_count = 99
 	if max_money < 0:
-		problems.append("maxMoney cannot be negative, got %d; using 999999" % max_money)
+		problems.append("max_money cannot be negative, got %d; using 999999" % max_money)
 		max_money = 999999
 	if reveal_seconds < 0.0:
-		problems.append("revealSeconds cannot be negative, got %s; using 1" % reveal_seconds)
+		problems.append("reveal_seconds cannot be negative, got %s; using 1" % reveal_seconds)
 		reveal_seconds = 1.0
 	return problems
 

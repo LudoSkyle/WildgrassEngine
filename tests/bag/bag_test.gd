@@ -52,7 +52,7 @@ func test_items_are_added_and_removed_all_or_nothing() -> void:
 
 
 func test_no_limit_when_max_count_is_zero() -> void:
-	_world.sandbox.write_json("Data/configs/bag_config.json", {"maxCount": 0})
+	_world.sandbox.write_json("config/bag.json", {"max_count": 0})
 	assert_bool(_world.bag.add(&"potion", 5000)).is_true()
 
 

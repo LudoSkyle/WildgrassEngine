@@ -32,7 +32,7 @@ func before_test() -> void:
 		_logged.append("%s %s" % [Log.Level.keys()[level], message]))
 	var paths := Paths.new(false)
 	var config := ConfigRegistry.new(paths, logger)
-	config.register(&"map", WgMapConfig, "map_config")
+	config.register(&"map", WgMapConfig, "map")
 	_hooks = Hooks.new()
 	var layer: Node = auto_free(Node.new())
 	add_child(layer)
@@ -97,7 +97,7 @@ func test_arriving_at_an_exit_puts_you_on_it_facing_back() -> void:
 
 
 func test_the_tile_size_comes_from_map_config() -> void:
-	_sandbox.write_json("Data/configs/map_config.json", {"tileSize": 32})
+	_sandbox.write_json("config/map.json", {"tile_size": 32})
 	_town_and_house()
 	await _maps.go_to(&"town", &"HouseDoor")
 	assert_that(_traveller.global_position).is_equal(Vector2(64, 80))
@@ -211,7 +211,7 @@ func test_reload_without_a_map_is_refused() -> void:
 
 
 func test_the_named_transition_covers_then_uncovers_with_the_configured_length() -> void:
-	_sandbox.write_json("Data/configs/map_config.json", {"fadeSeconds": 0.5})
+	_sandbox.write_json("config/map.json", {"fade_seconds": 0.5})
 	_town_and_house()
 	await _maps.warp(&"town", &"Spawn", &"test")
 	assert_array(RecordingTransition.calls).is_equal(["cover 0.5", "uncover"])

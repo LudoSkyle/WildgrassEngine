@@ -28,7 +28,7 @@ func after_test() -> void:
 
 
 func _config(values: Dictionary) -> void:
-	_world.sandbox.write_json("Data/configs/save_config.json", values)
+	_world.sandbox.write_json("config/save.json", values)
 
 
 func _file(slot: int) -> Dictionary:
@@ -46,7 +46,7 @@ func _play() -> void:
 func test_a_game_written_comes_back_whole() -> void:
 	_play()
 	assert_bool(_world.save.write(1)).is_true()
-	assert_str(_world.save.path_of(1)).is_equal(_world.sandbox.root + "saves/Saves/Pokemon_Party-1.json")
+	assert_str(_world.save.path_of(1)).is_equal(_world.sandbox.root + "saves/saves/game-1.json")
 	assert_int(_world.save.slot).is_equal(1)
 	_world.save.new_game(2)
 	assert_bool(_world.story.has(&"bell_told")).is_false()
@@ -76,7 +76,7 @@ func test_with_no_maximum_slots_go_on_after_the_last_used() -> void:
 
 
 func test_a_maximum_bounds_the_slots_and_a_single_game_has_one_file() -> void:
-	_config({"maximumSave": 2})
+	_config({"slots": 2})
 	var save := _world.save
 	assert_array(save.slots()).is_equal([1, 2])
 	save.write(1)
@@ -84,11 +84,11 @@ func test_a_maximum_bounds_the_slots_and_a_single_game_has_one_file() -> void:
 	assert_int(save.first_empty()).is_equal(0)
 	assert_bool(save.write(3)).is_false()
 	assert_bool(save.has(3)).is_false()
-	_world.config.register(&"save", WgSaveConfig, "save_config")
-	_config({"maximumSave": 1, "baseFilename": "game"})
+	_world.config.register(&"save", WgSaveConfig, "save")
+	_config({"slots": 1, "file": "game"})
 	assert_str(save.path_of(1)).is_equal(_world.sandbox.root + "saves/game.json")
 	assert_array(save.slots()).is_equal([1])
-	assert_array(_world.logged).is_equal(["ERROR no slot 3 to write in (maximumSave 2)"])
+	assert_array(_world.logged).is_equal(["ERROR no slot 3 to write in (slots 2)"])
 
 
 func test_writing_takes_the_game_s_slot_else_the_first_empty_one() -> void:
@@ -116,7 +116,7 @@ func test_a_new_game_resets_every_part_then_tells_the_game() -> void:
 
 
 func test_a_part_no_one_added_is_kept_and_one_the_file_lacks_is_reset() -> void:
-	_world.sandbox.write_json("saves/Saves/Pokemon_Party-1.json", {"format": 1, "parts": {"story": {"flags": ["met"]}, "pokedex": {"seen": [25]}}})
+	_world.sandbox.write_json("saves/saves/game-1.json", {"format": 1, "parts": {"story": {"flags": ["met"]}, "pokedex": {"seen": [25]}}})
 	_world.bag.add(&"potion")
 	assert_bool(await _world.save.load_game(1)).is_true()
 	assert_bool(_world.story.has(&"met")).is_true()
@@ -166,11 +166,11 @@ func test_an_older_game_is_upgraded_and_a_newer_or_broken_one_refused() -> void:
 		if version == "0.9":
 			parts["story"]["flags"] = ["bell_told"]
 		return parts)
-	_world.sandbox.write_json("saves/Saves/Pokemon_Party-1.json", {"format": 1, "game_version": "0.9", "parts": {"story": {"flags": ["bell"]}}})
+	_world.sandbox.write_json("saves/saves/game-1.json", {"format": 1, "game_version": "0.9", "parts": {"story": {"flags": ["bell"]}}})
 	assert_bool(await _world.save.load_game(1)).is_true()
 	assert_bool(_world.story.has(&"bell_told")).is_true()
-	_world.sandbox.write_json("saves/Saves/Pokemon_Party-2.json", {"format": 2, "parts": {"story": {"flags": ["later"]}}})
-	_world.sandbox.write("saves/Saves/Pokemon_Party-3.json", "{ not json")
+	_world.sandbox.write_json("saves/saves/game-2.json", {"format": 2, "parts": {"story": {"flags": ["later"]}}})
+	_world.sandbox.write("saves/saves/game-3.json", "{ not json")
 	assert_bool(await _world.save.load_game(2)).is_false()
 	assert_bool(await _world.save.load_game(3)).is_false()
 	assert_bool(await _world.save.load_game(4)).is_false()
@@ -178,8 +178,8 @@ func test_an_older_game_is_upgraded_and_a_newer_or_broken_one_refused() -> void:
 	assert_int(_world.save.slot).is_equal(1)
 	assert_that(_world.save.summary(3)).is_equal({"damaged": true})
 	assert_array(_world.logged).is_equal([
-		"ERROR Pokemon_Party-2.json: written by a newer engine (format 2, this one reads 1)",
-		"ERROR Pokemon_Party-3.json: not a saved game",
+		"ERROR game-2.json: written by a newer engine (format 2, this one reads 1)",
+		"ERROR game-3.json: not a saved game",
 		"ERROR slot 4 holds no game",
 	])
 
@@ -236,20 +236,19 @@ func test_erasing_empties_a_slot_and_the_game_played_keeps_its_own() -> void:
 	assert_array(_events).is_equal(["written 1", "erased 1"])
 
 
-func test_studio_s_binary_settings_are_logged_and_a_bad_config_corrected() -> void:
-	_config({"maximumSave": -1, "baseFilename": "Saves/", "saveKey": 1234, "saveHeader": "PKPRT", "isCanSaveOnAnySave": true, "klass": "Configs::Project::Save"})
+func test_a_bad_config_is_logged_and_corrected() -> void:
+	_config({"slots": -1, "file": "saves/", "save_anywhere": true})
 	var settings := _world.save.config()
-	assert_int(settings.maximum_save).is_equal(0)
-	assert_str(settings.base_filename).is_equal("Saves/Pokemon_Party")
-	assert_bool(settings.is_can_save_on_any_save).is_true()
+	assert_int(settings.slots).is_equal(0)
+	assert_str(settings.file).is_equal("saves/game")
+	assert_bool(settings.save_anywhere).is_true()
 	assert_array(_world.logged).is_equal([
-		"WARN save_config.json: maximumSave cannot be negative, got -1; using 0",
-		"WARN save_config.json: baseFilename needs a file name, got 'Saves/'; using Saves/Pokemon_Party",
-		"WARN save_config.json: saveKey is for Studio's binary saves; games are written as JSON, not encrypted",
+		"WARN save.json: slots cannot be negative, got -1; using 0",
+		"WARN save.json: file needs a file name, got 'saves/'; using saves/game",
 	])
 
 
 func test_a_game_launched_for_testing_writes_apart_from_the_player_s() -> void:
 	var testing := World.Save.new(World.Paths.new(true), Log.new(), _world.config, _world.hooks)
-	assert_str(testing.path_of(2)).is_equal(_world.sandbox.root + "saves/test_Saves/Pokemon_Party-2.json")
+	assert_str(testing.path_of(2)).is_equal(_world.sandbox.root + "saves/test_saves/game-2.json")
 
