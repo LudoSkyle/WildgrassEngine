@@ -17,12 +17,19 @@ const StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
 ## The project setting turning the layer on: `auto` (when the project has
 ## `project.studio`), `on`, `off`.
 const SETTING := "wildgrass/studio/enabled"
+## The title's images, inside the graphics folder.
+const TITLES := "titles/"
 ## The engine's English labels, and the Studio text line that says them.
 const LABELS: Dictionary[String, String] = {
 	"Bag": "100014:2",
 	"Save": "100014:4",
 	"Options": "100014:5",
 	"Exit": "9000:26",
+	"Quit": "9000:26",
+	"Play": "9000:126",
+	"New game": "9000:0",
+	"Continue": "100025:0",
+	"Erase": "9000:22",
 	"Text speed": "100042:3",
 	"Choose how fast messages are written.": "100042:7",
 	"Slow": "100042:4",
@@ -86,6 +93,7 @@ func install(engine_texts: Texts, items: Items, quests: Quests) -> void:
 	_config.add_source(&"save", _save)
 	_config.add_source(&"options", _options)
 	_config.add_source(&"bag", _bag)
+	_config.add_source(&"title", _title)
 	engine_texts.add_placeholder("text", texts.text_reference)
 	_hooks.add(&"text_tokens", &"wildgrass_studio", texts.tokens)
 	items.add_source(_items.read)
@@ -142,6 +150,22 @@ func _options() -> Dictionary:
 func _bag() -> Dictionary:
 	var given := _fields("settings_config", {"maxBagItemCount": "max_count"})
 	given["pockets"] = StudioItems.pockets()
+	return given
+
+
+## Studio's splashes, its language at first launch, its controls' delay, its
+## game's name, its title images when they exist; no prompt.
+func _title() -> Dictionary:
+	var given := _fields("scene_title_config", {"isLanguageSelectionEnabled": "choose_language", "controlWaitTime": "controls_delay"})
+	var splashes: Variant = config_file("scene_title_config").get("additionalSplashes")
+	if splashes is Array:
+		given["splashes"] = (splashes as Array).map(func(splash: Variant) -> String: return _paths.resolve(&"graphics", TITLES + "%s.png" % splash))
+	given.merge(_fields("infos_config", {"gameTitle": "name"}))
+	given["show_prompt"] = false
+	for field: String in ["background", "logo"]:
+		var path := _paths.resolve(&"graphics", TITLES + ("title" if field == "logo" else field) + ".png")
+		if _paths.exists(path):
+			given[field] = path
 	return given
 
 

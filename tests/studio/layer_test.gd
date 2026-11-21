@@ -84,6 +84,43 @@ func test_a_save_key_is_logged_and_a_broken_config_too() -> void:
 	])
 
 
+func test_studio_s_title_becomes_the_engine_s_the_project_s_own_winning() -> void:
+	_world.sandbox.set_setting("wildgrass/paths/graphics", _world.sandbox.root + "graphics/")
+	_world.sandbox.write_json("Data/configs/scene_title_config.json", {"klass": "Configs::Project::SceneTitle", "introMovieMapId": 1, "bgmName": "audio/bgm/title.ogg", "isLanguageSelectionEnabled": true, "additionalSplashes": ["workshop", "studio"], "controlWaitTime": 0.5})
+	_world.sandbox.write_json("Data/configs/infos_config.json", {"klass": "Configs::Project::Infos", "gameTitle": "Mirage", "gameVersion": 256})
+	_world.sandbox.write("graphics/titles/title.png", "")
+	_world.sandbox.write_json("config/title.json", {"controls_delay": 1.0})
+	_studio = StudioProject.install(_world)
+	var title := _world.title.config()
+	var titles := _world.sandbox.root + "graphics/titles/"
+	assert_array(title.splashes).is_equal([titles + "workshop.png", titles + "studio.png"])
+	assert_bool(title.choose_language).is_true()
+	assert_float(title.controls_delay).is_equal(1.0)
+	assert_str(title.name).is_equal("Mirage")
+	assert_bool(title.show_prompt).is_false()
+	assert_str(title.logo).is_equal(titles + "title.png")
+	assert_str(title.background).is_empty()
+	assert_array(_world.logged).is_empty()
+
+
+func test_the_title_s_words_are_studio_s() -> void:
+	var lines := PackedStringArray(["en,fr"])
+	for row in 127:
+		lines.append("x,x")
+	lines[1] = "New game,Nouvelle partie"
+	lines[23] = "Erase,Effacer"
+	lines[27] = "Exit,Quitter"
+	lines[127] = "Play,Jouer"
+	_world.sandbox.write("Data/Text/Dialogs/9000.csv", "\n".join(lines) + "\n")
+	_world.sandbox.write("Data/Text/Dialogs/100025.csv", "en,fr\nCONTINUE,Continuer\n")
+	_studio = StudioProject.install(_world)
+	_world.texts.language = "fr"
+	var words: Array[String] = []
+	for label: String in ["Play", "Quit", "New game", "Continue", "Erase"]:
+		words.append(_world.texts.label(label))
+	assert_array(words).is_equal(["Jouer", "Quitter", "Nouvelle partie", "Continuer", "Effacer"])
+
+
 func test_studio_s_pockets_come_in_studio_s_order_with_its_names() -> void:
 	_world.sandbox.write("Data/Text/Dialogs/100015.csv", "en,fr\nMedicine,Soins\nPoké Balls,Poké Balls\nBattle Items,Objets de combat\nBerries,Baies\nOther Items,Objets\nTMs,CT\nTreasures,Trésors\nIngredients,Ingrédients\nKey Items,Objets rares\n")
 	_studio = StudioProject.install(_world)
