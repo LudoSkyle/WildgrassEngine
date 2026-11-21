@@ -1,5 +1,5 @@
-## Builds a character's animations from a character sheet, as Studio and RPG
-## Maker draw them: columns of steps, one row per direction. `idle_<dir>` is the
+## Builds a character's animations from a character sheet, as they are usually
+## drawn: columns of steps, one row per direction. `idle_<dir>` is the
 ## first column, `walk_<dir>` every column.
 @tool
 class_name WgCharacterSprite

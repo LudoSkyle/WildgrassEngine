@@ -100,7 +100,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
+	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgStudioConfig", "WgTalk", "WgTransition", "WgTrigger", "WgWalker", "WgWalkerController", "WgWander"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 
@@ -119,6 +119,20 @@ func test_display_config_and_log_config_are_applied_at_start() -> void:
 	assert_array(display.applied).has_size(1)
 	assert_int(display.applied[0].window_scale).is_equal(3)
 	assert_int(engine.log.level).is_equal(engine.log.Level.ERROR)
+
+
+func test_a_studio_project_is_read_through_the_layer_from_the_start() -> void:
+	_sandbox.set_setting("wildgrass/services/display", "res://tests/support/recording_display.gd")
+	_sandbox.set_setting("wildgrass/paths/studio", _sandbox.root)
+	_sandbox.write("project.studio", "{}")
+	_sandbox.write_json("Data/configs/display_config.json", {"klass": "Configs::Project::Display", "windowScale": 4})
+	var engine := _start_engine()
+	add_child(engine)
+	assert_bool(engine.studio.installed).is_true()
+	var display := engine.display as RecordingDisplay
+	assert_array(display.applied).has_size(1)
+	assert_int(display.applied[0].window_scale).is_equal(4)
+	engine.studio.uninstall()
 
 
 func test_the_default_language_is_set_at_start() -> void:

@@ -7,20 +7,6 @@ const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
 
-## Studio's pocket numbers, by pocket.
-const STUDIO_POCKETS: Dictionary[int, StringName] = {1: &"items", 2: &"balls", 3: &"tms", 4: &"berries", 5: &"key_items", 6: &"medicine"}
-## Studio's item files, inside the data folder: `<id>.json`.
-const STUDIO_FOLDER := "Studio/items/"
-## Studio's item icons, inside the graphics folder: `<icon>.png`.
-const STUDIO_ICONS := "icons/"
-const NAME_TEXTS := 100012
-const DESCRIPTION_TEXTS := 100013
-const PLURAL_TEXTS := 9001
-## Fields every Studio item has; the others go to `data`.
-const STUDIO_FIELDS: Array[String] = [
-	"klass", "id", "dbSymbol", "icon", "price", "socket", "position", "isLimited", "isMapUsable",
-]
-
 @warning_ignore("shadowed_global_identifier")
 var log: Log
 
@@ -74,8 +60,6 @@ func _find(id: StringName) -> WgItem:
 			break
 		found = source.call(id) as WgItem
 	if found == null:
-		found = _read_studio(id)
-	if found == null:
 		return null
 	if found.id.is_empty():
 		found.id = id
@@ -110,36 +94,3 @@ func use_of(found: WgItem) -> Callable:
 
 func bag_config() -> WgBagConfig:
 	return _config.get_config(&"bag") as WgBagConfig
-
-
-func _studio_path(id: StringName) -> String:
-	return _paths.resolve(&"data", STUDIO_FOLDER + "%s.json" % id)
-
-
-func _read_studio(id: StringName) -> WgItem:
-	var path := _studio_path(id)
-	if not FileAccess.file_exists(path):
-		return null
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not data is Dictionary or str(data.get("dbSymbol", "")) != str(id):
-		log.error(&"items", "%s: not a Studio item" % path)
-		return null
-	var read := WgItem.new()
-	read.id = id
-	read.kind = StringName(str(data.get("klass", "Item")).trim_suffix("Item").to_snake_case())
-	var number := int(data.get("id", 0))
-	read.name = "{text:%d:%d}" % [NAME_TEXTS, number]
-	read.description = "{text:%d:%d}" % [DESCRIPTION_TEXTS, number]
-	read.plural = "{text:%d:%d}" % [PLURAL_TEXTS, number]
-	read.pocket = STUDIO_POCKETS.get(int(data.get("socket", 0)), &"")
-	read.position = int(data.get("position", 0))
-	read.price = int(data.get("price", 0))
-	read.consumed = bool(data.get("isLimited", true))
-	read.usable = bool(data.get("isMapUsable", false))
-	if data.has("icon"):
-		read.icon_path = _paths.resolve(&"graphics", STUDIO_ICONS + "%s.png" % data["icon"])
-		read.on_missing_icon = _paths.report_missing.bind("item %s" % id)
-	for key: String in data:
-		if key not in STUDIO_FIELDS:
-			read.data[key.to_snake_case()] = data[key]
-	return read

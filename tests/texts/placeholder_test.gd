@@ -70,41 +70,10 @@ func test_key_names_the_key_bound_to_an_action_else_its_first_input() -> void:
 	assert_str(_format("{key:wg_none}")).is_equal("{key:wg_none}")
 
 
-func test_text_inserts_a_studio_text() -> void:
-	_world.sandbox.write("Data/Text/Dialogs/100000.csv", "en,fr\nEgg,Œuf\nBulbasaur,Bulbizarre\n")
-	_world.texts.language = "fr"
-	assert_str(_format("A wild {text:100000:1}!")).is_equal("A wild Bulbizarre!")
-	assert_str(_format("{text:abc:1}")).is_equal("{text:abc:1}")
-
-
-func test_a_studio_text_with_a_fallback_shows_it_translated_when_the_text_is_missing() -> void:
-	var french := Translation.new()
-	french.locale = "fr"
-	french.add_message("Bag", "Sac à dos")
-	TranslationServer.add_translation(french)
-	_world.texts.language = "fr"
-	assert_str(_format("{text:100014:2|Bag}")).is_equal("Sac à dos")
-	_world.sandbox.write("Data/Text/Dialogs/100015.csv", "en,fr\nMedicine,Soins\n[~ 1],[~ 1]\n")
-	assert_str(_format("{text:100015:0|Medicine}")).is_equal("Soins")
-	assert_str(_format("{text:100015:1|Poké Balls}")).is_equal("Poké Balls")
-	assert_str(_format("{text:100015:7|Ingredients}")).is_equal("Ingredients")
-	assert_array(_world.logged).is_empty()
-	assert_str(_format("{text:100014:2}")).is_empty()
-	assert_array(_world.logged).is_equal(["WARN no Studio text file %sData/Text/Dialogs/100014.csv" % _world.sandbox.root])
-	TranslationServer.remove_translation(french)
-
-
-func test_studio_tokens_read_values_and_vanish_without_one() -> void:
-	_world.texts.set_value(&"pkname_0", "Pikachu")
-	assert_str(_format("The wild [VAR PKNAME(0000)] used [VAR 1002]Pound!")).is_equal("The wild Pikachu used Pound!")
-
-
 func test_what_is_missing_stays_as_written_and_is_logged_once() -> void:
-	_format("{nobody} {nobody} {it?a|b} [VAR 1002] {text:abc:1} {key:wg_none}")
+	_format("{nobody} {nobody} {it?a|b} {key:wg_none}")
 	_format("{nobody}")
 	assert_array(_world.logged).is_equal([
-		"WARN bad Studio text reference {text:abc:1}",
-		"WARN no value for Studio token [VAR 1002]",
 		"WARN no value for {nobody}",
 		"WARN no value for {it?a|b}",
 		"WARN no value for {key:wg_none}",
@@ -113,9 +82,8 @@ func test_what_is_missing_stays_as_written_and_is_logged_once() -> void:
 
 func test_escaping_applies_to_what_values_put_in_only() -> void:
 	_world.texts.set_value(&"player", "[page]Bob")
-	_world.texts.set_value(&"pkname_0", "[wait]")
 	_world.texts.set_value(&"flag", true)
-	assert_str(_format("{player} [b]x[/b] {flag?[i]y[/i]|} [VAR PKNAME(0000)]", true)).is_equal("[lb]page]Bob [b]x[/b] [i]y[/i] [lb]wait]")
+	assert_str(_format("{player} [b]x[/b] {flag?[i]y[/i]|}", true)).is_equal("[lb]page]Bob [b]x[/b] [i]y[/i]")
 	assert_str(_format("{player}")).is_equal("[page]Bob")
 
 

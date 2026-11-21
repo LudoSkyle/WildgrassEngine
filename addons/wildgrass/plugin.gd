@@ -5,8 +5,8 @@ const AUTOLOAD_NAME := "Wildgrass"
 const AUTOLOAD_PATH := "res://addons/wildgrass/wildgrass.gd"
 const SHADER_GLOBAL := "shader_globals/game_time"
 const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
-const StudioImport := preload("res://addons/wildgrass/texts/studio_import.gd")
+const StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
+const StudioImport := preload("res://addons/wildgrass/studio/studio_import.gd")
 
 
 func _enable_plugin() -> void:
@@ -40,7 +40,7 @@ func _exit_tree() -> void:
 ## Studio's text files stay as they are, not turned into translations.
 func _keep_studio_texts() -> void:
 	var made: Array[String] = []
-	var changed := StudioImport.keep_files(Paths.new(false).resolve(&"data", Texts.STUDIO_FOLDER), made)
+	var changed := StudioImport.keep_files(Paths.new(false).resolve(&"data", StudioTexts.FOLDER), made)
 	if changed.is_empty():
 		return
 	EditorInterface.get_resource_filesystem().reimport_files(changed)

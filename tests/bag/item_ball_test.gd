@@ -9,9 +9,12 @@ var _player: WgWalker
 
 func before_test() -> void:
 	_world = World.new(self)
-	_world.sandbox.write_json("Data/Studio/items/potion.json", {"id": 1, "dbSymbol": "potion", "socket": 6, "isLimited": true, "klass": "ConstantHealItem"})
-	_world.sandbox.write("Data/Text/Dialogs/100012.csv", "en,fr\nThing,Chose\nPotion,Potion\n")
-	_world.sandbox.write("Data/Text/Dialogs/9001.csv", "en,fr\nThings,Choses\nPotions,Potions\n")
+	var potion := WgItem.new()
+	potion.id = &"potion"
+	potion.name = "Potion"
+	potion.plural = "Potions"
+	potion.pocket = &"medicine"
+	_world.items.register(potion)
 
 
 func after_test() -> void:
@@ -86,7 +89,6 @@ func test_what_blocks_covers_its_cells_on_its_level_and_never_from_inside_a_walk
 
 
 func test_taken_it_goes_in_the_bag_says_its_name_and_is_gone() -> void:
-	TranslationServer.set_locale("fr")
 	_field()
 	var ball := _ball(Vector2i(5, 4), 3)
 	var gifts: Array[String] = []

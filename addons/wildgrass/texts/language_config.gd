@@ -10,8 +10,6 @@ extends WgConfig
 @export var choosable: Array[String] = []
 ## Name of each choosable language, written in that language.
 @export var names: Array[String] = []
-## Column of Studio's text files for a Godot locale, where they differ.
-@export var studio_columns: Dictionary[String, String] = {}
 
 
 func _validate() -> PackedStringArray:

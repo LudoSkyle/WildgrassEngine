@@ -7,19 +7,6 @@ const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
-## Studio's quest files, inside the data folder.
-const STUDIO_FOLDER := "Studio/quests/"
-## Studio texts of quest names and descriptions.
-const NAME_TEXTS := 100045
-const DESCRIPTION_TEXTS := 100046
-## Where each kind of Studio objective writes its target and its amount:
-## [index of the target or -1, index of the amount or -1].
-const STUDIO_ARGS: Dictionary[String, Array] = {
-	"speak_to": [0, -1], "obtain_item": [0, 1], "see_pokemon": [0, -1], "beat_pokemon": [0, 1],
-	"catch_pokemon": [-1, 1], "beat_npc": [0, 2], "obtain_egg": [-1, 0], "hatch_egg": [-1, 1],
-	"custom": [0, -1],
-}
-
 signal started(id: StringName)
 signal objective_done(id: StringName, index: int)
 signal finished(id: StringName)
@@ -34,7 +21,7 @@ var log: Log
 
 var _hooks: Hooks
 var _paths: Paths
-var _studio_read := false
+var _read := false
 var _sources: Array[Callable] = []
 var _quests: Dictionary[StringName, WgQuest] = {}
 var _givers: Dictionary[StringName, Callable] = {}
@@ -65,7 +52,7 @@ func add_source(source: Callable) -> void:
 
 
 func quest(id: StringName) -> WgQuest:
-	_read_studio()
+	_read_all()
 	return _quests.get(id)
 
 
@@ -210,14 +197,12 @@ func reset() -> void:
 	_progress.clear()
 
 
-## Reads the Studio project's quests, once, before any is asked for; a quest
-## the game registers under the same id wins. Its name and description are
-## placeholders of Studio texts, shown in the current language through
-## `Wildgrass.texts.format()`.
-func _read_studio() -> void:
-	if _studio_read:
+## Reads the folder's quests and the sources', once, before any quest is
+## asked for; the first to name an id keeps it.
+func _read_all() -> void:
+	if _read:
 		return
-	_studio_read = true
+	_read = true
 	for found: WgQuest in _from_folder():
 		_add_once(found)
 	for source in _sources:
@@ -225,18 +210,6 @@ func _read_studio() -> void:
 		for found: Variant in given if given is Array else []:
 			if found is WgQuest:
 				_add_once(found)
-	var folder := _paths.resolve(&"data", STUDIO_FOLDER)
-	var dir := DirAccess.open(folder)
-	if dir == null:
-		return
-	var files := Array(dir.get_files()).filter(func(file: String) -> bool: return file.get_extension() == "json")
-	files.sort()
-	for file: String in files:
-		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(folder + file))
-		if not data is Dictionary or not data.has("dbSymbol"):
-			log.error(&"quests", "%s: not a Studio quest" % (folder + file))
-			continue
-		_add_once(_from_studio(data))
 
 
 func _add_once(found: WgQuest) -> void:
@@ -258,36 +231,6 @@ func _from_folder() -> Array[WgQuest]:
 		else:
 			found.append(quest)
 	return found
-
-
-func _from_studio(data: Dictionary) -> WgQuest:
-	var built := WgQuest.new()
-	built.id = StringName(str(data["dbSymbol"]))
-	var number := int(data.get("id", 0))
-	built.name = "{text:%d:%d}" % [NAME_TEXTS, number]
-	built.description = "{text:%d:%d}" % [DESCRIPTION_TEXTS, number]
-	built.primary = bool(data.get("isPrimary", true))
-	for written: Variant in data.get("objectives", []):
-		var objective := WgQuestObjective.new()
-		var kind := str(written.get("objectiveMethodName", "")).trim_prefix("objective_")
-		objective.kind = StringName(kind)
-		objective.args = written.get("objectiveMethodArgs", [])
-		objective.hidden = bool(written.get("hiddenByDefault", false))
-		var places: Array = STUDIO_ARGS.get(kind, [0, -1])
-		if not STUDIO_ARGS.has(kind):
-			log.warn(&"quests", "%s: unknown objective kind '%s'" % [built.id, kind])
-		if places[0] >= 0 and places[0] < objective.args.size() and objective.args[places[0]] != null:
-			var target: Variant = objective.args[places[0]]
-			objective.target = str(int(target)) if target is float and target == floorf(target) else str(target)
-		if places[1] >= 0 and places[1] < objective.args.size() and objective.args[places[1]] != null:
-			objective.amount = maxi(int(objective.args[places[1]]), 1)
-		built.objectives.append(objective)
-	for written: Variant in data.get("earnings", []):
-		var earning := WgQuestEarning.new()
-		earning.kind = StringName(str(written.get("earningMethodName", "")).trim_prefix("earning_"))
-		earning.args = written.get("earningArgs", [])
-		built.earnings.append(earning)
-	return built
 
 
 func _count(id: StringName, index: int, amount: int) -> void:
@@ -316,7 +259,7 @@ func _matches(objective: WgQuestObjective, target: Variant) -> bool:
 
 
 func _known(id: StringName) -> WgQuest:
-	_read_studio()
+	_read_all()
 	if not _quests.has(id):
 		log.error(&"quests", "unknown quest '%s'" % id)
 		return null

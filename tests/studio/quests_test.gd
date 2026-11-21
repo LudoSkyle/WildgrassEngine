@@ -1,8 +1,10 @@
 extends GdUnitTestSuite
 
 const World := preload("res://tests/support/walking_world.gd")
+const StudioProject := preload("res://tests/support/studio_project.gd")
 
 var _world: World
+var _studio: StudioProject.Studio
 
 
 func before_test() -> void:
@@ -26,9 +28,11 @@ func before_test() -> void:
 		"earnings": [],
 	})
 	_world.sandbox.write("Data/Text/Dialogs/100045.csv", "en,fr\nTo the Tower!,Direction la Tour !\n[~ 1],[~ 1]\nA ghost's regrets,Les regrets d'un fantôme\n")
+	_studio = StudioProject.install(_world)
 
 
 func after_test() -> void:
+	_studio.uninstall()
 	TranslationServer.set_locale("en")
 	_world.root.free()
 	_world.cleanup()

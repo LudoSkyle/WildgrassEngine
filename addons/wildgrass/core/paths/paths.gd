@@ -5,6 +5,8 @@ extends RefCounted
 signal asset_missing(path: String, requester: String)
 
 const SETTING_PREFIX := "wildgrass/paths/"
+## `data` and `studio` are the Studio layer's: a Studio project's data
+## folder and its root.
 const DEFAULTS: Dictionary[StringName, String] = {
 	&"data": "res://Data/",
 	&"graphics": "res://graphics/",
@@ -14,6 +16,7 @@ const DEFAULTS: Dictionary[StringName, String] = {
 	&"config": "res://config/",
 	&"items": "res://items/",
 	&"quests": "res://quests/",
+	&"studio": "res://",
 }
 
 ## True when the game was launched with `-- --test`: player files are redirected.
