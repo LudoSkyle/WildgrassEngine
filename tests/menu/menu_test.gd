@@ -55,12 +55,12 @@ func _mark(name: String, close: bool) -> bool:
 
 func test_entries_go_before_exit_or_another_and_an_id_taken_again_stays_in_place() -> void:
 	var menu := _world.menu
-	assert_array(menu.entries()).is_equal([&"bag", &"save", &"exit"])
+	assert_array(menu.entries()).is_equal([&"bag", &"options", &"save", &"exit"])
 	menu.add_entry(&"dex", "Pokédex", _mark.bind("dex", false), "", &"bag")
 	menu.add_entry(&"card", "Card", _mark.bind("card", false))
 	menu.add_entry(&"last", "Last", _mark.bind("last", false), "", &"nowhere")
 	menu.add_entry(&"dex", "Dex", _mark.bind("dex", true))
-	assert_array(menu.entries()).is_equal([&"dex", &"bag", &"save", &"card", &"exit", &"last"])
+	assert_array(menu.entries()).is_equal([&"dex", &"bag", &"options", &"save", &"card", &"exit", &"last"])
 	assert_bool(menu.remove_entry(&"last")).is_true()
 	assert_bool(menu.remove_entry(&"last")).is_false()
 	assert_str(menu.shown()[0]["text"]).is_equal("Dex")
@@ -73,7 +73,7 @@ func test_the_menu_key_opens_it_with_the_entries_whose_condition_holds() -> void
 	Input.action_release("ui_cancel")
 	var screen := _world.screens.top() as WgMenuScreen
 	assert_object(screen).is_not_null()
-	assert_array(_labels(screen)).is_equal(["Bag", "Exit"])
+	assert_array(_labels(screen)).is_equal(["Bag", "Options", "Exit"])
 	assert_object(_world.menu.open()).is_null()
 
 
@@ -88,7 +88,8 @@ func test_the_cursor_moves_round_and_is_kept_then_falls_back_when_its_entry_is_g
 	assert_str(screen.selected()).is_equal("bag")
 	_press("ui_up")
 	assert_str(screen.selected()).is_equal("exit")
-	assert_int(_pressed(screen)).is_equal(2)
+	assert_int(_pressed(screen)).is_equal(3)
+	_press("ui_down")
 	_press("ui_down")
 	_press("ui_down")
 	assert_str(screen.selected()).is_equal("save")
@@ -114,7 +115,7 @@ func test_an_entry_is_awaited_keys_waiting_then_it_closes_the_menu_or_stays() ->
 	assert_bool(screen.is_closed()).is_false()
 	entry_done.emit()
 	assert_bool(screen.is_closed()).is_false()
-	assert_array(_labels(screen)).is_equal(["Wait", "Leave", "Bag", "Exit"])
+	assert_array(_labels(screen)).is_equal(["Wait", "Leave", "Bag", "Options", "Exit"])
 	_press("ui_down")
 	_press("ui_accept")
 	assert_bool(screen.is_closed()).is_true()
@@ -136,6 +137,7 @@ func test_bag_opens_above_and_comes_back_to_the_menu_and_exit_closes() -> void:
 
 func test_save_closes_the_menu_once_saved_only() -> void:
 	var screen := _world.menu.open() as WgMenuScreen
+	_press("ui_down")
 	_press("ui_down")
 	_press("ui_accept")
 	await get_tree().process_frame
@@ -159,9 +161,9 @@ func test_save_closes_the_menu_once_saved_only() -> void:
 func test_its_labels_follow_the_language() -> void:
 	_world.sandbox.write("Data/Text/Dialogs/100014.csv", "en,fr\nPOKÉMON,Pokémon\nPOKÉDEX,Pokédex\nBAG,Sac\n")
 	var screen := _world.menu.open() as WgMenuScreen
-	assert_array(_labels(screen)).is_equal(["BAG", "Save", "Exit"])
+	assert_array(_labels(screen)).is_equal(["BAG", "Options", "Save", "Exit"])
 	_world.texts.language = "fr"
-	assert_array(_labels(screen)).is_equal(["Sac", "Save", "Exit"])
+	assert_array(_labels(screen)).is_equal(["Sac", "Options", "Save", "Exit"])
 
 
 func test_opened_alone_the_screen_uses_the_engine_s_services() -> void:

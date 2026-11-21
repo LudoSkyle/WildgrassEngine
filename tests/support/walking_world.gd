@@ -87,6 +87,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
+	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -121,6 +122,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu.add_entry(&"save", "{text:100014:4|Save}", menu.open_save, "!save_disabled")
 	options = Options.new(paths, logger, config)
 	options.file_path = sandbox.root + "options.json"
+	menu.services["options"] = options
+	menu.add_entry(&"options", "{text:100014:5|Options}", menu.open_options, "", &"save")
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 
