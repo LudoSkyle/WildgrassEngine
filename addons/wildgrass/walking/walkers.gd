@@ -76,6 +76,7 @@ func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, s
 	tiles = tiles_service
 	hooks.add(&"can_step", &"wildgrass_walkers", _keep_walkers_apart)
 	maps.map_changed.connect(_on_map_changed)
+	maps.cleared.connect(_end_all)
 
 
 ## The walker standing or stepping into `cell` on `level`, or null. Walkers
@@ -483,8 +484,12 @@ static func _read_cell(value: Variant) -> Vector2i:
 ## A warp or a reload ends every interaction and scripted walk; crossing a
 ## seam does not.
 func _on_map_changed(_map: WgMap) -> void:
-	if maps.is_crossing:
-		return
+	if not maps.is_crossing:
+		_end_all()
+
+
+## Every interaction and scripted walk ends: a warp, back to the title.
+func _end_all() -> void:
 	_busy.clear()
 	for walker: WgWalker in _scripts.keys():
 		_end_walk(walker, false)

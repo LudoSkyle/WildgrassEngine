@@ -4,7 +4,9 @@
 ## `wildgrass/screens/save_slots` to its own.
 ##
 ## `Wildgrass.screens.open(&"save_slots")`; arguments: `save`, `dialogue`,
-## `texts`, the services (the engine's).
+## `texts`, the services (the engine's); `new_game` and `continue`, callables
+## given a slot and awaited, true when the game started, in place of the save
+## service's (the title's fade).
 class_name WgSaveSlotsScreen
 extends WgScreen
 
@@ -45,12 +47,17 @@ var cursor := 0
 
 var _cards: Array[Button] = []
 var _busy := false
+var _ended := false
+var _new_game: Callable
+var _continue: Callable
 
 
 func _on_open(args: Dictionary) -> void:
 	save = _service(args, &"save")
 	dialogue = _service(args, &"dialogue")
 	texts = _service(args, &"texts")
+	_new_game = args.get("new_game", Callable())
+	_continue = args.get("continue", Callable())
 	if save == null or dialogue == null or texts == null:
 		push_error("save slots screen: no save, dialogue or texts service")
 		close()
@@ -140,17 +147,16 @@ func _act() -> void:
 	_busy = true
 	if summary.is_empty():
 		var start := await dialogue.ask(card_of(number), [new_game_choice, cancel_choice])
-		_busy = false
-		if start == 0:
-			save.new_game(number)
+		if start == 0 and await _start_new(number):
 			_end(number, &"new_game")
+		_busy = false
 		return
 	var damaged: bool = summary.get("damaged", false)
 	var choices: Array = [erase_choice, cancel_choice] if damaged else [continue_choice, erase_choice, cancel_choice]
 	var picked := await dialogue.ask(card_of(number), choices)
 	var answer: String = choices[picked] if picked >= 0 else cancel_choice
 	if answer == continue_choice:
-		if await save.load_game(number):
+		if await _load(number):
 			_busy = false
 			_end(number, &"continue")
 			return
@@ -162,9 +168,25 @@ func _act() -> void:
 	_busy = false
 
 
+func _start_new(number: int) -> bool:
+	if _new_game.is_valid():
+		return await _new_game.call(number)
+	save.new_game(number)
+	return true
+
+
+func _load(number: int) -> bool:
+	if _continue.is_valid():
+		return await _continue.call(number)
+	return await save.load_game(number)
+
+
+## Announces what was done, once, and closes: a game started by the title
+## closed it already.
 func _end(number: int, action: StringName) -> void:
-	if is_closed():
+	if _ended:
 		return
+	_ended = true
 	chosen.emit(number, action)
 	close()
 

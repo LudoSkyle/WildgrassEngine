@@ -194,6 +194,14 @@ func new_game(game_slot := 0) -> void:
 	new_game_started.emit(slot)
 
 
+## Empties every part and forgets the game played: back to the title.
+func reset() -> void:
+	_kept = {}
+	slot = 0
+	for part: Dictionary in _parts:
+		(part["reset"] as Callable).call()
+
+
 ## Removes the game of a slot. The game played keeps its slot.
 func erase(game_slot: int) -> bool:
 	if not has(game_slot):

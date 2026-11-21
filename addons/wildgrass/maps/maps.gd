@@ -16,6 +16,8 @@ signal zone_changed(old_zone: StringName, new_zone: StringName)
 signal map_changed(map: WgMap)
 ## Every neighbour of the current map is shown, after a crossing.
 signal neighbours_loaded
+## Every map was dropped: back to the title.
+signal cleared
 
 ## The map on screen, or null.
 var current: WgMap
@@ -109,6 +111,25 @@ func _warp(map_id: StringName, point: StringName, transition: StringName, offset
 	is_changing = false
 	map_changed.emit(current)
 	return true
+
+
+## Drops every map on screen and the traveller's place in them: back to the
+## title. The traveller leaves the tree; the next warp puts it back.
+func clear() -> void:
+	_generation += 1
+	is_loading_neighbours = false
+	if traveller != null and traveller.get_parent() != null:
+		traveller.get_parent().remove_child(traveller)
+	if current != null:
+		_free_map(current)
+	for map: WgMap in neighbours:
+		_free_map(map)
+	neighbours.clear()
+	_neighbour_ids.clear()
+	current = null
+	current_id = &""
+	_zone = &""
+	cleared.emit()
 
 
 ## Warps through `door`, by the rules of the point it leads to.

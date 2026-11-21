@@ -128,6 +128,20 @@ func test_a_part_no_one_added_is_kept_and_one_the_file_lacks_is_reset() -> void:
 	assert_bool(_file(2)["parts"].has("pokedex")).is_false()
 
 
+func test_reset_empties_every_part_and_forgets_the_game_telling_no_one() -> void:
+	_world.sandbox.write_json("saves/saves/game-1.json", {"format": 1, "parts": {"pokedex": {"seen": [25]}}})
+	assert_bool(await _world.save.load_game(1)).is_true()
+	_play()
+	_events.clear()
+	_world.save.reset()
+	assert_int(_world.save.slot).is_equal(0)
+	assert_bool(_world.story.has(&"bell_told")).is_false()
+	assert_int(_world.bag.money).is_equal(0)
+	assert_array(_events).is_empty()
+	_world.save.write(2)
+	assert_bool(_file(2)["parts"].has("pokedex")).is_false()
+
+
 func test_parts_are_restored_in_order_a_coroutine_awaited_before_the_game_is_told() -> void:
 	var order: Array[String] = []
 	_world.save.add_part(&"late", func() -> Dictionary: return {"x": 1}, func(_state: Dictionary) -> void:

@@ -80,6 +80,11 @@ func values_of(id: StringName) -> Array:
 	return found if found is Array else []
 
 
+## True if the player's machine kept a value for `id`.
+func was_kept(id: StringName) -> bool:
+	return _read.has(str(id))
+
+
 func value(id: StringName) -> Variant:
 	return _values.get(id)
 
@@ -149,6 +154,7 @@ func write() -> void:
 		log.error(&"options", "cannot write %s: %s" % [file_path, error_string(FileAccess.get_open_error())])
 		return
 	file.store_string(JSON.stringify(kept, "\t"))
+	_read = kept
 
 
 ## The engine's options: message speed, message frame, volume, language.

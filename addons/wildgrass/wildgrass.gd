@@ -24,6 +24,7 @@ const Save := preload("res://addons/wildgrass/save/save.gd")
 const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Options := preload("res://addons/wildgrass/options/options.gd")
 const Studio := preload("res://addons/wildgrass/studio/studio.gd")
+const Title := preload("res://addons/wildgrass/title/title.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -49,6 +50,7 @@ var dialogue: Dialogue
 var save: Save
 var menu: Menu
 var options: Options
+var title: Title
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -96,6 +98,7 @@ func _init() -> void:
 	options = _service(&"options", Options, [paths, log, config])
 	menu.services["options"] = options
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
+	title = _service(&"title", Title, [paths, log, config, screens, story, maps, dialogue, save, options, texts])
 	config.register(&"log", WgLogConfig, "log")
 	config.register(&"display", WgDisplayConfig, "display")
 	config.register(&"language", WgLanguageConfig, "language")
@@ -106,6 +109,7 @@ func _init() -> void:
 	config.register(&"movement", WgMovementConfig, "movement")
 	config.register(&"dialogue", WgDialogueConfig, "dialogue")
 	config.register(&"studio", WgStudioConfig, "studio")
+	config.register(&"title", WgTitleConfig, "title")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests)
@@ -118,6 +122,8 @@ func _init() -> void:
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
+	screens.register(&"splash", "res://addons/wildgrass/title/splash_screen.tscn")
+	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.
@@ -150,6 +156,13 @@ func _ready() -> void:
 	Clock.declare_shader_global()
 	clock.updates_shader_global = true
 	_start.call_deferred()
+
+
+## A traveller out of the tree, back at the title, has no one else to free it:
+## it would keep every service alive past the end.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE and maps != null and is_instance_valid(maps.traveller) and maps.traveller.get_parent() == null:
+		maps.traveller.free()
 
 
 func _process(delta: float) -> void:
