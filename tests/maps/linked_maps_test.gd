@@ -270,6 +270,26 @@ func test_a_warp_shows_the_target_at_the_origin_with_fresh_neighbours_and_runs_t
 	assert_that(_neighbour(&"route").position).is_equal(Vector2(32, -128))
 
 
+func test_clear_drops_every_map_and_their_loading_and_the_next_warp_starts_afresh() -> void:
+	_route()
+	await _maps.go_to(&"route", &"Spawn")
+	_cross_to(Vector2(16, 128))
+	var left: Array[String] = []
+	_hooks.add(&"map_leaving", &"test", func(map: WgMap) -> void: left.append(map.scene_file_path.get_file()))
+	_maps.cleared.connect(func() -> void: left.append("cleared"))
+	_maps.clear()
+	assert_array(left).is_equal(["island.tscn", "route.tscn", "cleared"])
+	assert_object(_maps.current).is_null()
+	assert_str(_maps.current_id).is_empty()
+	assert_array(_maps.neighbours).is_empty()
+	assert_bool(_maps.is_loading_neighbours).is_false()
+	assert_object(_traveller.get_parent()).is_null()
+	assert_int(_host.get_child_count()).is_equal(0)
+	_events.clear()
+	await _maps.go_to(&"island", &"Spawn")
+	assert_array(_events).is_equal(["arrived", "zone >island", "changed island"])
+
+
 func test_reload_away_from_the_origin_keeps_every_map_in_place() -> void:
 	_route()
 	await _maps.go_to(&"route", &"Spawn")

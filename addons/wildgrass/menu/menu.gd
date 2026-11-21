@@ -5,6 +5,7 @@ extends RefCounted
 const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
+const Entries := preload("res://addons/wildgrass/menu/entries.gd")
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
@@ -18,52 +19,34 @@ var services := {}
 var screen: WgScreen
 
 var _screens: ScreenRegistry
-var _story: Story
-## Each {"id", "text", "callable", "condition"}, in order.
-var _entries: Array[Dictionary] = []
+var _entries: Entries
 
 
 func _init(logger: Log, screen_registry: ScreenRegistry, story: Story) -> void:
 	log = logger
 	_screens = screen_registry
-	_story = story
+	_entries = Entries.new(story)
 
 
 ## Adds an entry before `before` (the last one if it is not there). Its
 ## callable is awaited and returns true to close the menu. An id taken
 ## again replaces that entry where it stands.
 func add_entry(id: StringName, text: String, callable: Callable, condition := "", before: StringName = &"exit") -> void:
-	var entry := {"id": id, "text": text, "callable": callable, "condition": condition}
-	var at := _index(id)
-	if at >= 0:
-		_entries[at] = entry
-		return
-	var place := _index(before)
-	if place < 0:
-		_entries.append(entry)
-	else:
-		_entries.insert(place, entry)
+	_entries.add(id, text, callable, condition, before)
 
 
 func remove_entry(id: StringName) -> bool:
-	var at := _index(id)
-	if at < 0:
-		return false
-	_entries.remove_at(at)
-	return true
+	return _entries.remove(id)
 
 
 ## Every entry's id, in order.
 func entries() -> Array[StringName]:
-	var ids: Array[StringName] = []
-	for entry: Dictionary in _entries:
-		ids.append(entry["id"])
-	return ids
+	return _entries.ids()
 
 
 ## The entries whose condition holds now, in order.
 func shown() -> Array[Dictionary]:
-	return _entries.filter(func(entry: Dictionary) -> bool: return _story.check(entry["condition"]))
+	return _entries.shown()
 
 
 ## Opens the `menu` screen, unless it is shut or a screen is open. Null if not.
@@ -96,13 +79,6 @@ func _while_open(opened: WgScreen) -> void:
 	await opened.closed
 	if is_instance_valid(menu_screen):
 		menu_screen.visible = true
-
-
-func _index(id: StringName) -> int:
-	for index in _entries.size():
-		if _entries[index]["id"] == id:
-			return index
-	return -1
 
 
 ## The engine's entries.

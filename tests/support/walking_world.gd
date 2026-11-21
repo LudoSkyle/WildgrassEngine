@@ -20,6 +20,7 @@ const Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const Save := preload("res://addons/wildgrass/save/save.gd")
 const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Options := preload("res://addons/wildgrass/options/options.gd")
+const Title := preload("res://addons/wildgrass/title/title.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -42,6 +43,8 @@ var menu: Menu
 ## Its engine options are added by the tests that need them, once their
 ## configs are written.
 var options: Options
+## Its `title` screen is registered by the tests that show it.
+var title: Title
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -74,6 +77,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"bag", WgBagConfig, "bag")
 	config.register(&"save", WgSaveConfig, "save")
 	config.register(&"options", WgOptionsConfig, "options")
+	config.register(&"title", WgTitleConfig, "title")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -83,6 +87,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	root.add_child(screen_layer)
 	screens = ScreenRegistry.new(logger, screen_layer)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
+	screens.register(&"splash", "res://addons/wildgrass/title/splash_screen.tscn")
+	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")
@@ -126,6 +132,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	options.file_path = sandbox.root + "options.json"
 	menu.services["options"] = options
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
+	title = Title.new(paths, logger, config, screens, story, maps, dialogue, save, options, texts)
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 
