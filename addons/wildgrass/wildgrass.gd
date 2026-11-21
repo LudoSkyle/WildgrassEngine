@@ -118,7 +118,7 @@ func _init() -> void:
 	config.register(&"title", WgTitleConfig, "title")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
-		studio.install(texts, items, quests)
+		studio.install(texts, items, quests, species, types)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
