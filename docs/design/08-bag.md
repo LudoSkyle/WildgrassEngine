@@ -39,12 +39,12 @@ kind adds). `name_for(count)`: its plural when more than one, if it has one.
 ```json
 {
 	"pockets": [
-		{ "id": "items", "name": "{text:100015:4}", "socket": 1 },
-		{ "id": "balls", "name": "{text:100015:1}", "socket": 2 },
-		{ "id": "medicine", "name": "{text:100015:0}", "socket": 6 },
-		{ "id": "tms", "name": "{text:100015:5}", "socket": 3 },
-		{ "id": "key_items", "name": "{text:100015:8}", "socket": 5, "reveal": true },
-		{ "id": "berries", "name": "{text:100015:3}", "socket": 4 }
+		{ "id": "items", "name": "{text:100015:4|Other Items}", "socket": 1 },
+		{ "id": "balls", "name": "{text:100015:1|Poké Balls}", "socket": 2 },
+		{ "id": "medicine", "name": "{text:100015:0|Medicine}", "socket": 6 },
+		{ "id": "tms", "name": "{text:100015:5|TMs}", "socket": 3 },
+		{ "id": "key_items", "name": "{text:100015:8|Key Items}", "socket": 5, "reveal": true },
+		{ "id": "berries", "name": "{text:100015:3|Berries}", "socket": 4 }
 	],
 	"maxCount": 99,
 	"maxMoney": 999999
@@ -156,8 +156,7 @@ Toss (a consumed item only; how many, then Yes / No), Cancel.
   found by its id, else its kind; it may be a coroutine, awaited; it returns
   false if the item was not used up. Use shows only for an item usable
   outside battle with a use; a consumed item used is removed.
-- Nothing opens the bag before the pause menu (feature 10):
-  `Wildgrass.screens.open(&"bag")`.
+- The pause menu opens it (feature 10), or `Wildgrass.screens.open(&"bag")`.
 
 ## Later
 

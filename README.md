@@ -6,7 +6,7 @@ GDScript only, ships no assets.
 ## Status
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
-dialogue, texts, characters, story, bag, save.
+dialogue, texts, characters, story, bag, save, menu and options.
 
 ## Install
 
@@ -168,6 +168,18 @@ Wildgrass.save.add_part(&"pokedex", _state, _restore, _reset)
 Wildgrass.save.write()
 await Wildgrass.save.load_game(1)
 Wildgrass.screens.open(&"save_slots")
+```
+
+**Menu and options**: the `menu` action (Escape by default) opens the pause
+menu: Bag, Options, Save, Exit; add your entries, each shown while its story
+condition holds. Options (text speed, message frame, volume, language, and
+yours) are kept on the player's machine, in the order of Studio's
+`game_options_config.json`. Labels are Studio's texts, with English
+fallbacks: `{text:100014:2|Bag}`.
+
+```gdscript
+Wildgrass.menu.add_entry(&"pokedex", "Pokédex", _open_dex, "has_dex", &"bag")
+Wildgrass.options.add_option(&"auto_run", {"values": [false, true], "default": false, "apply": _set_auto_run})
 ```
 
 ## License

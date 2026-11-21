@@ -206,9 +206,13 @@ a television) is a game's subclass overriding `_interact()`.
 	"advance": "page",
 	"scrollSpeed": 60,
 	"maxChoices": 6,
-	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right" }
+	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right" },
+	"frames": [{ "style": "", "name": "Plain" }, { "style": "gold", "name": "Gold" }]
 }
 ```
+
+`frames` lists the frames the player may pick in the options (feature 10):
+a `style` and its name; a frame with no style is logged and dropped.
 
 `scrollSpeed` is in pixels per second. A value not positive is logged and
 reset; an unknown `advance`, logged, gives `page`.
