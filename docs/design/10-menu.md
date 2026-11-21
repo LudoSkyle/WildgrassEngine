@@ -7,37 +7,34 @@ it, and the options: what can be set, kept on the player's machine apart from
 any saved game, and the screen that sets them. The title screen that also
 opens the options is feature 11.
 
-## Studio texts with a fallback
+## English labels
 
-The engine's labels are Studio's texts, so a Studio project shows its own
-words in its own languages; a project without Studio's text files shows the
-English fallback, through `tr()`:
+The engine's labels are plain English, shown through
+`Wildgrass.texts.label()` (feature 5): Godot's translations, then
+placeholders. A game translates them as any Godot text; a Studio project
+shows Studio's words, through translations the Studio layer builds (feature
+10 bis).
 
 ```gdscript
-Wildgrass.texts.format("{text:100014:2|Bag}")   # Studio's "Sac" in French, else tr("Bag")
+Wildgrass.texts.label("Bag")   # "Sac" in French, when translated
 ```
-
-- `{text:file:line|fallback}`: the fallback when the file or the line is
-  missing, or no cell has a text, unlogged. Without one, a missing text stays
-  as before: empty, logged once.
-- The bag's pockets have fallbacks (`{text:100015:4|Other Items}`…).
 
 ## The pause menu
 
 The player's input reads one more action, `menu` (`ui_cancel` by default, in
-`movement_config.json`). Pressed while the player stands still, with no
+the `movement` config). Pressed while the player stands still, with no
 screen open, no interaction under way, no map changing, and the menu
 enabled, it opens the `menu` screen.
 
 ```gdscript
 Wildgrass.menu.enabled = false                 # a scene keeps it shut
-Wildgrass.menu.add_entry(&"pokedex", "{text:100014:1|Pokédex}", _open_dex, "has_dex", &"bag")
+Wildgrass.menu.add_entry(&"pokedex", "Pokédex", _open_dex, "has_dex", &"bag")
 Wildgrass.menu.open()                          # as the key does
 await Wildgrass.menu.show_screen(&"pokedex")   # an entry's screen, the menu hidden beneath
 ```
 
 - `add_entry(id, text, callable, condition = "", before = &"exit")`: an
-  entry, placed before another (before Exit by default; at the end if that
+  entry, its text a label, placed before another (before Exit by default; at the end if that
   one is not there). `condition` is a story condition (feature 7), checked
   each time the menu shows: an entry whose condition fails is not shown. The
   callable is awaited; it returns true to close the menu, false or nothing to
@@ -50,10 +47,10 @@ await Wildgrass.menu.show_screen(&"pokedex")   # an entry's screen, the menu hid
 
   | Id | Text | Condition | Does |
   |---|---|---|---|
-  | `bag` | `{text:100014:2\|Bag}` | | opens `bag`, stays |
-  | `options` | `{text:100014:5\|Options}` | | opens `options`, stays |
-  | `save` | `{text:100014:4\|Save}` | `!save_disabled` | opens `save`; closes once saved |
-  | `exit` | `{text:9000:26\|Exit}` | | closes |
+  | `bag` | Bag | | opens `bag`, stays |
+  | `options` | Options | | opens `options`, stays |
+  | `save` | Save | `!save_disabled` | opens `save`; closes once saved |
+  | `exit` | Exit | | closes |
 
   Pokémon, Pokédex and the trainer card add theirs with their features.
 - `Wildgrass.menu.enabled` (true): false keeps the key from opening it; not
@@ -98,24 +95,27 @@ and for the screen `name`, `description`, `texts` (one per value),
 - `set_value()` refuses, logged, an unknown option or a value not among its
   values. Signal `changed(id, value)`.
 - An option without values, or whose default is not among them, is refused,
-  logged.
-- `game_options_config.json` (Studio's) gives the `order` of the options
-  shown (`shown()`); an id no option has is skipped, so a Studio project's
-  list works before battles exist. By default: `message_speed`,
+  logged. One whose values are empty for now (no frames listed) keeps its
+  default quietly.
+- The `options` config (`config/options.json`) gives the `order` of the
+  options shown (`shown()`); an id no option has is skipped, so a Studio
+  project's list (its `game_options_config.json`, through the Studio layer)
+  works before battles exist. By default: `message_speed`,
   `message_frame`, `volume`, `language`. An option with fewer than two values
   is not shown.
 - `text_of(id)`: the value's text, else its format, else the value.
-- The engine's options, Studio's ids and texts:
+- The engine's options, with Studio's ids; names, descriptions and value
+  texts are labels:
 
   | Id | Values | Applies to |
   |---|---|---|
   | `message_speed` | 1, 2, 3 (slow, normal, fast; 2) | `Wildgrass.dialogue.letters_per_second`: the config's × 0.5, 1, 2 |
-  | `message_frame` | the `frames` of `dialogue_config.json` (`{"style", "name"}`; none by default) | `Wildgrass.dialogue.style` |
+  | `message_frame` | the `frames` of the `dialogue` config (`{"style", "name"}`; none by default) | `Wildgrass.dialogue.style` |
   | `volume` | 0 to 100 by 5, a slider (100) | the volume of the `Master` audio bus, muted at 0 |
   | `language` | the choosable languages (feature 5), by their names | `Wildgrass.texts.language` |
 
   Studio's `screen_scale` has no engine option: the window is resized by
-  hand, the game keeping its proportions with bars (`display_config.json`,
+  hand, the game keeping its proportions with bars (the `display` config,
   feature 0). `battle_animation`, `battle_style` and `auto_run` come with
   battles and running.
 
@@ -155,15 +155,14 @@ beneath.
 Entries, options, configs, texts and screens are built by the tests, which
 keep their options in a file of their own; input is simulated with Godot's
 input actions.
-Covered: Studio texts with a fallback, translated, missing files, lines and
-cells, a missing text still logged without one, the pockets' fallbacks;
-entries placed and replaced, removed, their conditions, the key opening the
+Covered: entries placed and replaced, removed, their conditions, the key opening the
 menu, a menu shut, opening over a screen, moving round, the cursor kept and
 falling back, entries awaited with keys waiting, closing or staying and shown
 again, the bag and the options opening above with the menu hidden, saving
 closing the menu once saved only, labels following the language, the
 engine's services; options applied and kept, coming back on the next launch,
-wrong options and values, kept values no longer allowed, unknown ones kept,
+wrong options and values, kept values no longer allowed, an option with no
+values kept quiet, unknown ones kept,
 a broken file, the order and what is skipped, value texts, formats, the
 engine's options on the dialogue, the sound and the language, frames
 without a style; the options screen's rows, descriptions, moving, values

@@ -25,7 +25,7 @@ Wildgrass.tiles.data(cell, &"water")              # tile data, or null
 ```
 
 `level` defaults to 0, the ground. A direction other than up, down, left or
-right, or a level `map_config.json` does not have, is logged and refused.
+right, or a level the `map` config does not have, is logged and refused.
 Outside every map, a cell is solid.
 
 ## What blocks
@@ -42,7 +42,7 @@ off: what the editor shows is what blocks, exactly where Godot's physics would
 block. Under a
 bridge or a jetty, the water is an alternative tile without collision.
 
-Each level has two physics layers, named in `map_config.json` by their layer
+Each level has two physics layers, named in the `map` config by their layer
 numbers (1 to 32, as in Godot's inspector):
 
 | | Asked | Level 0 default |
@@ -114,8 +114,10 @@ each has a place here.
 
 ## Config
 
+`config/map.json`:
+
 ```json
-{ "tileSize": 16, "fadeSeconds": 0.25, "solidLayers": [1, 2], "edgeLayers": [4, 5] }
+{ "tile_size": 16, "fade_seconds": 0.25, "solid_layers": [1, 2], "edge_layers": [4, 5] }
 ```
 
 One entry per level, as many in each list; only level 0 by default. Lists of

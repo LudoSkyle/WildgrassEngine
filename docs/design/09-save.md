@@ -20,21 +20,20 @@ Wildgrass.save.new_game(2)            # empties every part; slot 2 is the game's
 Wildgrass.save.erase(2)
 ```
 
-- A slot is a number from 1. `save_config.json` (Studio's) sets how many:
-  `maximumSave` (0: as many as the player wants, `slots()` going one past the
-  last used; 1: a single game), `baseFilename` (`Saves/Pokemon_Party`: the
-  file of slot 2 is `Saves/Pokemon_Party-2.json`, a single game's
-  `Saves/Pokemon_Party.json`, in the `saves` folder of paths, `user://`;
-  `test_Saves/…` when launched for testing), `isCanSaveOnAnySave` (true: the
-  save screen may write in another slot than the game's; false by default).
-  `saveHeader` belongs to Studio's binary format and is ignored; a `saveKey`
-  set is logged: games are written as JSON, not encrypted.
+- A slot is a number from 1. The `save` config (`config/save.json`) sets
+  how many: `slots` (0: as many as the player wants, `slots()` going one past
+  the last used; 1: a single game), `file` (`saves/game`: the file of slot 2
+  is `saves/game-2.json`, a single game's `saves/game.json`, in the `saves`
+  folder of paths, `user://`; `test_saves/…` when launched for testing),
+  `save_anywhere` (true: the save screen may write in another slot than the
+  game's; false by default). A Studio project's `save_config.json` gives
+  them through the Studio layer (feature 10 bis).
 - `new_game(slot)` resets every part and makes `slot` the game's, writing
   nothing: until written, the slot keeps what it held. `slot` 0 there takes
   the first empty one. Hook `new_game(slot)`, signal `new_game_started(slot)`:
   the game warps to its first map there.
 - `write()` with no slot chosen takes the first empty one; past
-  `maximumSave` it is refused, logged. Signal `written(slot)`.
+  `slots` it is refused, logged. Signal `written(slot)`.
 - `erase(slot)` removes the file; the game played keeps its slot. Signal
   `erased(slot)`.
 
@@ -80,7 +79,7 @@ map's own, from its corner, whichever map the player crossed into.
 
 ## The file
 
-`user://Saves/Pokemon_Party-1.json`:
+`user://saves/game-1.json`:
 
 ```json
 {
@@ -124,7 +123,7 @@ A replaceable screen, `save` (`WgSaveScreen`), the engine's in Godot's theme:
 a summary of the game in a corner (its zone, else its map, and the play time
 as `h:mm`), then in the message box:
 
-1. when `isCanSaveOnAnySave`: "Save in which file?", a choice per slot (the
+1. when `save_anywhere`: "Save in which file?", a choice per slot (the
    game's selected; a new one offered) and Cancel;
 2. "Would you like to save the game?" (Yes / No);
 3. if the file holds a game: "There is already a saved file. Is it OK to
@@ -162,7 +161,7 @@ The title screen (feature 11) opens it; until then
 - Options (message speed, volume, language): their own file, feature 10.
 - The title screen, continuing the last game played: feature 11.
 - Pokémon, the party, the Pokédex as parts: features 12 and after.
-- Reading Studio's binary saves, encrypting with `saveKey`: not planned.
+- Reading Studio's binary saves, encrypting them: not planned.
 - Autosave, saving anywhere from a debug key: the debug tools (feature 20).
 
 ## Tests
@@ -176,8 +175,7 @@ the game's slot else the first empty one, a new game and its hook, parts kept
 and reset, the restore order and a coroutine awaited, a check refusing a
 load, upgrades, newer and broken files, damaged cards, summaries and what a
 game adds, what JSON cannot hold and a summary that cannot be written, a file
-that cannot be replaced, erasing, test files apart, Studio's binary settings
-and a bad config; the play time kept; the map part with the traveller's
+that cannot be replaced, erasing, test files apart, a bad config; the play time kept; the map part with the traveller's
 level and facing, walkers put back and one gone, cells of a map not at the
 origin, walkers of other maps left out, a lost map refused or replaced, no
 map, a traveller that is no walker; the save screen's summary, saving, the

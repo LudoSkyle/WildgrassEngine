@@ -48,7 +48,7 @@ if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
 | `auto` | `0` | seconds after the last page before going on without the key (battles) |
 | `hold` | `false` | returns once written; the box stays until the next message or `close()` (“Saving…”) |
 | `locked` | `false` | once written, the key does nothing: with `auto`, the message goes on by itself |
-| `values` | none | placeholders of this message alone, `{"item": "Potion"}`, read before the texts' own; a value may hold placeholders (a Studio name) |
+| `values` | none | placeholders of this message alone, `{"item": "Potion"}`, read before the texts' own; each is a label, translated, and may hold placeholders (an item's name) |
 | `walk_away` | `false` | a direction other than the one faced ends the message, and the player walks on that way (signs) |
 | `screen` | `message_box` | another screen extending `WgMessageBox` (a battle's box) |
 
@@ -90,7 +90,7 @@ instead of placing the nodes as below. Optional nodes stay hidden when unused.
   - `page` (default): a page is as many lines as `Text` shows, laid out by
     Godot with its font, width and wrapping, so a page breaks where the text
     wraps anyway. The box clears and writes the next one.
-  - `scroll`: the lines slide up one by one at `scrollSpeed`, the next one
+  - `scroll`: the lines slide up one by one at `scroll_speed`, the next one
     written below, as in older games.
 
   Never a scrollbar. Each language breaks where it must, since layout follows
@@ -144,7 +144,7 @@ choice; `-1`: cancel does nothing).
   the mouse and touch pick with them.
 - A choice is a `String`, through `tr()`, or `{"text": …, "disabled": true}`:
   shown, never picked (`choice_refused`).
-- The list shows `maxChoices` (config) at most, and only as many as fit
+- The list shows `max_choices` (config) at most, and only as many as fit
   between the box and the edge of the screen; beyond, it scrolls, the
   selection kept in view.
 
@@ -158,7 +158,7 @@ a warp or a reload return `null`. A `max` below `min` is logged and becomes
 ## Talking to what you face
 
 The player's input reads one more action, `interact` (`ui_accept` by
-default, in `movement_config.json`). Pressed while the player stands still,
+default, in the `movement` config). Pressed while the player stands still,
 the engine looks at the cell faced, on the player's level:
 
 1. **A `WgInteractable`** covering it, on that level, found by global
@@ -198,14 +198,14 @@ a television) is a game's subclass overriding `_interact()`.
 
 ## Config
 
-`dialogue_config.json`:
+`config/dialogue.json`:
 
 ```json
 {
-	"lettersPerSecond": 50,
+	"letters_per_second": 50,
 	"advance": "page",
-	"scrollSpeed": 60,
-	"maxChoices": 6,
+	"scroll_speed": 60,
+	"max_choices": 6,
 	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right" },
 	"frames": [{ "style": "", "name": "Plain" }, { "style": "gold", "name": "Gold" }]
 }
@@ -214,7 +214,7 @@ a television) is a game's subclass overriding `_interact()`.
 `frames` lists the frames the player may pick in the options (feature 10):
 a `style` and its name; a frame with no style is logged and dropped.
 
-`scrollSpeed` is in pixels per second. A value not positive is logged and
+`scroll_speed` is in pixels per second. A value not positive is logged and
 reset; an unknown `advance`, logged, gives `page`.
 
 ## Later

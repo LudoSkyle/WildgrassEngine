@@ -10,7 +10,7 @@ item on a Pokémon waits for Pokémon (feature 12); saving is feature 9's.
 
 ```gdscript
 var potion := Wildgrass.items.item(&"potion")   # a WgItem
-potion.name                                     # through Wildgrass.texts.format()
+potion.name                                     # a label: Wildgrass.texts.label()
 ```
 
 `WgItem` (`Resource`): `id`, `kind` (items that work alike share one),
@@ -20,10 +20,13 @@ place when a pocket is sorted), `price`, `icon` (`Texture2D`), `consumed`
 without a count: key items, TMs), `usable` (outside battle), `data` (what a
 kind adds). `name_for(count)`: its plural when more than one, if it has one.
 
-- A game registers its own (`Wildgrass.items.register(item)`), or **a Studio
-  project's `Data/Studio/items/<id>.json` is read as it is**, the first time
-  that item is asked for (no reading of every file, no icon loaded before it
-  shows): `dbSymbol` is the id; the kind is its `klass` without `Item`, in
+- A game registers its own (`Wildgrass.items.register(item)`), else
+  `res://items/<id>.tres` (paths, `items`), else a source
+  (`Wildgrass.items.add_source(callable)`, given the id, returning a `WgItem`
+  or null), the first time that item is asked for (no reading of every file,
+  no icon loaded before it shows). **A Studio project's
+  `Data/Studio/items/<id>.json` come from the Studio layer's source** (feature
+  10 bis): `dbSymbol` is the id; the kind is its `klass` without `Item`, in
   snake case (`ConstantHealItem` → `constant_heal`, `RepelItem` → `repel`,
   `Item` → none); name, description and plural are
   placeholders of Studio texts `100012`, `100013`, `9001`; `socket` gives the
@@ -34,29 +37,30 @@ kind adds). `name_for(count)`: its plural when more than one, if it has one.
 
 ## Pockets
 
-`bag_config.json`; by default, Studio's pockets in Studio's order:
+`config/bag.json`; by default, the engine's pockets:
 
 ```json
 {
 	"pockets": [
-		{ "id": "items", "name": "{text:100015:4|Other Items}", "socket": 1 },
-		{ "id": "balls", "name": "{text:100015:1|Poké Balls}", "socket": 2 },
-		{ "id": "medicine", "name": "{text:100015:0|Medicine}", "socket": 6 },
-		{ "id": "tms", "name": "{text:100015:5|TMs}", "socket": 3 },
-		{ "id": "key_items", "name": "{text:100015:8|Key Items}", "socket": 5, "reveal": true },
-		{ "id": "berries", "name": "{text:100015:3|Berries}", "socket": 4 }
+		{ "id": "items", "name": "Items" },
+		{ "id": "medicine", "name": "Medicine" },
+		{ "id": "balls", "name": "Poké Balls" },
+		{ "id": "tms", "name": "TMs" },
+		{ "id": "berries", "name": "Berries" },
+		{ "id": "key_items", "name": "Key Items", "reveal": true }
 	],
-	"maxCount": 99,
-	"maxMoney": 999999
+	"max_count": 99,
+	"max_money": 999999
 }
 ```
 
-- A game's item names its pocket by id; a Studio item by `socket`. An item
-  of a pocket the config does not have is in the bag, in no pocket shown
-  (Studio's letters).
+- A pocket's `name` is a label, translated. A Studio project gets Studio's
+  pockets, in Studio's order with Studio's names, from the Studio layer.
+- An item names its pocket by id. An item of a pocket the config does not
+  have is in the bag, in no pocket shown (Studio's letters).
 - `consumed` decides counts and tossing; `reveal` is the pocket's: giving one
   of its items shows it on the `item_reveal` screen.
-- `maxCount` 0: no limit.
+- `max_count` 0: no limit.
 
 ## The bag and money
 
@@ -73,8 +77,8 @@ Wildgrass.bag.can_use(&"potion")      # held, usable, with a use
 await Wildgrass.bag.use(&"potion")    # false if not used
 ```
 
-- `add()` refuses what would go past `maxCount`, or past 1 for an item not
-  consumed, rather than adding part of it. Money stops at `maxMoney` and 0.
+- `add()` refuses what would go past `max_count`, or past 1 for an item not
+  consumed, rather than adding part of it. Money stops at `max_money` and 0.
 - Signals `changed(id, count)`, `money_changed(money)`.
 - Adding records `obtain_item` for quests. Quests' `money` and `item`
   earnings are given here; quests gain a check per kind of earning, and
@@ -99,7 +103,7 @@ declares a tag that narrates; a game may declare others.
 
 **An item of a `reveal` pocket** is shown on `item_reveal`, a replaceable
 screen (the engine's: its icon in a panel) while the message is written; once
-written, the message stays `revealSeconds` (1), then goes on by itself, the
+written, the message stays `reveal_seconds` (1), then goes on by itself, the
 key not hurrying it, and the screen closes. A dialogue closed meanwhile
 closes it too. For this, messages gain the option `locked`: once written, the
 key does nothing (with `auto`).
@@ -125,7 +129,7 @@ by default), `full_text` (`"No room for {item}."`), `invisible`.
 - `{item}` is the item's name (its plural when `count` is more than 1),
   `{count}` the count. They are this message's own values: `say()` gains the
   option `values`, a dictionary of placeholders for one message, whose values
-  may hold placeholders themselves (a Studio name).
+  may hold placeholders themselves (a Studio item's name).
 
 ## The bag screen
 
@@ -165,17 +169,17 @@ Toss (a consumed item only; how many, then Yes / No), Cancel.
 - Registering an item to a key, favourites, sorting by name: with the options
   (feature 10).
 - A TM's name with its move's: with moves (feature 12).
-- Studio's `settings_config.json` (`maxBagItemCount` and Pokémon settings):
-  with Pokémon (feature 12); until then `maxCount`.
+- Studio's Pokémon settings: with Pokémon (feature 12); its
+  `maxBagItemCount` is the bag's `max_count` (the Studio layer).
 - Filling the bag for testing: the debug tools (feature 20).
 
 ## Tests
 
-Items, configs, Studio files, maps and screens are built by the tests; time is
+Items, configs, maps and screens are built by the tests; time is
 advanced by hand and input simulated with Godot's input actions.
-Covered: items registered and Studio items read once, on demand, their kind,
-texts, pocket, flags, icon and data, a game's winning, unknown items and
-missing icons logged once; pockets and limits from the config, no limit at 0;
+Covered: items registered, else resources of the items folder, else a
+source's, unknown items logged once and one without an id refused; the
+engine's pockets by default, pockets and limits from the config, no limit at 0;
 adding and removing all or nothing, an item not consumed kept once, the order
 received, a stable sort, money between 0 and its maximum, gifts announced and
 refusals logged, `obtain_item` and quest earnings that would not fit, bag
@@ -187,4 +191,4 @@ walker), balls blocking or not, taken with their plural name, a full bag, gone
 on every load with a single gate, children of any name; the bag screen's
 pockets, counts and a long one, cursor and details, following the bag, the choices offered, tossing with and without a
 number, cancelled, keys waiting for a use, letting go of the bag, the engine's
-services, no pocket.
+services, no pocket. Studio items: feature 10 bis.

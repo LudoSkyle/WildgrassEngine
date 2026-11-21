@@ -33,7 +33,9 @@ Wildgrass.paths  .log  .config  .display  .hooks  .clock  .screens
 
 ## Config
 
-One JSON file per system in `Data/configs/`. A game only sets what it changes.
+One file per system in the `config` folder (paths, `res://config/`): a
+resource (`display.tres`, a `WgConfig` edited in the inspector) or JSON
+(`display.json`), the resource winning. A game only sets what it changes.
 
 ```gdscript
 class_name WgDisplayConfig
@@ -44,28 +46,33 @@ extends WgConfig
 @export var fullscreen := false
 ```
 
-- A field is an `@export` variable. JSON keys are its name in camelCase
-  (`String.to_snake_case()` maps back: `layer2Name` → `layer_2_name`).
+- A field is an `@export` variable. JSON keys are its own name
+  (`window_scale`).
 - Read: `bool`, `int` (whole numbers only), `float`, `String`, `StringName`,
   `Vector2`, `Vector2i` (`{"x", "y"}`), `Color` (`"#rrggbb"`), typed arrays and
   dictionaries, enums by name, sub-configs (an exported `WgConfig` with a
   default instance).
 - Missing key: default kept. Unknown key, wrong type, wrong element: logged,
-  value kept. `_validate()` then resets impossible values. The `klass` key
-  every Studio file carries is ignored.
+  value kept. `_validate()` then resets impossible values; its messages name
+  the field (`window_scale must be at least 1`).
 
 ```gdscript
-Wildgrass.config.register(&"display", WgDisplayConfig, "display_config")
+Wildgrass.config.register(&"display", WgDisplayConfig, "display")
 var display := Wildgrass.config.get_config(&"display") as WgDisplayConfig
+Wildgrass.config.add_source(&"display", func() -> Dictionary: return {"window_scale": 3})
 ```
 
 - Loaded once, on first access. Unknown name: `null`, logged.
+- Order: the defaults, then what sources give (a plugin reading another
+  tool's files, as the Studio layer, feature 10 bis), then the project's own
+  file, field by field. `is_given(name)`: a file or a source gives values.
 - A game extends an engine config by registering a subclass under the same
   name. A script that does not extend the registered one is refused.
 
 ## Display
 
-`display_config.json` is applied at start **only if the game provides it**.
+The `display` config is applied at start **only if it is given** (a file or
+a source).
 Then:
 
 - window = resolution × window scale, or fullscreen;
@@ -117,11 +124,13 @@ var rate := Wildgrass.hooks.filter(&"encounter_rate", 10, [map])
 
 | Key | Default |
 |---|---|
-| `data` | `res://Data/` (`Studio/`, `Text/`, `configs/`) |
+| `config` | `res://config/` |
 | `graphics` | `res://graphics/` |
 | `audio` | `res://audio/` |
 | `maps` | `res://maps/` (feature 1) |
 | `saves` | `user://` (feature 9) |
+| `items`, `quests` | `res://items/`, `res://quests/` (features 8, 7) |
+| `data`, `studio` | `res://Data/`, `res://`: the Studio layer's (feature 10 bis) |
 
 - Settings `wildgrass/paths/<key>`; a game can add keys.
 - `resolve(key, relative)`, `exists(path)`.
@@ -137,7 +146,7 @@ Wildgrass.log.info(&"screens", "Opening bag")
 ```
 
 - Levels `debug`, `info`, `warn`, `error`; each message has a channel.
-- Minimum level, globally and per channel: `log_config.json`
+- Minimum level, globally and per channel: `config/log.json`
   (`{"level": "info", "channels": {"screens": "debug"}}`).
 - Signal `logged(level, channel, message)`.
 

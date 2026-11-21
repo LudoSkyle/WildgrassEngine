@@ -23,12 +23,12 @@ StartIsland (WgMap)
 | `WgMap` field | Default | |
 |---|---|---|
 | `entities` | `Entities` | where the traveller is put; the map itself if missing |
-| `zone` | `&""` | Pokémon Studio zone id |
+| `zone` | `&""` | zone id: map-wide data several maps share |
 
-- **The zone carries map-wide data Studio already models**: name, location
-  panel, fly point, weather, wild groups. Several maps share a zone. Features
-  that need it read the zone data.
-- **Anything Studio does not model** (music, darkness) is a small node inside
+- **The zone carries map-wide data**: name, location panel, fly point,
+  weather, wild groups. Several maps share a zone. Features that need it read
+  the zone data; a Studio project's zones will come through the Studio layer.
+- **Anything a zone does not carry** (music, darkness) is a small node inside
   the map, found with `map.find_part(Type)`. A game adds its own the same way.
 
 ## Spawn points and doors
@@ -100,15 +100,15 @@ A warp, in order:
 ## Transitions
 
 Screens named `transition_<name>`, extending `WgTransition` (`cover()`,
-`uncover()`, both awaited; `seconds` set from `fadeSeconds`). They swallow
+`uncover()`, both awaited; `seconds` set from `fade_seconds`). They swallow
 input while open. The engine ships `none` and `fade` (to black, texture-free).
 A game replaces them or adds its own (`transition_circle`) like any screen. An
 unknown transition is logged and the warp happens without one.
 
-`map_config.json`:
+`config/map.json`:
 
 ```json
-{ "tileSize": 16, "fadeSeconds": 0.25 }
+{ "tile_size": 16, "fade_seconds": 0.25 }
 ```
 
 A tile size below 1 or a negative length is logged and reset.

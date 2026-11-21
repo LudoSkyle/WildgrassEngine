@@ -38,8 +38,8 @@ three, a game writes others.
 - A wanderer never steps onto a ledge or onto ice: it would leave its area
   with no way back.
 - **Nobody moves by themselves while a screen is open, a warp runs, or the
-  player is held by an interaction** (`movement_config.json`:
-  `"stillDuringDialogue": true`). The walker stops asking its controller then,
+  player is held by an interaction** (the `movement` config:
+  `"still_during_dialogue": true`). The walker stops asking its controller then,
   so a game's controllers obey too. Characters of linked maps on screen move
   as well.
 
@@ -60,7 +60,7 @@ guard.turn_toward(player)   # along the axis it is furthest on
   then gives up (`false`). `{"skip_blocked": true}` skips that step instead.
 - `walk_to()` takes world cells, like `walker.cell`. It searches a path
   through what `can_step` allows, over a few frames, visiting at most
-  `pathCells` cells (config, 400); none: `false`.
+  `path_cells` cells (config, 400); none: `false`.
 - Cut short: a warp or a reload, the walker freed, or another `walk()` for it,
   which takes over. The service holds the wait, so the caller always resumes.
 
@@ -130,8 +130,8 @@ change the layout; it shows in the editor too. A game with its own
 
 ## Config
 
-`movement_config.json` gains `"stillDuringDialogue": true`, `"patience": 2`
-and `"pathCells": 400`. A negative patience or a path size not positive is
+The `movement` config gains `"still_during_dialogue": true`, `"patience": 2`
+and `"path_cells": 400`. A negative patience or a path size not positive is
 logged and reset.
 
 ## Later
@@ -156,7 +156,7 @@ or an interaction, unless the config says so, the traveller always asked;
 scripted walks, backing away, running, the controller waiting, dialogue not
 stopping them, waiting then giving up, skipping, cut short by another walk,
 by freeing or by a warp, paths around walls and over ledges, characters not
-blocking a search, no path within `pathCells`, `turn_toward()`, stepping into
+blocking a search, no path within `path_cells`, `turn_toward()`, stepping into
 a cell being left, config errors; talking, its speaker and colour, not
 turning, mid-step on the cell walked into, not on the one left, not turning
 back when moved, the controller waiting; triggers holding a held key at

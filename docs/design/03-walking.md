@@ -58,7 +58,7 @@ obstacle).
   never stops between cells: after any time T, the walker has gone pace × T,
   however the frames fall. `WgPlayerInput` is one; feature 6 adds others.
 - **The pace is chosen when a step starts**: walk (the walker's `pace`, else
-  the config's) or run, in cells per second (`movement_config.json`), then the
+  the config's) or run, in cells per second (the `movement` config), then the
   filter hook
   `step_pace(pace, walker, direction, running)`: a bike changes it there.
 - `Wildgrass.tiles.can_step()` decides, with the walker passed to its hook: a
@@ -84,8 +84,8 @@ obstacle).
 
 - **Ledge**: a solid tile whose `jump` data (`Vector2i`) is the direction of
   the step. The walker jumps it and lands one cell beyond, if it can step there
-  from the ledge. One step of two cells, at `jumpPace`; the sprite rises in an
-  arc of `jumpHeight` pixels while the node stays on the ground (sorting,
+  from the ledge. One step of two cells, at `jump_pace`; the sprite rises in an
+  arc of `jump_height` pixels while the node stays on the ground (sorting,
   camera, shadow). The other way, or nowhere to land: a bump.
 - **Ice**: `ice` data. A step that leads onto ice starts a slide: the walker
   goes on in the direction of that step, legs still, at its pace, until a step
@@ -97,7 +97,7 @@ obstacle).
 `WgPlayerInput` drives its walker:
 
 - **Tap to turn, hold to walk**: from a standstill, a direction pressed turns
-  the walker; still held after `holdSeconds`, it walks. While walking, a held
+  the walker; still held after `hold_seconds`, it walks. While walking, a held
   direction steps on at once.
 - **The last direction pressed wins**; released, the one still held takes
   over.
@@ -108,7 +108,7 @@ obstacle).
   would take the player back (into the door, or out of the exit it arrived
   on), if held on arrival, is ignored until released. Any other held direction
   walks on into the new map.
-- Actions are named in `movement_config.json` (`ui_up`, `ui_down`, `ui_left`,
+- Actions are named in the `movement` config (`ui_up`, `ui_down`, `ui_left`,
   `ui_right`, `run` by default) and bound in Godot's input map.
 
 The traveller (`Wildgrass.maps.traveller`) also, on its own:
@@ -155,12 +155,12 @@ for the walk pace and sped up with the pace.
 
 ## Config
 
-`movement_config.json`:
+`config/movement.json`:
 
 ```json
 {
-	"walkPace": 4, "runPace": 8, "jumpPace": 5, "jumpHeight": 8,
-	"holdSeconds": 0.12,
+	"walk_pace": 4, "run_pace": 8, "jump_pace": 5, "jump_height": 8,
+	"hold_seconds": 0.12,
 	"actions": { "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "run": "run", "interact": "ui_accept", "menu": "ui_cancel" }
 }
 ```
