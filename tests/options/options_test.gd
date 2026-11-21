@@ -67,12 +67,13 @@ func test_wrong_options_and_values_are_refused_and_logged() -> void:
 
 
 func test_a_kept_value_no_longer_allowed_takes_the_default_and_unknown_ones_are_kept() -> void:
-	_world.sandbox.write_json("options.json", {"auto_run": "maybe", "pokedex_sort": "name"})
+	_world.sandbox.write_json("options.json", {"auto_run": "maybe", "pokedex_sort": "name", "frame": "gold"})
 	_world.options.read()
 	_auto_run(_world.options)
+	_world.options.add_option(&"frame", {"values": [], "default": ""})
 	assert_bool(_world.options.value(&"auto_run")).is_false()
 	_world.options.set_value(&"auto_run", true)
-	assert_that(_kept()).is_equal({"auto_run": true, "pokedex_sort": "name"})
+	assert_that(_kept()).is_equal({"auto_run": true, "pokedex_sort": "name", "frame": ""})
 	_world.sandbox.write("options.json", "nope")
 	_world.options.read()
 	assert_array(_world.logged).is_equal([

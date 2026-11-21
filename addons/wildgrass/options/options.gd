@@ -56,7 +56,7 @@ func add_option(id: StringName, option: Dictionary) -> bool:
 		return false
 	var key := str(id)
 	var kept: Variant = _read.get(key, option.get("default"))
-	if _read.has(key) and _index(values, kept) < 0:
+	if _read.has(key) and not values.is_empty() and _index(values, kept) < 0:
 		log.warn(&"options", "option '%s': %s is not among its values; using %s" % [id, kept, option.get("default")])
 		kept = option.get("default")
 	_values[id] = values[_index(values, kept)] if _index(values, kept) >= 0 else option.get("default")
