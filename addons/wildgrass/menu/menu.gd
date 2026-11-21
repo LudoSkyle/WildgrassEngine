@@ -111,6 +111,11 @@ func open_bag() -> bool:
 	return false
 
 
+func open_options() -> bool:
+	await show_screen(&"options")
+	return false
+
+
 func open_save() -> bool:
 	var saved := [false]
 	var opened := _screens.open(&"save", services)

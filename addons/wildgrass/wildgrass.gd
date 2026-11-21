@@ -91,6 +91,8 @@ func _init() -> void:
 	walkers.menu = menu
 	_add_entries()
 	options = _service(&"options", Options, [paths, log, config])
+	menu.services["options"] = options
+	menu.add_entry(&"options", "{text:100014:5|Options}", menu.open_options, "", &"save")
 	config.register(&"log", WgLogConfig, "log_config")
 	config.register(&"display", WgDisplayConfig, "display_config")
 	config.register(&"language", WgLanguageConfig, "language_config")
@@ -108,6 +110,7 @@ func _init() -> void:
 	screens.register(&"save", "res://addons/wildgrass/save/save_screen.tscn")
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
+	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.
