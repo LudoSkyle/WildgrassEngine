@@ -123,6 +123,8 @@ func _init() -> void:
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types)
+	menu.services.merge({"pokedex": pokedex, "species": species, "types": types, "screens": screens})
+	menu.add_entry(&"pokedex", "Pokédex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
@@ -135,6 +137,8 @@ func _init() -> void:
 	screens.register(&"splash", "res://addons/wildgrass/title/splash_screen.tscn")
 	screens.register(&"title", "res://addons/wildgrass/title/title_screen.tscn")
 	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
+	screens.register(&"pokedex", "res://addons/wildgrass/pokedex/pokedex_screen.tscn")
+	screens.register(&"pokedex_entry", "res://addons/wildgrass/pokedex/pokedex_entry_screen.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.
@@ -148,6 +152,12 @@ func _add_parts() -> void:
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
 	hooks.add(&"save_summary", &"wildgrass_pokedex", pokedex.save_summary)
+
+
+## The pause menu's Pokédex entry.
+func _open_pokedex() -> bool:
+	await menu.show_screen(&"pokedex")
+	return false
 
 
 ## The engine's entries of the pause menu, in order.
