@@ -72,6 +72,7 @@ func test_each_slot_shows_a_card_from_its_summary_the_game_s_selected() -> void:
 	_world.sandbox.write("saves/Saves/Pokemon_Party-3.json", "nope")
 	var screen := _open()
 	assert_array(_cards(screen)).is_equal(["File 1\nNew game", "File 2\nharbour   1:02", "File 3\nThis file is damaged."])
+	assert_float(((screen.get_node("Panel") as Panel).get_theme_stylebox(&"panel") as StyleBoxFlat).bg_color.a).is_equal(1.0)
 	assert_int(screen.selected()).is_equal(2)
 	assert_int(_pressed(screen)).is_equal(1)
 	screen.card_text = "{name}, {place}"

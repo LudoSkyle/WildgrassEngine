@@ -97,6 +97,7 @@ func test_it_shows_a_pocket_with_counts_and_turns_round_the_pockets_each_keeping
 	_world.bag.add(&"bell")
 	var screen := _open()
 	assert_str(_pocket_name(screen)).is_equal("Medicine")
+	assert_float(((screen.get_node("Panel") as Panel).get_theme_stylebox(&"panel") as StyleBoxFlat).bg_color.a).is_equal(1.0)
 	assert_array(_rows(screen)).is_equal([["Potion", "×3"], ["Antidote", "×1"]])
 	assert_int((screen.get_node("Box/List") as Tree).get_column_width(1)).is_equal(40)
 	assert_object(_icon(screen)).is_same(_potion_icon)
