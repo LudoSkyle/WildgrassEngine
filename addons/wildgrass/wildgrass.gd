@@ -123,6 +123,7 @@ func _init() -> void:
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
 	screens.register(&"splash", "res://addons/wildgrass/title/splash_screen.tscn")
+	screens.register(&"title", "res://addons/wildgrass/title/title_screen.tscn")
 	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
 
 
@@ -179,6 +180,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start() -> void:
 	hooks.run(&"engine_ready")
 	ready_for_game.emit()
+	if (config.get_config(&"title") as WgTitleConfig).show_at_start:
+		title.start()
 
 
 func _service(service_name: StringName, default: GDScript, args: Array = []) -> Object:

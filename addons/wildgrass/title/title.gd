@@ -104,8 +104,10 @@ func choose_language() -> void:
 		_texts.language = picked[0]
 
 
-## Opens the `title` screen.
+## Opens the `title` screen; the one already open, if it is.
 func show_title() -> WgScreen:
+	if is_instance_valid(screen) and not screen.is_closed():
+		return screen
 	screen = _screens.open(&"title", _given({"title": self}))
 	if screen != null and not screen.is_closed():
 		title_shown.emit()
