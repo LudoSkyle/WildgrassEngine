@@ -25,6 +25,7 @@ const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 const Options := preload("res://addons/wildgrass/options/options.gd")
 const Studio := preload("res://addons/wildgrass/studio/studio.gd")
 const Title := preload("res://addons/wildgrass/title/title.gd")
+const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -51,6 +52,7 @@ var save: Save
 var menu: Menu
 var options: Options
 var title: Title
+var species: SpeciesData
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -81,6 +83,7 @@ func _init() -> void:
 	story = _service(&"story", Story, [log, hooks, maps])
 	quests = _service(&"quests", Quests, [log, hooks, paths])
 	items = _service(&"items", Items, [paths, log, config])
+	species = _service(&"species", SpeciesData, [paths, log])
 	bag = _service(&"bag", Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
