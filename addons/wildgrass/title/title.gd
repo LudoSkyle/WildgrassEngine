@@ -212,7 +212,7 @@ func choose_game() -> bool:
 		state["starting"] = false
 		_game_chosen.emit()
 		return state["started"]
-	var opened := _screens.open(&"save_slots", _given({"new_game": starting.bind(new_game), "continue": starting.bind(continue_game)}))
+	var opened := _screens.open(&"save_slots", _given({"new_game": starting.bind(new_game), "continue": starting.bind(continue_game), "open_options": open_options}))
 	await _until_closed(opened)
 	if state["starting"]:
 		await _game_chosen
