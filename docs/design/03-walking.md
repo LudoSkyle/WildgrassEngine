@@ -161,7 +161,7 @@ for the walk pace and sped up with the pace.
 {
 	"walkPace": 4, "runPace": 8, "jumpPace": 5, "jumpHeight": 8,
 	"holdSeconds": 0.12,
-	"actions": { "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "run": "run" }
+	"actions": { "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "run": "run", "interact": "ui_accept", "menu": "ui_cancel" }
 }
 ```
 

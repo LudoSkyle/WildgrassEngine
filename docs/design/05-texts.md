@@ -68,6 +68,7 @@ Wildgrass.texts.format("Welcome, {player}! Ready{player_girl?e|}?")
 | `{name?yes\|no}` | `yes` if the value is true, a non-zero number or a non-empty text, else `no`: gendered words, plurals |
 | `{key:action}` | the key bound to an input action, else its first input, through the filter hook `key_name(name, action)` (button glyphs) |
 | `{text:file:line}` | a Studio text |
+| `{text:file:line\|fallback}` | a Studio text, else the fallback through `tr()`, unlogged (feature 10) |
 
 - `set_value(name, null)` removes a value. The filter hook
   `text_value(value, name)` gives values the game computes (feature 7 adds
