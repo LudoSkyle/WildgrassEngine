@@ -52,3 +52,25 @@ func test_the_camera_is_free_on_linked_maps_and_maps_without_a_size() -> void:
 	assert_int(camera.limit_bottom).is_equal(WgCamera.FAR)
 	_camera_on(_build.map(), "open")
 	assert_int((_world.maps.traveller.get_child(0) as WgCamera).limit_right).is_equal(WgCamera.FAR)
+
+
+func test_the_limits_change_on_arrival_under_the_transition() -> void:
+	const Held := preload("res://tests/support/held_transition.gd")
+	_world.screens.register(&"transition_held", _world.sandbox.scene("held.tscn", Held))
+	var view := get_viewport().get_visible_rect().size * 4.0
+	var hall := _build.map()
+	var hall_size := Vector2i(ceili(view.x / 8.0), ceili(view.y / 8.0))
+	hall.size = hall_size
+	var camera := _camera_on(hall, "hall")
+	var room := _build.map()
+	var room_size := hall_size * 2
+	room.size = room_size
+	MapBuilder.spawn(room, "Spawn", Vector2.ZERO)
+	_build.save("room", room)
+	_world.maps.warp(&"room", &"Spawn", &"held")
+	await get_tree().process_frame
+	assert_bool(_world.maps.is_changing).is_true()
+	assert_int(camera.limit_right).is_equal(room_size.x * 16)
+	(_world.screens.top() as Held).release.emit()
+	await get_tree().process_frame
+	assert_bool(_world.maps.is_changing).is_false()
