@@ -30,6 +30,7 @@ const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const Weather := preload("res://addons/wildgrass/weather/weather.gd")
 const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
+const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -66,6 +67,7 @@ var daytime: Daytime
 var weather: Weather
 var grass: TallGrass
 var footprints: Footprints
+var reflections: Reflections
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -104,6 +106,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"audio", WgAudioConfig, "audio")
 	config.register(&"daytime", WgDaytimeConfig, "daytime")
 	config.register(&"footprints", WgFootprintsConfig, "footprints")
+	config.register(&"reflections", WgReflectionsConfig, "reflections")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -144,6 +147,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.encounters = encounters
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
+	reflections = Reflections.new(config, walkers, tiles)
 	audio = Audio.new(paths, logger, config, species, root)
 	daytime = Daytime.new(logger, config, hooks)
 	daytime.follow(maps)

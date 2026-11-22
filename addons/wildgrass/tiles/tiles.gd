@@ -31,6 +31,11 @@ func _init(logger: Log, config: ConfigRegistry, hooks: Hooks, maps: Maps) -> voi
 	_hooks.add(&"map_leaving", &"wildgrass_tiles", _forget_reach)
 
 
+## The side of a cell, in pixels.
+func tile_size() -> int:
+	return _tile_size()
+
+
 ## The world cell holding `global_position`.
 func cell_of(global_position: Vector2) -> Vector2i:
 	return Vector2i((global_position / _tile_size()).floor())

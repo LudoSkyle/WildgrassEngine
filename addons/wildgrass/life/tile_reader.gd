@@ -26,8 +26,13 @@ static func layers_under(node: Node) -> Array[TileMapLayer]:
 ## tile there: the highest `z_index`, the last in the tree between equals;
 ## null if none.
 static func top_at(node: Node, point: Vector2) -> TileMapLayer:
+	return top_in(layers_under(node), point)
+
+
+## The layer of `layers` drawn on top at `point`, as `top_at()`.
+static func top_in(layers: Array[TileMapLayer], point: Vector2) -> TileMapLayer:
 	var top: TileMapLayer = null
-	for layer in layers_under(node):
+	for layer in layers:
 		if layer.get_cell_source_id(layer.local_to_map(layer.to_local(point))) != -1 and (top == null or layer.z_index >= top.z_index):
 			top = layer
 	return top

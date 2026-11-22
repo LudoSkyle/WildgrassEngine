@@ -33,6 +33,11 @@ signal bumped(direction: Vector2i)
 ## Walking pace in cells per second; 0: the config's. Running keeps the
 ## config's.
 @export var pace := 0.0
+## Shows its reflection over water; off for a Pokémon flying.
+@export var reflects := true
+## Its ground line below its origin, in pixels: its feet, where water mirrors
+## it.
+@export var ground_offset := 8.0
 
 ## The walkers service: the engine's, unless set before entering the tree.
 var walkers: Walkers
