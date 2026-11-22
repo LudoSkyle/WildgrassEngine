@@ -1,7 +1,14 @@
 ## A walker in line behind another: it replays its leader's steps, one
-## behind, through anything. The followers service sets its leader.
+## behind, through anything. The followers service sets its leader. A
+## Pokémon's shows its species' `character` sheet.
 class_name WgFollower
 extends WgWalker
+
+## The Pokémon it shows, if one: set by the followers service.
+var species: StringName = &""
+var form := 0
+var shiny := false
+var female := false
 
 ## Who it follows: the traveller, or the follower before it in the line.
 var leader: WgWalker:
@@ -43,6 +50,18 @@ func advance(delta: float) -> void:
 	_replaying = _replaying and is_moving and step_count == _replay_step
 	if not is_moving:
 		_keep_in_place()
+
+
+## Shows `species_form`'s `character` sheet on its sprite, if it is a
+## WgCharacterSprite; a game's follower with another sprite overrides it.
+## Returns false without a sheet.
+func _dress(species_form: WgSpeciesForm, is_shiny: bool, is_female: bool) -> bool:
+	var sheet := species_form.picture(&"character", is_shiny, is_female)
+	var drawn := get_node_or_null(sprite) as WgCharacterSprite
+	if sheet == null or drawn == null:
+		return false
+	drawn.sheet = sheet
+	return true
 
 
 ## Ends its step where it goes and shows: out of the line.
