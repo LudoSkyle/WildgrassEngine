@@ -122,7 +122,7 @@ func _init() -> void:
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
-		studio.install(texts, items, quests, species, types)
+		studio.install(texts, items, quests, species, types, pokedex)
 	menu.services.merge({"pokedex": pokedex, "species": species, "types": types, "screens": screens})
 	menu.add_entry(&"pokedex", "Pokédex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
