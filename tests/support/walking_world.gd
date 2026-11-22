@@ -33,6 +33,8 @@ const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
 const Zones := preload("res://addons/wildgrass/maps/zones.gd")
+const Debug := preload("res://addons/wildgrass/debug/debug.gd")
+const EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -74,6 +76,8 @@ var grass: TallGrass
 var footprints: Footprints
 var reflections: Reflections
 var zones: Zones
+var debug: Debug
+var debug_tools: EngineTools
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -113,6 +117,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"daytime", WgDaytimeConfig, "daytime")
 	config.register(&"footprints", WgFootprintsConfig, "footprints")
 	config.register(&"reflections", WgReflectionsConfig, "reflections")
+	config.register(&"debug", WgDebugConfig, "debug")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -132,6 +137,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
 	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
+	screens.register(&"debug", "res://addons/wildgrass/debug/debug_screen.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -188,6 +194,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	title = Title.new(paths, logger, config, screens, story, maps, dialogue, save, options, texts)
 	title.audio = audio
 	audio.follow_game(screens, dialogue, save, bag, items)
+	debug = Debug.new(logger, config, screens)
+	debug.services = {"dialogue": dialogue, "texts": texts, "species": species, "screens": screens}
+	debug_tools = EngineTools.new(debug, {
+		"texts": texts, "dialogue": dialogue, "bag": bag, "items": items, "quests": quests, "maps": maps,
+		"daytime": daytime, "weather": weather, "pokedex": pokedex, "species": species, "clock": clock,
+		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks,
+	})
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 
