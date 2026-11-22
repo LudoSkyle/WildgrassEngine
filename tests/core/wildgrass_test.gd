@@ -44,6 +44,7 @@ func test_the_autoload_provides_every_service() -> void:
 	assert_array(engine.menu.entries()).is_equal([&"pokedex", &"bag", &"options", &"save", &"debug", &"exit"])
 	assert_bool(engine.config.is_registered(&"debug")).is_true()
 	assert_str(engine.screens.scene_path(&"debug")).is_equal("res://addons/wildgrass/debug/debug_screen.tscn")
+	assert_str(engine.screens.scene_path(&"species_view")).is_equal("res://addons/wildgrass/debug/species_view_screen.tscn")
 	assert_bool(engine.debug.has_tool(&"fill_bag")).is_true()
 	assert_object(engine.walkers.menu).is_same(engine.menu)
 	assert_bool(engine.config.is_registered(&"options")).is_true()
@@ -111,7 +112,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgAudioConfig", "WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDaytimeConfig", "WgDebugConfig", "WgDebugScreen", "WgDex", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgEncounterTable", "WgEncounters", "WgEncountersConfig", "WgFlyer", "WgFollower", "WgFootprintsConfig", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLocationBanner", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgNightLight", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgPokedexConfig", "WgPokedexEntryScreen", "WgPokedexScreen", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgReflectionsConfig", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgTwinkle", "WgType", "WgWalker", "WgWalkerController", "WgWander", "WgWeather", "WgWeatherLayer", "WgZone"])
+	assert_array(names).is_equal(["WgAudioConfig", "WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDaytimeConfig", "WgDebugConfig", "WgDebugScreen", "WgDex", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgEncounterTable", "WgEncounters", "WgEncountersConfig", "WgFlyer", "WgFollower", "WgFootprintsConfig", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLocationBanner", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgNightLight", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgPokedexConfig", "WgPokedexEntryScreen", "WgPokedexScreen", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgReflectionsConfig", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSpeciesViewScreen", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgTwinkle", "WgType", "WgWalker", "WgWalkerController", "WgWander", "WgWeather", "WgWeatherLayer", "WgZone"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 

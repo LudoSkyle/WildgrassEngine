@@ -88,7 +88,11 @@ func test_the_engine_page_lists_mirage_s_tools_then_the_others() -> void:
 	var quest := WgQuest.new()
 	quest.id = &"bell"
 	_world.quests.register(quest)
-	assert_str(_labels()[1]).is_equal("Quests")
+	var mew := WgSpecies.new()
+	mew.id = &"mew"
+	mew.forms.append(WgSpeciesForm.new())
+	_world.species.register(mew)
+	assert_array(_labels().slice(0, 6)).is_equal(["Fill the bag", "Quests", "Hour: real", "Weather: Clear", "Species", "Fill the Pokédex"])
 
 
 func test_fill_the_bag_gives_every_item_but_key_ones_more_each_time_up_to_the_limit() -> void:

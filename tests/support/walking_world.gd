@@ -138,6 +138,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
 	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
 	screens.register(&"debug", "res://addons/wildgrass/debug/debug_screen.tscn")
+	screens.register(&"species_view", "res://addons/wildgrass/debug/species_view_screen.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -199,7 +200,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	debug_tools = EngineTools.new(debug, {
 		"texts": texts, "dialogue": dialogue, "bag": bag, "items": items, "quests": quests, "maps": maps,
 		"daytime": daytime, "weather": weather, "pokedex": pokedex, "species": species, "clock": clock,
-		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks,
+		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks, "screens": screens,
 	})
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
