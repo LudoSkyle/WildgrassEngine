@@ -74,6 +74,7 @@ music keep it going. The title plays the `title` config's `music` (feature
   the key still finishing writing it (`Wildgrass.dialogue.hold_until()`).
   An item given waits for its jingle the same way.
 - `[sound=name]` plays an effect.
+- `[cry=species]` (`[cry=species:form]`) plays its cry, over any one playing.
 
 ## Volumes
 
