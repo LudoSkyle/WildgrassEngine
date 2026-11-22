@@ -28,6 +28,8 @@ extends WgConfig
 ## The engine's screen's pictures.
 @export var background := ""
 @export var logo := ""
+## The title's music (feature 15), crossfaded into the first map's.
+@export var music: StringName = &""
 
 
 ## The name shown: `name`, else the project's.

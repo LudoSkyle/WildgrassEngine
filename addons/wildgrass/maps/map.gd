@@ -11,6 +11,10 @@ extends Node2D
 @export var size := Vector2i.ZERO
 ## Maps shown against its sides.
 @export var links: Array[WgMapLink] = []
+## The music played on it (feature 15); empty: silence.
+@export var music: StringName = &""
+## The ambience under the music; empty: none.
+@export var ambience: StringName = &""
 
 
 ## The node the traveller goes in, or the map itself if missing.

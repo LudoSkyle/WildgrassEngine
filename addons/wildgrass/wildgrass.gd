@@ -106,6 +106,7 @@ func _init() -> void:
 	audio_host.name = "Audio"
 	add_child(audio_host)
 	audio = _service(&"audio", Audio, [paths, log, config, species, audio_host])
+	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	save = _service(&"save", Save, [paths, log, config, hooks])
@@ -118,6 +119,7 @@ func _init() -> void:
 	menu.services["options"] = options
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	title = _service(&"title", Title, [paths, log, config, screens, story, maps, dialogue, save, options, texts])
+	title.audio = audio
 	config.register(&"log", WgLogConfig, "log")
 	config.register(&"display", WgDisplayConfig, "display")
 	config.register(&"language", WgLanguageConfig, "language")

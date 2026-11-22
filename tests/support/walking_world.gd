@@ -132,6 +132,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
 	walkers.encounters = encounters
 	audio = Audio.new(paths, logger, config, species, root)
+	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	clock = Clock.new()
@@ -154,6 +155,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu.services["options"] = options
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	title = Title.new(paths, logger, config, screens, story, maps, dialogue, save, options, texts)
+	title.audio = audio
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 

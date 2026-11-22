@@ -69,6 +69,19 @@ func setup() -> void:
 		voices.append(Channel.player_on(_host, StringName(buses.get("effects", "Master"))))
 
 
+## Plays each map's music and ambience once it shows: a warp, a reload,
+## crossing into a linked map.
+func follow(maps: Object) -> void:
+	maps.map_changed.connect(_on_map_changed)
+
+
+func _on_map_changed(map: WgMap) -> void:
+	if map == null:
+		return
+	play_music(map.music)
+	play_ambience(map.ambience)
+
+
 ## Moves the crossfades on: the engine calls it each frame.
 func advance(delta: float) -> void:
 	if music == null:
