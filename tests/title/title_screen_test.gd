@@ -246,3 +246,11 @@ func test_the_choices_follow_the_language() -> void:
 	_world.texts.language = "fr"
 	assert_str(_labels(screen)[0]).is_equal("[Jouer]")
 	assert_str((screen.get_node("Prompt") as Label).text).is_equal("Appuyez sur %s" % _world.texts.label("{key:ui_accept}"))
+
+
+func test_a_scene_without_a_list_leaves_no_button_without_a_parent() -> void:
+	var screen := _open()
+	screen.list = ^"Missing"
+	screen.refresh()
+	assert_array(screen._buttons).is_empty()
+	assert_that(screen.selected()).is_equal(&"play")
