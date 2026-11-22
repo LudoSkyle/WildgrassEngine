@@ -113,7 +113,8 @@ obstacle).
 
 The traveller (`Wildgrass.maps.traveller`) also, on its own:
 
-- lands on a **contact door** → `Wildgrass.maps.use(door)`;
+- lands on a **contact door** → `Wildgrass.maps.use(door)`; else a trigger
+  (feature 6), then maybe a wild Pokémon (feature 14);
 - tries to step off an **exit door** in its direction → uses it instead of
   stepping, even toward a wall;
 - lands anywhere → `Wildgrass.maps.cross()`: linked maps;

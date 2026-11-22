@@ -84,7 +84,8 @@ down (highest effective `z_index`, then last in the tree):
   data layer.
 
 The engine fixes no other names: each feature documents those it reads, and a
-game adds its own in its TileSets.
+game adds its own in its TileSets. Wild encounters read `encounter` (a
+terrain name) and `encounter_area` (feature 14).
 
 ## Stepping
 

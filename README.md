@@ -7,7 +7,8 @@ GDScript only, ships no assets.
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
-layer, the title screen, Pokémon species and types, and the Pokédex.
+layer, the title screen, Pokémon species and types, the Pokédex, and wild
+encounters.
 
 ## Install
 
@@ -37,7 +38,7 @@ what you change.
 
 **Folders** default to `res://config/`, `res://graphics/`, `res://audio/`,
 `res://maps/`, `res://items/`, `res://quests/`, `res://pokemon/`,
-`res://types/` and `res://dex/`. Change them in *Project
+`res://types/`, `res://dex/` and `res://encounters/`. Change them in *Project
 Settings → wildgrass/paths*.
 
 **Studio projects**: a project with a `project.studio` file runs as it is.
@@ -231,6 +232,16 @@ national one made by the engine; the `pokedex` screen from the pause menu.
 Wildgrass.pokedex.see(&"rattata", 1)
 Wildgrass.pokedex.catch(&"pikachu")
 Wildgrass.pokedex.add_dex(&"national")
+```
+
+**Wild encounters**: tile data `encounter` (`grass`…) marks where Pokémon
+live; a map's `WgEncounters` node gives its chance per step walked and run,
+and its `WgEncounterTable`s (species, levels, weights). A wild Pokémon is
+seen in the Pokédex; the engine says it appeared until battles come.
+
+```gdscript
+Wildgrass.encounters.start = _start_battle       # what follows a wild Pokémon
+Wildgrass.hooks.add(&"wild_encounter", &"repel", _repel)
 ```
 
 ## License
