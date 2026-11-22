@@ -131,8 +131,13 @@ func test_the_entry_of_a_species_seen_shows_what_is_known_once_caught() -> void:
 
 
 func test_the_entry_cries_as_it_shows() -> void:
+	# Long enough to still be playing when checked.
 	var stream := AudioStreamWAV.new()
-	stream.data = PackedByteArray([0, 0, 0, 0])
+	stream.mix_rate = 8000
+	stream.format = AudioStreamWAV.FORMAT_8_BITS
+	var data := PackedByteArray()
+	data.resize(4000)
+	stream.data = data
 	_world.species.find(&"bulbasaur").forms[0].pictures[&"cry"] = stream
 	_world.pokedex.see(&"bulbasaur")
 	_open()
