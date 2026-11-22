@@ -141,6 +141,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	daytime = Daytime.new(logger, config, hooks)
 	daytime.follow(maps)
 	weather = Weather.new(paths, logger)
+	weather.daytime = daytime
 	weather.follow(maps)
 	audio.follow(maps)
 	story.add_tags(dialogue)
