@@ -3,19 +3,19 @@
 ## time it is asked for. The engine ships none.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _catalog: Catalog
+var _catalog: _Catalog
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	log = logger
-	_catalog = Catalog.new(paths, logger, &"types", WgType, &"types", "type")
+	_catalog = _Catalog.new(paths, logger, &"types", WgType, &"types", "type")
 
 
 ## Makes `type` known by its id; it wins over a resource or a source's.

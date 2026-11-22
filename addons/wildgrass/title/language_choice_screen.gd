@@ -8,8 +8,8 @@
 class_name WgLanguageChoiceScreen
 extends WgScreen
 
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## Emitted with the code picked, just before the screen closes.
 signal chosen(code: String)
@@ -18,8 +18,8 @@ signal chosen(code: String)
 ## The container the languages are added to.
 @export var list: NodePath = ^"Panel/Margin/Languages"
 
-var dialogue: Dialogue
-var texts: Texts
+var dialogue: _Dialogue
+var texts: _Texts
 ## The codes shown, in order.
 var languages: Array[String] = []
 ## The index of the language under the cursor.

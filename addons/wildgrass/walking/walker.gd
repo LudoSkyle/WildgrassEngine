@@ -3,7 +3,7 @@
 class_name WgWalker
 extends Node2D
 
-const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const _Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const DIRECTION_NAMES: Dictionary[Vector2i, String] = {
 	Vector2i.DOWN: "down", Vector2i.UP: "up", Vector2i.LEFT: "left", Vector2i.RIGHT: "right",
 }
@@ -47,7 +47,7 @@ signal bumped(direction: Vector2i)
 @export var always_stepping := false
 
 ## The walkers service: the engine's, unless set before entering the tree.
-var walkers: Walkers
+var walkers: _Walkers
 ## Decides the next step: the first WgWalkerController child, unless set.
 var controller: WgWalkerController
 ## The cell it stands in, or is stepping from.

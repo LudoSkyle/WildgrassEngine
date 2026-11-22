@@ -11,7 +11,7 @@
 class_name WgFlyer
 extends Node2D
 
-const TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
+const _TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
 
 const DIRECTIONS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
 const MAX_STRIDE := 3
@@ -232,7 +232,7 @@ func _shade() -> void:
 	while node != null and not node is WgMap:
 		node = node.get_parent()
 	var under := global_position + Vector2(0.0, shadow_offset + 1.0)
-	var water: bool = node != null and TileReader.top_data(node, under, "reflects", false) == true
+	var water: bool = node != null and _TileReader.top_data(node, under, "reflects", false) == true
 	shadow.color = shadow_water if water else shadow_land
 
 

@@ -3,14 +3,14 @@
 ## below its ground line, cut to the water it falls in.
 extends RefCounted
 
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
 
 ## The sway of a reflection, in pixels, one value each quarter of a second.
 const SWAY: Array[float] = [0.0, 1.0, 0.0, -1.0]
 const SWAYS_PER_SECOND := 4.0
 
-var _config: ConfigRegistry
+var _config: _ConfigRegistry
 var _walkers: Object
 var _tiles: Object
 var _clock := 0.0
@@ -22,7 +22,7 @@ var _holders: Dictionary[TileMapLayer, Node2D] = {}
 var _layers: Dictionary[int, Array] = {}
 
 
-func _init(config_registry: ConfigRegistry, walkers: Object, tiles: Object) -> void:
+func _init(config_registry: _ConfigRegistry, walkers: Object, tiles: Object) -> void:
 	_config = config_registry
 	_walkers = walkers
 	_tiles = tiles
@@ -77,7 +77,7 @@ func _show(walker: WgWalker) -> void:
 	var top := middle - size.y / 2.0
 	var left := axis - size.x / 2.0
 	if not _layers.has(map.get_instance_id()):
-		_layers[map.get_instance_id()] = TileReader.layers_under(map)
+		_layers[map.get_instance_id()] = _TileReader.layers_under(map)
 	var layers: Array[TileMapLayer] = []
 	layers.assign(_layers[map.get_instance_id()])
 	var pool := _pool(layers, left, left + size.x, top, top + size.y)
@@ -186,8 +186,8 @@ func _span(layers: Array[TileMapLayer], x: float, top: float, bottom: float, cel
 	while y < bottom:
 		var row := floorf(y / cell_size)
 		var point := Vector2(x, y)
-		var layer := TileReader.top_in(layers, point)
-		if layer != null and TileReader.read(layer, layer.local_to_map(layer.to_local(point)), "reflects", false) == true:
+		var layer := _TileReader.top_in(layers, point)
+		if layer != null and _TileReader.read(layer, layer.local_to_map(layer.to_local(point)), "reflects", false) == true:
 			if found.is_empty():
 				found = {"top": maxf(top, row * cell_size), "layer": layer}
 			found["bottom"] = minf(bottom, (row + 1.0) * cell_size)

@@ -9,9 +9,9 @@
 class_name WgBagScreen
 extends WgScreen
 
-const Bag := preload("res://addons/wildgrass/bag/bag.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Bag := preload("res://addons/wildgrass/bag/bag.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Nodes")
 ## The `Label` of the pocket's name.
@@ -38,9 +38,9 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 ## `{count}`, and `{item}`, its name for that count.
 @export_multiline var toss_confirm_text := "Throw away {count} {item}?"
 
-var bag: Bag
-var dialogue: Dialogue
-var texts: Texts
+var bag: _Bag
+var dialogue: _Dialogue
+var texts: _Texts
 ## The ids of the pockets, in order.
 var pockets: Array[StringName] = []
 ## The id of the pocket shown.

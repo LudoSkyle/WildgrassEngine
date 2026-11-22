@@ -3,10 +3,10 @@
 ## shown.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
 
 const DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 ## Edges are looked for this far on each side of a border, in pixels.
@@ -14,16 +14,16 @@ const EDGE_PROBE := 2.0
 ## Tile data that hides the data of the tiles below.
 const COVERS := &"covers"
 
-var _log: Log
-var _config: ConfigRegistry
-var _hooks: Hooks
-var _maps: Maps
+var _log: _Log
+var _config: _ConfigRegistry
+var _hooks: _Hooks
+var _maps: _Maps
 ## TileSet -> how many cells away a tile's polygons can reach. Emptied when a
 ## map leaves, so TileSets are not kept alive.
 var _reach: Dictionary[TileSet, int] = {}
 
 
-func _init(logger: Log, config: ConfigRegistry, hooks: Hooks, maps: Maps) -> void:
+func _init(logger: _Log, config: _ConfigRegistry, hooks: _Hooks, maps: _Maps) -> void:
 	_log = logger
 	_config = config
 	_hooks = hooks

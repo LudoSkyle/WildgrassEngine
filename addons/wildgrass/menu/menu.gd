@@ -2,13 +2,13 @@
 ## holds, and the `menu` screen that lists them.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
-const Story := preload("res://addons/wildgrass/story/story.gd")
-const Entries := preload("res://addons/wildgrass/menu/entries.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Story := preload("res://addons/wildgrass/story/story.gd")
+const _Entries := preload("res://addons/wildgrass/menu/entries.gd")
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## False keeps the menu shut: a scene sets it back. Not saved.
 var enabled := true
 ## The entry under the cursor, kept from one opening to the next.
@@ -18,14 +18,14 @@ var services := {}
 ## The menu's screen while it is open.
 var screen: WgScreen
 
-var _screens: ScreenRegistry
-var _entries: Entries
+var _screens: _ScreenRegistry
+var _entries: _Entries
 
 
-func _init(logger: Log, screen_registry: ScreenRegistry, story: Story) -> void:
+func _init(logger: _Log, screen_registry: _ScreenRegistry, story: _Story) -> void:
 	log = logger
 	_screens = screen_registry
-	_entries = Entries.new(story)
+	_entries = _Entries.new(story)
 
 
 ## Adds an entry before `before` (the last one if it is not there). Its

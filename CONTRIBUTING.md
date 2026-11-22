@@ -25,6 +25,9 @@ One feature at a time:
 - Statically typed GDScript. Untyped declarations are errors.
 - Classes prefixed with `Wg`. A `class_name` only for types a game extends or
   declares; everything else is reached through `Wildgrass` and `preload`.
+- A preloaded script's constant starts with `_` (`const _Maps := preload(…)`):
+  Godot lets a game's global class of the same name win over it in types, so
+  a game's `class_name Weather` would break the engine.
 - Never a class name Godot already uses.
 - One class per file, `snake_case` file names.
 - Signals in the past tense, methods in the imperative.

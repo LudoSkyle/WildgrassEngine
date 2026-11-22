@@ -3,20 +3,20 @@
 ## name is its line of the zone names' texts, its banner `panel_<panelId>`.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
 const FOLDER := "Studio/zones/"
 const NAME_TEXTS := 100010
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _paths: Paths
+var _paths: _Paths
 var _warned: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	log = logger
 

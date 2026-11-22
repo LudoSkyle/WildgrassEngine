@@ -4,18 +4,18 @@
 ## none has that id, is every species by national number.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 
 ## A form of species `id` was seen; `first`: the first time.
 signal seen(id: StringName, form: int, first: bool)
 signal caught(id: StringName, form: int, first: bool)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The ids of the player's Pokédexes, in order: the config's at a new game.
 var dexes: Array[StringName]:
 	get:
@@ -32,9 +32,9 @@ var dex: StringName:
 	set(value):
 		_dex = value
 
-var _config: ConfigRegistry
-var _species: SpeciesData
-var _catalog: Catalog
+var _config: _ConfigRegistry
+var _species: _SpeciesData
+var _catalog: _Catalog
 ## Species id -> its forms seen, sorted.
 var _seen: Dictionary[StringName, Array] = {}
 var _caught: Dictionary[StringName, Array] = {}
@@ -44,11 +44,11 @@ var _national: WgDex
 var _skipped: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, species: SpeciesData) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, species: _SpeciesData) -> void:
 	log = logger
 	_config = config_registry
 	_species = species
-	_catalog = Catalog.new(paths, logger, &"dex", WgDex, &"pokedex", "Pokédex")
+	_catalog = _Catalog.new(paths, logger, &"dex", WgDex, &"pokedex", "Pokédex")
 
 
 func config() -> WgPokedexConfig:

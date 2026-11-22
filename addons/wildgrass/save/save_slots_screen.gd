@@ -13,9 +13,9 @@
 class_name WgSaveSlotsScreen
 extends WgScreen
 
-const Save := preload("res://addons/wildgrass/save/save.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Save := preload("res://addons/wildgrass/save/save.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## The slot of the Options card.
 const OPTIONS_CARD := -1
@@ -58,9 +58,9 @@ signal chosen(slot: int, action: StringName)
 @export_multiline var erase_text := "Erase file {slot}?"
 @export_multiline var failed_text := "This file could not be loaded."
 
-var save: Save
-var dialogue: Dialogue
-var texts: Texts
+var save: _Save
+var dialogue: _Dialogue
+var texts: _Texts
 ## The slots of the cards, in order; `OPTIONS_CARD` for the Options card.
 var slots: Array[int] = []
 ## The index of the card under the cursor.

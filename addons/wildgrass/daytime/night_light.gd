@@ -4,7 +4,7 @@
 class_name WgNightLight
 extends PointLight2D
 
-const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
+const _Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 
 ## Its energy at full night.
 @export var brightness := 1.0
@@ -16,7 +16,7 @@ const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 @export var radius := 64
 
 ## The day and night it follows; the engine's if not set.
-var daytime: Daytime
+var daytime: _Daytime
 
 var _time := 0.0
 var _phase := 0.0

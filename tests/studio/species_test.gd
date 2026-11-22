@@ -135,7 +135,7 @@ func test_every_species_is_listed_unread_and_a_game_s_wins() -> void:
 func test_the_generation_follows_the_national_number() -> void:
 	var seen: Array[int] = []
 	for number: int in [0, 1, 151, 152, 386, 387, 905, 906, 1025, 1026]:
-		seen.append(StudioProject.Studio.StudioSpecies.generation_of(number))
+		seen.append(preload("res://addons/wildgrass/studio/studio_species.gd").generation_of(number))
 	assert_array(seen).is_equal([0, 1, 1, 2, 3, 4, 8, 9, 9, 0])
 
 

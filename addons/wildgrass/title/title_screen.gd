@@ -8,9 +8,9 @@
 class_name WgTitleScreen
 extends WgScreen
 
-const Title := preload("res://addons/wildgrass/title/title.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Title := preload("res://addons/wildgrass/title/title.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 enum Stage {
 	## Black lifts, then the game's arrival plays.
@@ -53,9 +53,9 @@ enum Stage {
 @export_group("Texts")
 @export var prompt_text := "Press {key:ui_accept}"
 
-var title: Title
-var dialogue: Dialogue
-var texts: Texts
+var title: _Title
+var dialogue: _Dialogue
+var texts: _Texts
 ## Where the title stands.
 var stage := Stage.ARRIVAL
 ## The choice under the cursor.

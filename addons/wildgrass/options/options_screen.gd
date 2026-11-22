@@ -9,9 +9,9 @@
 class_name WgOptionsScreen
 extends WgScreen
 
-const Options := preload("res://addons/wildgrass/options/options.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Options := preload("res://addons/wildgrass/options/options.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Nodes")
 ## The `Tree` of the options: their names, then their values.
@@ -25,9 +25,9 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 ## Said in the frame chosen when confirm is pressed on `message_frame`.
 @export_multiline var frame_sample_text := "This is how messages look."
 
-var options: Options
-var dialogue: Dialogue
-var texts: Texts
+var options: _Options
+var dialogue: _Dialogue
+var texts: _Texts
 ## The ids of the options shown, in order.
 var rows: Array[StringName] = []
 ## The index of the row under the cursor.

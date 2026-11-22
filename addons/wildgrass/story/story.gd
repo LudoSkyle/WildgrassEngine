@@ -2,10 +2,10 @@
 ## on them.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## A flag or a value changed.
 signal changed(name: StringName)
@@ -13,10 +13,10 @@ signal changed(name: StringName)
 signal restored
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _hooks: Hooks
-var _maps: Maps
+var _hooks: _Hooks
+var _maps: _Maps
 var _flags: Dictionary[StringName, bool] = {}
 var _values: Dictionary[StringName, Variant] = {}
 var _warned: Dictionary[String, bool] = {}
@@ -27,7 +27,7 @@ static var _comparison := RegEx.create_from_string("^(\\w+)\\s*(!=|<=|>=|=|<|>)\
 static var _identifier := RegEx.create_from_string("^\\w+$")
 
 
-func _init(logger: Log, hook_registry: Hooks, maps_service: Maps) -> void:
+func _init(logger: _Log, hook_registry: _Hooks, maps_service: _Maps) -> void:
 	log = logger
 	_hooks = hook_registry
 	_maps = maps_service
@@ -103,7 +103,7 @@ func check(condition: String, node: Node = null) -> bool:
 
 ## Adds the message tags `[flag=name]`, `[unflag=name]` and `[reload]`, which
 ## reloads the map once the dialogue is closed, unless a warp closed it.
-func add_tags(dialogue: Dialogue) -> void:
+func add_tags(dialogue: _Dialogue) -> void:
 	# Methods, not lambdas: a lambda would keep this service alive.
 	dialogue.add_tag(&"flag", _flag_tag)
 	dialogue.add_tag(&"unflag", _unflag_tag)

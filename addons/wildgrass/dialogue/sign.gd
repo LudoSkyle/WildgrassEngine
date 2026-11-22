@@ -3,7 +3,7 @@
 class_name WgSign
 extends WgInteractable
 
-const StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
+const _StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
 
 ## What it says; `[page]` starts a page.
 @export_multiline var text := ""
@@ -15,12 +15,12 @@ const StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
 
 ## What it says now.
 func current_text(story: RefCounted) -> String:
-	return StoryLines.choose(story, self, text, states, ask)["text"]
+	return _StoryLines.choose(story, self, text, states, ask)["text"]
 
 
 func _interact(walker: WgWalker) -> void:
 	var options := {"style": "sign", "walk_away": true}
-	var chosen := StoryLines.choose(walker.walkers.story, self, text, states, ask)
+	var chosen := _StoryLines.choose(walker.walkers.story, self, text, states, ask)
 	if not chosen["question"].is_empty() and not await walker.walkers.dialogue.confirm(chosen["question"], {"style": "sign"}):
 		return
 	await walker.walkers.dialogue.say(chosen["text"], options)

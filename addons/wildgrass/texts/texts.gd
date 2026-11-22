@@ -1,16 +1,16 @@
 ## The language of the game, and the texts it shows, placeholders filled.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
 ## The language changed.
 signal language_changed(code: String)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The current language: Godot's locale.
 var language: String:
 	get:
@@ -21,9 +21,9 @@ var language: String:
 		TranslationServer.set_locale(code)
 		language_changed.emit(TranslationServer.get_locale())
 
-var _paths: Paths
-var _config: ConfigRegistry
-var _hooks: Hooks
+var _paths: _Paths
+var _config: _ConfigRegistry
+var _hooks: _Hooks
 var _warned: Dictionary[String, bool] = {}
 var _values: Dictionary[StringName, Variant] = {}
 
@@ -35,7 +35,7 @@ var _placeholders: Dictionary[String, Callable] = {}
 var _givens: Dictionary[String, Callable] = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry

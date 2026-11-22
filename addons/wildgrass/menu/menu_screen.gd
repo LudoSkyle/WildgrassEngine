@@ -8,17 +8,17 @@
 class_name WgMenuScreen
 extends WgScreen
 
-const Menu := preload("res://addons/wildgrass/menu/menu.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Menu := preload("res://addons/wildgrass/menu/menu.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Nodes")
 ## The container the entries are added to.
 @export var list: NodePath = ^"Panel/Margin/Entries"
 
-var menu: Menu
-var dialogue: Dialogue
-var texts: Texts
+var menu: _Menu
+var dialogue: _Dialogue
+var texts: _Texts
 
 ## The entries shown, in order.
 var _shown: Array[Dictionary] = []

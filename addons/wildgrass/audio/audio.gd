@@ -3,11 +3,11 @@
 ## the `audio` config. The engine ships no sound.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Channel := preload("res://addons/wildgrass/audio/channel.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Channel := preload("res://addons/wildgrass/audio/channel.gd")
 
 ## The formats looked for, in order.
 const FORMATS: Array[String] = ["ogg", "wav", "mp3"]
@@ -18,17 +18,17 @@ const VOICES := 4
 signal jingle_finished(sound_name: StringName)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The music and the ambience.
-var music: Channel
-var ambience: Channel
+var music: _Channel
+var ambience: _Channel
 var jingle_player: AudioStreamPlayer
 var cry_player: AudioStreamPlayer
 var voices: Array[AudioStreamPlayer] = []
 
-var _paths: Paths
-var _config: ConfigRegistry
-var _species: SpeciesData
+var _paths: _Paths
+var _config: _ConfigRegistry
+var _species: _SpeciesData
 var _host: Node
 var _streams: Dictionary[String, AudioStream] = {}
 var _warned: Dictionary[String, bool] = {}
@@ -43,7 +43,7 @@ var _traveller: WgWalker
 var _bump_left := 0.0
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, species: SpeciesData, host: Node) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, species: _SpeciesData, host: Node) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry
@@ -66,12 +66,12 @@ func setup() -> void:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus_name)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, &"Master")
-	music = Channel.new(_host, StringName(buses.get("music", "Master")))
-	ambience = Channel.new(_host, StringName(buses.get("music", "Master")))
-	jingle_player = Channel.player_on(_host, StringName(buses.get("effects", "Master")))
-	cry_player = Channel.player_on(_host, StringName(buses.get("cries", "Master")))
+	music = _Channel.new(_host, StringName(buses.get("music", "Master")))
+	ambience = _Channel.new(_host, StringName(buses.get("music", "Master")))
+	jingle_player = _Channel.player_on(_host, StringName(buses.get("effects", "Master")))
+	cry_player = _Channel.player_on(_host, StringName(buses.get("cries", "Master")))
 	for voice in VOICES:
-		voices.append(Channel.player_on(_host, StringName(buses.get("effects", "Master"))))
+		voices.append(_Channel.player_on(_host, StringName(buses.get("effects", "Master"))))
 
 
 ## Plays each map's music and ambience once it shows: a warp, a reload,

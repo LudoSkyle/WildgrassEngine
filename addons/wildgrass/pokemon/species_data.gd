@@ -3,22 +3,22 @@
 ## time it is asked for, no picture loaded before it shows.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _paths: Paths
-var _catalog: Catalog
+var _paths: _Paths
+var _catalog: _Catalog
 var _warned: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	log = logger
-	_catalog = Catalog.new(paths, logger, &"pokemon", WgSpecies, &"species", "species")
+	_catalog = _Catalog.new(paths, logger, &"pokemon", WgSpecies, &"species", "species")
 
 
 ## Makes `species` known by its id; it wins over a resource or a source's.

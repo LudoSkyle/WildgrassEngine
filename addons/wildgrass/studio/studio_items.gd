@@ -3,8 +3,8 @@
 ## An item's name, description and plural are Studio texts.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
 ## Studio's pockets, in Studio's order: its number (`socket`), the engine's
 ## pocket, its name among Studio's texts; giving a key item shows it.
@@ -29,12 +29,12 @@ const FIELDS: Array[String] = [
 ]
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _paths: Paths
+var _paths: _Paths
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	log = logger
 

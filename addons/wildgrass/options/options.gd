@@ -2,11 +2,11 @@
 ## on the player's machine, apart from any saved game.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## The speeds of `message_speed`, times the config's letters per second.
 const SPEEDS: Array[float] = [0.5, 1.0, 2.0]
@@ -14,22 +14,22 @@ const SPEEDS: Array[float] = [0.5, 1.0, 2.0]
 signal changed(id: StringName, value: Variant)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## Where the options are kept.
 var file_path: String
 
-var _config: ConfigRegistry
+var _config: _ConfigRegistry
 ## id -> the option as added.
 var _options: Dictionary[StringName, Dictionary] = {}
 ## id -> its value, kept or not yet.
 var _values: Dictionary[StringName, Variant] = {}
 ## Values read from the file for options not added yet.
 var _read: Dictionary = {}
-var _dialogue: Dialogue
-var _texts: Texts
+var _dialogue: _Dialogue
+var _texts: _Texts
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry) -> void:
 	log = logger
 	_config = config_registry
 	file_path = paths.user_file("options.json")
@@ -158,7 +158,7 @@ func write() -> void:
 
 
 ## The engine's options: message speed, message frame, volume, language.
-func add_engine_options(dialogue: Dialogue, texts: Texts) -> void:
+func add_engine_options(dialogue: _Dialogue, texts: _Texts) -> void:
 	_dialogue = dialogue
 	_texts = texts
 	add_option(&"message_speed", {

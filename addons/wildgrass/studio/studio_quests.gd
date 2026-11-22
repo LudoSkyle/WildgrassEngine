@@ -3,8 +3,8 @@
 ## texts, `{text:file:line}`.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
 ## The quest files, inside the data folder.
 const FOLDER := "Studio/quests/"
@@ -20,12 +20,12 @@ const ARGS: Dictionary[String, Array] = {
 }
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _paths: Paths
+var _paths: _Paths
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	log = logger
 

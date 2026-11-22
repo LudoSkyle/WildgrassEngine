@@ -5,8 +5,8 @@
 ## through.
 extends RefCounted
 
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
 
 ## How long each state of a rustle lasts, in seconds.
 var rustle_seconds := 0.07
@@ -19,7 +19,7 @@ var _fronts: Dictionary[int, Array] = {}
 var _rustles: Array[Dictionary] = []
 
 
-func _init(hooks: Hooks, walkers: Object, tiles: Object) -> void:
+func _init(hooks: _Hooks, walkers: Object, tiles: Object) -> void:
 	_tiles = tiles
 	hooks.add(&"map_loaded", &"wildgrass_tall_grass", _on_map_loaded)
 	walkers.walker_entered.connect(_on_entered)
@@ -60,12 +60,12 @@ func _on_map_loaded(map: WgMap) -> void:
 			_fronts.erase(id)
 		elif is_instance_valid(_fronts[id][1]):
 			fronts[(_fronts[id][1] as Object).get_instance_id()] = true
-	for layer in TileReader.layers_under(map):
+	for layer in _TileReader.layers_under(map):
 		if _fronts.has(layer.get_instance_id()) or fronts.has(layer.get_instance_id()):
 			continue
 		var cells: Array[Vector2i] = []
 		for cell in layer.get_used_cells():
-			if int(TileReader.read(layer, cell, "front_source", 0)) > 0:
+			if int(_TileReader.read(layer, cell, "front_source", 0)) > 0:
 				cells.append(cell)
 		if cells.is_empty():
 			continue
@@ -77,7 +77,7 @@ func _on_map_loaded(map: WgMap) -> void:
 		map.entities_node().add_child(front)
 		front.global_position = layer.global_position
 		for cell in cells:
-			front.set_cell(cell, int(TileReader.read(layer, cell, "front_source", 0)), layer.get_cell_atlas_coords(cell))
+			front.set_cell(cell, int(_TileReader.read(layer, cell, "front_source", 0)), layer.get_cell_atlas_coords(cell))
 		_fronts[layer.get_instance_id()] = [layer, front]
 
 
@@ -91,7 +91,7 @@ func _on_entered(walker: WgWalker, cell: Vector2i) -> void:
 			continue
 		var layer := pair[0] as TileMapLayer
 		var local := layer.local_to_map(layer.to_local(at))
-		var frames: Variant = TileReader.read(layer, local, "rustle", [])
+		var frames: Variant = _TileReader.read(layer, local, "rustle", [])
 		if not frames is Array or (frames as Array).is_empty():
 			continue
 		if _rustles.any(func(rustle: Dictionary) -> bool: return rustle["layer"] == layer and rustle["cell"] == local):

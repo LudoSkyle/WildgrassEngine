@@ -4,11 +4,11 @@
 ## `<file>.json`, field by field.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
-var _paths: Paths
-var _log: Log
+var _paths: _Paths
+var _log: _Log
 ## name -> {"script": GDScript, "file": String}
 var _entries: Dictionary[StringName, Dictionary] = {}
 var _loaded: Dictionary[StringName, WgConfig] = {}
@@ -16,7 +16,7 @@ var _loaded: Dictionary[StringName, WgConfig] = {}
 var _sources: Dictionary[StringName, Array] = {}
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	_log = logger
 

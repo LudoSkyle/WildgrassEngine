@@ -4,8 +4,8 @@
 ## are asked for: sources of the species, types and Pokédex services.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
 const SPECIES := "Studio/pokemon/"
 const TYPES := "Studio/types/"
@@ -38,14 +38,14 @@ const PICTURES: Dictionary[StringName, Array] = {
 const NONE: Array[String] = ["__undef__", "none", ""]
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _paths: Paths
+var _paths: _Paths
 ## Files that are not what they should be, logged once.
 var _broken: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	_paths = paths
 	log = logger
 

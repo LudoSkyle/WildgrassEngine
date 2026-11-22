@@ -1,11 +1,11 @@
 ## Loads maps and moves the traveller between and within them.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 
 ## The traveller was put on the new map, facing `direction`. `point` is the
 ## door or spawn point it arrived at, or null.
@@ -38,11 +38,11 @@ var is_loading_neighbours := false
 ## True while `map_changed` announces a crossing, not a warp or a reload.
 var is_crossing := false
 
-var _paths: Paths
-var _log: Log
-var _config: ConfigRegistry
-var _hooks: Hooks
-var _screens: ScreenRegistry
+var _paths: _Paths
+var _log: _Log
+var _config: _ConfigRegistry
+var _hooks: _Hooks
+var _screens: _ScreenRegistry
 var _zone: StringName = &""
 var _neighbour_ids: Dictionary[WgMap, StringName] = {}
 ## Every map built and not freed yet -> its id.
@@ -53,7 +53,7 @@ var _generation := 0
 var _requested: Dictionary[String, int] = {}
 
 
-func _init(paths: Paths, logger: Log, config: ConfigRegistry, hooks: Hooks, screens: ScreenRegistry, map_host: Node) -> void:
+func _init(paths: _Paths, logger: _Log, config: _ConfigRegistry, hooks: _Hooks, screens: _ScreenRegistry, map_host: Node) -> void:
 	_paths = paths
 	_log = logger
 	_config = config

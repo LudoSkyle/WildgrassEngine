@@ -4,9 +4,9 @@
 ## print darkens the ground for half its life, then fades.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _TileReader := preload("res://addons/wildgrass/life/tile_reader.gd")
 
 ## Where the feet are below a cell's centre, how far apart, how far one leads,
 ## for cells of 16 pixels.
@@ -18,8 +18,8 @@ const STRIDE := 2.0
 ## the next `advance()`.
 var prints: Array[Sprite2D] = []
 
-var _paths: Paths
-var _config: ConfigRegistry
+var _paths: _Paths
+var _config: _ConfigRegistry
 var _maps: Object
 var _tiles: Object
 ## A walker's instance id -> [cell left, direction] of its step under way.
@@ -37,7 +37,7 @@ var _texture_path := ""
 var _from_config := false
 
 
-func _init(paths: Paths, config_registry: ConfigRegistry, maps: Object, walkers: Object, tiles: Object) -> void:
+func _init(paths: _Paths, config_registry: _ConfigRegistry, maps: Object, walkers: Object, tiles: Object) -> void:
 	_paths = paths
 	_config = config_registry
 	_maps = maps
@@ -70,7 +70,7 @@ func ground_at(point: Vector2) -> TileMapLayer:
 	var map: WgMap = _maps.map_at(point)
 	if map == null:
 		return null
-	return TileReader.top_at(map, point)
+	return _TileReader.top_at(map, point)
 
 
 func _on_left(walker: WgWalker, cell: Vector2i, direction: Vector2i, _running: bool) -> void:
@@ -93,7 +93,7 @@ func _on_entered(walker: WgWalker, cell: Vector2i) -> void:
 		return
 	var centre: Vector2 = _tiles.center_of(from)
 	var ground := ground_at(centre)
-	if ground == null or TileReader.read(ground, ground.local_to_map(ground.to_local(centre)), "footprints", false) != true:
+	if ground == null or _TileReader.read(ground, ground.local_to_map(ground.to_local(centre)), "footprints", false) != true:
 		return
 	_drop(walker, ground, centre, Vector2(direction))
 

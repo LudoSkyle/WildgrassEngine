@@ -7,7 +7,7 @@
 class_name WgSplashScreen
 extends WgScreen
 
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 @export var fade_in_seconds := 0.4
 @export var stay_seconds := 1.0
@@ -17,7 +17,7 @@ const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 ## The `TextureRect` of the image.
 @export var image: NodePath = ^"Image"
 
-var dialogue: Dialogue
+var dialogue: _Dialogue
 ## Seconds since it opened.
 var elapsed := 0.0
 

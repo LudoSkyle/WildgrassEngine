@@ -9,10 +9,10 @@
 class_name WgPokedexEntryScreen
 extends WgScreen
 
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Types := preload("res://addons/wildgrass/pokemon/types.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Nodes")
 @export var picture: NodePath = ^"Picture"
@@ -34,10 +34,10 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 ## Shown in place of what is known once caught.
 @export var unknown_text := "?????"
 
-var species: SpeciesData
-var types: Types
-var dialogue: Dialogue
-var texts: Texts
+var species: _SpeciesData
+var types: _Types
+var dialogue: _Dialogue
+var texts: _Texts
 ## The list's rows, and the index of the one shown.
 var rows: Array[Dictionary] = []
 var index := 0

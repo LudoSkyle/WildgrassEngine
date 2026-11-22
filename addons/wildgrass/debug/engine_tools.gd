@@ -3,10 +3,10 @@
 ## changed or the game quits, and are never saved.
 extends RefCounted
 
-const Debug := preload("res://addons/wildgrass/debug/debug.gd")
+const _Debug := preload("res://addons/wildgrass/debug/debug.gd")
 
 ## The pages and tools, in order.
-const PAGE := Debug.ENGINE
+const PAGE := _Debug.ENGINE
 
 ## Walking through walls runs after every other `can_step` hook.
 const WALLS_PRIORITY := 1000
@@ -14,14 +14,14 @@ const WALLS_PRIORITY := 1000
 ## Walking through tiles and characters, for the traveller.
 var through_walls := false
 
-var _debug: Debug
+var _debug: _Debug
 var _s := {}
 
 
 ## Adds the engine's tools to `debug`, with `services` by name: texts,
 ## dialogue, bag, items, quests, maps, daytime, weather, pokedex, species,
 ## clock, encounters, followers, save, hooks, screens.
-func _init(debug: Debug, services: Dictionary) -> void:
+func _init(debug: _Debug, services: Dictionary) -> void:
 	_debug = debug
 	_s = services
 	var hooks: Object = _s.get("hooks")

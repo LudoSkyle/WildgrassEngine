@@ -3,24 +3,24 @@
 ## Nothing of the engine depends on it.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
-const Items := preload("res://addons/wildgrass/bag/items.gd")
-const Quests := preload("res://addons/wildgrass/story/quests.gd")
-const StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
-const StudioItems := preload("res://addons/wildgrass/studio/studio_items.gd")
-const StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
-const StudioSpecies := preload("res://addons/wildgrass/studio/studio_species.gd")
-const StudioEncounters := preload("res://addons/wildgrass/studio/studio_encounters.gd")
-const StudioZones := preload("res://addons/wildgrass/studio/studio_zones.gd")
-const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
-const Zones := preload("res://addons/wildgrass/maps/zones.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Types := preload("res://addons/wildgrass/pokemon/types.gd")
-const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Items := preload("res://addons/wildgrass/bag/items.gd")
+const _Quests := preload("res://addons/wildgrass/story/quests.gd")
+const _StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
+const _StudioItems := preload("res://addons/wildgrass/studio/studio_items.gd")
+const _StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
+const _StudioSpecies := preload("res://addons/wildgrass/studio/studio_species.gd")
+const _StudioEncounters := preload("res://addons/wildgrass/studio/studio_encounters.gd")
+const _StudioZones := preload("res://addons/wildgrass/studio/studio_zones.gd")
+const _Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
+const _Zones := preload("res://addons/wildgrass/maps/zones.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 
 ## The project setting turning the layer on: `auto` (when the project has
 ## `project.studio`), `on`, `off`.
@@ -60,37 +60,37 @@ const LABELS: Dictionary[String, String] = {
 }
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## Studio's text files.
-var texts: StudioTexts
+var texts: _StudioTexts
 ## True once installed.
 var installed := false
 
-var _paths: Paths
-var _config: ConfigRegistry
-var _hooks: Hooks
-var _texts: Texts
-var _items: StudioItems
-var _quests: StudioQuests
-var _species: StudioSpecies
-var _encounters: StudioEncounters
-var _zones: StudioZones
+var _paths: _Paths
+var _config: _ConfigRegistry
+var _hooks: _Hooks
+var _texts: _Texts
+var _items: _StudioItems
+var _quests: _StudioQuests
+var _species: _StudioSpecies
+var _encounters: _StudioEncounters
+var _zones: _StudioZones
 ## Studio config file -> its data, read once.
 var _files: Dictionary[String, Dictionary] = {}
 var _translations: Array[Translation] = []
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry
 	_hooks = hook_registry
-	texts = StudioTexts.new(paths, logger, config_registry)
-	_items = StudioItems.new(paths, logger)
-	_quests = StudioQuests.new(paths, logger)
-	_species = StudioSpecies.new(paths, logger)
-	_encounters = StudioEncounters.new(paths, logger)
-	_zones = StudioZones.new(paths, logger)
+	texts = _StudioTexts.new(paths, logger, config_registry)
+	_items = _StudioItems.new(paths, logger)
+	_quests = _StudioQuests.new(paths, logger)
+	_species = _StudioSpecies.new(paths, logger)
+	_encounters = _StudioEncounters.new(paths, logger)
+	_zones = _StudioZones.new(paths, logger)
 
 
 ## True when the project is a Studio project, as the setting says.
@@ -106,7 +106,7 @@ func is_project() -> bool:
 ## Plugs the project into the engine: its configs as sources, its texts, its
 ## items, pockets, quests, species, types, Pokédexes, wild groups and
 ## zones. Done once.
-func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types, pokedex: Pokedex, encounters: Encounters, zones: Zones) -> void:
+func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _SpeciesData, types: _Types, pokedex: _Pokedex, encounters: _Encounters, zones: _Zones) -> void:
 	if installed:
 		return
 	installed = true
@@ -180,7 +180,7 @@ func _options() -> Dictionary:
 
 func _bag() -> Dictionary:
 	var given := _fields("settings_config", {"maxBagItemCount": "max_count"})
-	given["pockets"] = StudioItems.pockets()
+	given["pockets"] = _StudioItems.pockets()
 	return given
 
 
