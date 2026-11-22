@@ -64,6 +64,7 @@ Wildgrass.maps.use(door)          # warp to the door's target, by its rules
 Wildgrass.maps.go_to(&"start_island", &"Spawn")   # warp with no transition
 Wildgrass.maps.go_to_cell(&"town", Vector2i(3, 4), Vector2i.LEFT)   # a loaded game
 Wildgrass.maps.has_map(&"town")   # true if its scene exists
+Wildgrass.maps.go_to(&"res://tests/field.tscn", &"Spawn")   # a map outside the maps folder, by its path
 Wildgrass.maps.reload()           # same map, traveller stays
 Wildgrass.maps.clear()            # no map: back to the title
 Wildgrass.maps.current            # WgMap or null

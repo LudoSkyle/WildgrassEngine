@@ -49,8 +49,9 @@ names, and problems name them (`path_cells`, `letters_per_second`).
   it rewrite a text before placeholders are read.
 - **Items** are `WgItem` resources, registered by the game or found as
   `res://items/<id>.tres` (paths, `items`) the first time they are asked for.
-  `Wildgrass.items.add_source(callable)`: another origin, given an id the
-  engine does not have, returning a `WgItem` or null.
+  `Wildgrass.items.add_source(callable, lister)`: another origin, given an
+  id the engine does not have, returning a `WgItem` or null; `lister` lists
+  its ids (Studio's, by their files).
 - **Quests** are `WgQuest` resources, registered or found in
   `res://quests/*.tres` (paths, `quests`).
   `Wildgrass.quests.add_source(callable)` gives others: the callable returns

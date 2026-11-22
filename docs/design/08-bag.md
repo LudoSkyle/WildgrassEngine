@@ -11,6 +11,7 @@ item on a Pokémon waits for Pokémon (feature 12); saving is feature 9's.
 ```gdscript
 var potion := Wildgrass.items.item(&"potion")   # a WgItem
 potion.name                                     # a label: Wildgrass.texts.label()
+Wildgrass.items.ids()                           # every item id known, none read
 ```
 
 `WgItem` (`Resource`): `id`, `kind` (items that work alike share one),
@@ -22,8 +23,8 @@ kind adds). `name_for(count)`: its plural when more than one, if it has one.
 
 - A game registers its own (`Wildgrass.items.register(item)`), else
   `res://items/<id>.tres` (paths, `items`), else a source
-  (`Wildgrass.items.add_source(callable)`, given the id, returning a `WgItem`
-  or null), the first time that item is asked for (no reading of every file,
+  (`Wildgrass.items.add_source(callable, lister)`, given the id, returning a
+  `WgItem` or null; `lister`, if given, returns the ids it has), the first time that item is asked for (no reading of every file,
   no icon loaded before it shows). **A Studio project's
   `Data/Studio/items/<id>.json` come from the Studio layer's source** (feature
   10 bis): `dbSymbol` is the id; the kind is its `klass` without `Item`, in
@@ -171,7 +172,6 @@ Toss (a consumed item only; how many, then Yes / No), Cancel.
 - A TM's name with its move's: with moves, as data.
 - Studio's Pokémon settings: with the party; its
   `maxBagItemCount` is the bag's `max_count` (the Studio layer).
-- Filling the bag for testing: the debug tools (feature 20).
 
 ## Tests
 
