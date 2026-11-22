@@ -36,6 +36,11 @@ var _warned: Dictionary[String, bool] = {}
 var _pending_music := {}
 var _jingle: StringName = &""
 var _jingles := 0
+var _maps: Object
+var _dialogue: Object
+var _items: Object
+var _traveller: WgWalker
+var _bump_left := 0.0
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, species: SpeciesData, host: Node) -> void:
@@ -72,14 +77,103 @@ func setup() -> void:
 ## Plays each map's music and ambience once it shows: a warp, a reload,
 ## crossing into a linked map.
 func follow(maps: Object) -> void:
+	_maps = maps
 	maps.map_changed.connect(_on_map_changed)
 
 
+## Plays the engine's named sounds as the game goes: the screens' keys, the
+## menu, the player bumping and jumping, doors, saving, items given; and the
+## `[jingle=…]` and `[sound=…]` tags of messages.
+func follow_game(screens: Object, dialogue: Object, save: Object, bag: Object, items: Object) -> void:
+	_dialogue = dialogue
+	_items = items
+	screens.input_taken.connect(_on_input_taken)
+	screens.screen_opened.connect(_on_screen_opened)
+	_maps.door_used.connect(_on_door_used)
+	_maps.traveller_arrived.connect(_on_traveller_arrived)
+	save.written.connect(_on_written)
+	bag.given.connect(_on_given)
+	dialogue.add_tag(&"jingle", _jingle_tag)
+	dialogue.add_tag(&"sound", _sound_tag)
+
+
 func _on_map_changed(map: WgMap) -> void:
+	_watch_traveller()
 	if map == null:
 		return
 	play_music(map.music)
 	play_ambience(map.ambience)
+
+
+func _on_traveller_arrived(_direction: Vector2i, _point: Node2D) -> void:
+	_watch_traveller()
+
+
+## Listens to the traveller's bumps and jumps.
+func _watch_traveller() -> void:
+	var walker := _maps.traveller as WgWalker if _maps != null else null
+	if walker == _traveller or walker == null:
+		return
+	_traveller = walker
+	walker.bumped.connect(_on_bumped)
+	walker.step_started.connect(_on_step_started)
+
+
+func _on_bumped(_direction: Vector2i) -> void:
+	play(&"bump")
+	_bump_left = config().bump_seconds
+
+
+func _on_step_started(_from: Vector2i, _to: Vector2i) -> void:
+	if _traveller.is_jumping:
+		play(&"jump")
+
+
+func _on_input_taken(event: InputEvent) -> void:
+	if _dialogue.is_action(event, "confirm"):
+		play(&"confirm")
+	elif _dialogue.is_action(event, "cancel"):
+		play(&"cancel")
+	elif _dialogue.is_action(event, "up") or _dialogue.is_action(event, "down") or _dialogue.is_action(event, "left") or _dialogue.is_action(event, "right"):
+		play(&"cursor")
+
+
+func _on_screen_opened(screen_name: StringName, _screen: WgScreen) -> void:
+	if screen_name == &"menu":
+		play(&"menu")
+
+
+func _on_door_used(_door: WgDoor) -> void:
+	play(&"door")
+
+
+func _on_written(_slot: int) -> void:
+	play(&"save")
+
+
+## An item given plays `key_item` for a pocket that reveals, else `item`; the
+## message waits for it.
+func _on_given(id: StringName, _count: int) -> void:
+	var item: WgItem = _items.item(id)
+	var reveals: bool = item != null and _items.bag_config().pocket(item.pocket).get("reveal", false)
+	_hold_for(&"key_item" if reveals else &"item")
+
+
+func _jingle_tag(value: String) -> void:
+	jingle(StringName(value))
+	if is_jingle_playing():
+		_dialogue.hold_until(jingle_finished)
+
+
+func _sound_tag(value: String) -> void:
+	effect(StringName(value))
+
+
+## Plays the named jingle `role`; a message shown waits for it.
+func _hold_for(role: StringName) -> void:
+	play(role)
+	if is_jingle_playing():
+		_dialogue.hold_until(jingle_finished)
 
 
 ## Moves the crossfades on: the engine calls it each frame.
@@ -89,6 +183,10 @@ func advance(delta: float) -> void:
 	var seconds := config().fade_seconds
 	music.advance(delta, seconds)
 	ambience.advance(delta, seconds)
+	if is_instance_valid(_traveller) and _traveller.is_pushing() and _bump_left > 0.0:
+		_bump_left -= delta
+		if _bump_left <= 0.0:
+			_on_bumped(Vector2i.ZERO)
 
 
 ## Plays music `sound_name`, crossfaded; asked during a jingle, once it ends.

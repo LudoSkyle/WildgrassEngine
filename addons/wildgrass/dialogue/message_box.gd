@@ -73,6 +73,9 @@ var _carry := 0.0
 var _pause := 0.0
 var _speed := 1.0
 var _blocked := false
+## True until a signal given to `hold_until()` comes: the key finishes
+## writing, nothing more.
+var _held := false
 ## Set when a tag changes how fast writing goes, so the time left is counted again.
 var _retimed := false
 var _auto_left := 0.0
@@ -193,8 +196,17 @@ func advance(delta: float) -> void:
 					_end()
 
 
+## Keeps the message from going on until `done` comes: the key may still
+## finish writing it.
+func hold_until(done: Signal) -> void:
+	_held = true
+	done.connect(func(..._args: Array) -> void: _held = false, CONNECT_ONE_SHOT)
+
+
 ## The confirm action, or a click on the box.
 func confirm() -> void:
+	if _held and state != State.WRITING:
+		return
 	match state:
 		State.WRITING:
 			if not _blocked:

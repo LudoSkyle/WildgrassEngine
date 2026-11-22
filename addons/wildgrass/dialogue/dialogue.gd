@@ -148,6 +148,12 @@ func confirm(text: String, options := {}) -> bool:
 	return await ask(text, ["Yes", "No"], checked) == 0
 
 
+## Keeps the message shown from going on until `done` comes (a jingle).
+func hold_until(done: Signal) -> void:
+	if is_open():
+		box.hold_until(done)
+
+
 ## Closes the box at once. Pending messages return; questions answer their
 ## `cancel`, or `-1`.
 func close() -> void:

@@ -156,6 +156,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	title = Title.new(paths, logger, config, screens, story, maps, dialogue, save, options, texts)
 	title.audio = audio
+	audio.follow_game(screens, dialogue, save, bag, items)
 	tile_set = T.tile_set()
 	hooks.add(&"map_built", &"test_world_walkers", _give_walkers)
 

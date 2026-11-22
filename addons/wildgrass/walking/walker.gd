@@ -134,6 +134,11 @@ func advance(delta: float) -> void:
 	_animate()
 
 
+## True while it keeps walking into something.
+func is_pushing() -> bool:
+	return _pushing or _pushed
+
+
 ## Turns in place, if not moving.
 func turn(direction: Vector2i) -> void:
 	if not _valid(direction) or is_moving:

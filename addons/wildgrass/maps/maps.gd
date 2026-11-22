@@ -18,6 +18,8 @@ signal map_changed(map: WgMap)
 signal neighbours_loaded
 ## Every map was dropped: back to the title.
 signal cleared
+## A door is used, before its warp.
+signal door_used(door: WgDoor)
 
 ## The map on screen, or null.
 var current: WgMap
@@ -134,6 +136,7 @@ func clear() -> void:
 
 ## Warps through `door`, by the rules of the point it leads to.
 func use(door: WgDoor) -> bool:
+	door_used.emit(door)
 	return await warp(door.target_map, door.target_door, door.transition)
 
 

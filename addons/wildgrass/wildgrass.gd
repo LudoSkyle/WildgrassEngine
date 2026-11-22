@@ -120,6 +120,7 @@ func _init() -> void:
 	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
 	title = _service(&"title", Title, [paths, log, config, screens, story, maps, dialogue, save, options, texts])
 	title.audio = audio
+	audio.follow_game(screens, dialogue, save, bag, items)
 	config.register(&"log", WgLogConfig, "log")
 	config.register(&"display", WgDisplayConfig, "display")
 	config.register(&"language", WgLanguageConfig, "language")

@@ -12,6 +12,8 @@ const ROLES: Dictionary[String, String] = {
 
 ## A crossfade, in seconds.
 @export var fade_seconds := 1.0
+## Walking into something sounds again this often while it goes on.
+@export var bump_seconds := 0.3
 ## Each kind's folder, inside paths `audio`.
 @export var folders: Dictionary[String, String] = {"music": "music", "ambience": "ambience", "jingles": "jingles", "effects": "effects"}
 ## Each kind's audio bus.
