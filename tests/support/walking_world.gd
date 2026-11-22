@@ -24,6 +24,7 @@ const Title := preload("res://addons/wildgrass/title/title.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -52,6 +53,7 @@ var species: SpeciesData
 var types: Types
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
+var encounters: Encounters
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -86,6 +88,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"options", WgOptionsConfig, "options")
 	config.register(&"title", WgTitleConfig, "title")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
+	config.register(&"encounters", WgEncountersConfig, "encounters")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -117,6 +120,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	species = SpeciesData.new(paths, logger)
 	types = Types.new(paths, logger)
 	pokedex = Pokedex.new(paths, logger, config, species)
+	encounters = Encounters.new(paths, logger, config, maps, story, species)
 	bag = Bag.new(logger, hooks, items, quests)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue

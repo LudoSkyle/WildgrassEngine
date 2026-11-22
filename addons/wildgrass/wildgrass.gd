@@ -28,6 +28,7 @@ const Title := preload("res://addons/wildgrass/title/title.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -57,6 +58,7 @@ var title: Title
 var species: SpeciesData
 var types: Types
 var pokedex: Pokedex
+var encounters: Encounters
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -90,6 +92,7 @@ func _init() -> void:
 	species = _service(&"species", SpeciesData, [paths, log])
 	types = _service(&"types", Types, [paths, log])
 	pokedex = _service(&"pokedex", Pokedex, [paths, log, config, species])
+	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species])
 	bag = _service(&"bag", Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
@@ -120,6 +123,7 @@ func _init() -> void:
 	config.register(&"studio", WgStudioConfig, "studio")
 	config.register(&"title", WgTitleConfig, "title")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
+	config.register(&"encounters", WgEncountersConfig, "encounters")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex)
