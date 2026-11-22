@@ -77,3 +77,16 @@ func test_an_item_is_registered_else_a_resource_of_the_items_folder_else_a_sourc
 	assert_object(_world.items.item(&"odd")).is_null()
 	assert_array(asked).is_equal(["lure", "nothing", "odd"])
 	assert_array(_world.logged).is_equal(["ERROR odd.tres: not a WgItem", "ERROR unknown item 'odd'"])
+
+
+func test_every_item_id_known_registered_the_folder_s_and_a_listing_source_s() -> void:
+	var folder := _world.sandbox.root + "items/"
+	DirAccess.make_dir_recursive_absolute(folder)
+	_world.sandbox.set_setting("wildgrass/paths/items", folder)
+	var antidote := WgItem.new()
+	antidote.id = &"antidote"
+	ResourceSaver.save(antidote, folder + "antidote.tres")
+	FileAccess.open(folder + "notes.txt", FileAccess.WRITE).store_string("not an item")
+	_world.items.add_source(func(_id: StringName) -> WgItem: return null, func() -> Array: return [&"repel", "potion"])
+	_world.items.add_source(func(_id: StringName) -> WgItem: return null)
+	assert_array(_world.items.ids()).is_equal([&"potion", &"tm56", &"antidote", &"repel"])

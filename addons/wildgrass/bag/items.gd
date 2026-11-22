@@ -16,6 +16,7 @@ var _items: Dictionary[StringName, WgItem] = {}
 var _uses: Dictionary[StringName, Callable] = {}
 var _unknown: Dictionary[StringName, bool] = {}
 var _sources: Array[Callable] = []
+var _listers: Array[Callable] = []
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
@@ -33,9 +34,33 @@ func register(item: WgItem) -> void:
 
 
 ## Adds an origin of items: `source` is given an id the engine does not have
-## and returns its `WgItem`, or null.
-func add_source(source: Callable) -> void:
+## and returns its `WgItem`, or null; `lister`, if given, returns the ids it
+## has.
+func add_source(source: Callable, lister := Callable()) -> void:
 	_sources.append(source)
+	if lister.is_valid():
+		_listers.append(lister)
+
+
+## Every item id known, none read: registered, the folder's, the sources'
+## that list theirs.
+func ids() -> Array[StringName]:
+	var known: Array[StringName] = []
+	known.assign(_items.keys())
+	var folder := _paths.root(&"items")
+	if not folder.is_empty() and DirAccess.dir_exists_absolute(folder):
+		var files := DirAccess.get_files_at(folder)
+		files.sort()
+		for file in files:
+			var name := file.trim_suffix(".remap")
+			if name.ends_with(".tres") and StringName(name.get_basename()) not in known:
+				known.append(StringName(name.get_basename()))
+	for lister in _listers:
+		var listed: Variant = lister.call()
+		for id: Variant in listed if listed is Array else []:
+			if StringName(str(id)) not in known:
+				known.append(StringName(str(id)))
+	return known
 
 
 ## The item of that id; null, logged once, if unknown.
