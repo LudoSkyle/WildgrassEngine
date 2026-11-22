@@ -72,6 +72,18 @@ func picture(kind: StringName, shiny := false, female := false) -> Texture2D:
 	return null
 
 
+## True if a picture of `kind` is given and there: a texture, or a file
+## that exists. Nothing is loaded.
+func has_picture(kind: StringName) -> bool:
+	if not pictures.has(kind):
+		return false
+	var held: Variant = pictures[kind]
+	if held is Resource:
+		return true
+	var path := str(held)
+	return not path.is_empty() and (ResourceLoader.exists(path) or FileAccess.file_exists(path))
+
+
 ## Its cry; null if none.
 func cry() -> AudioStream:
 	return _loaded(&"cry") as AudioStream

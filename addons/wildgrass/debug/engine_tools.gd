@@ -20,7 +20,7 @@ var _s := {}
 
 ## Adds the engine's tools to `debug`, with `services` by name: texts,
 ## dialogue, bag, items, quests, maps, daytime, weather, pokedex, species,
-## clock, encounters, followers, save, hooks.
+## clock, encounters, followers, save, hooks, screens.
 func _init(debug: Debug, services: Dictionary) -> void:
 	_debug = debug
 	_s = services
@@ -31,6 +31,7 @@ func _init(debug: Debug, services: Dictionary) -> void:
 	debug.add_page(&"quests", "Quests", {"page": PAGE, "lines": quest_lines, "shown": _has_quests})
 	_tool(&"hour", hour_label, next_hour)
 	_tool(&"weather", weather_label, next_weather)
+	_tool(&"species", "Species", show_species, {"shown": _has_species})
 	_tool(&"fill_pokedex", "Fill the Pokédex", fill_pokedex)
 	_tool(&"speed", speed_label, next_speed)
 	_tool(&"empty_bag", "Empty the bag", empty_bag)
@@ -208,6 +209,18 @@ func next_weather() -> bool:
 
 ## In the dex shown: one species in three caught, the next seen, the next
 ## left unknown.
+## The species view, over the tools, until it closes.
+func show_species() -> bool:
+	var opened: WgScreen = _s["screens"].open(&"species_view", {"species": _s["species"], "texts": _s["texts"], "dialogue": _s["dialogue"]})
+	if opened != null and not opened.is_closed():
+		await opened.closed
+	return true
+
+
+func _has_species() -> bool:
+	return not _s["species"].ids().is_empty()
+
+
 func fill_pokedex() -> bool:
 	var pokedex: Object = _s["pokedex"]
 	var entries: Array = pokedex.entries()

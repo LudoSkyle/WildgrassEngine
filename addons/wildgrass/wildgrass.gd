@@ -194,13 +194,14 @@ func _init() -> void:
 	screens.register(&"pokedex_entry", "res://addons/wildgrass/pokedex/pokedex_entry_screen.tscn")
 	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
 	screens.register(&"debug", "res://addons/wildgrass/debug/debug_screen.tscn")
+	screens.register(&"species_view", "res://addons/wildgrass/debug/species_view_screen.tscn")
 	config.register(&"debug", WgDebugConfig, "debug")
 	debug = _service(&"debug", Debug, [log, config, screens])
 	debug.services = {"dialogue": dialogue, "texts": texts, "species": species, "screens": screens}
 	debug_tools = EngineTools.new(debug, {
 		"texts": texts, "dialogue": dialogue, "bag": bag, "items": items, "quests": quests, "maps": maps,
 		"daytime": daytime, "weather": weather, "pokedex": pokedex, "species": species, "clock": clock,
-		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks,
+		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks, "screens": screens,
 	})
 
 
