@@ -34,6 +34,8 @@ enters the game, and when a warp or a reload places it.
 | `slides` | `true` | slides on ice |
 | `through` | `false` | blocks no one, blocked by no character |
 | `pace` | `0` | its walking pace; 0: the config's (feature 6) |
+| `reflects` | `true` | shows its reflection over water (feature 18) |
+| `ground_offset` | `8` | its ground line below its origin, where water mirrors it |
 
 ```gdscript
 walker.turn(Vector2i.LEFT)
@@ -47,7 +49,10 @@ walker.is_moving
 
 Signals: `turned(direction)`, `step_started(from, to)`,
 `step_finished(cell)`, `bumped(direction)` (once per push against an
-obstacle).
+obstacle). The walkers service relays every walker's
+`walker_left(walker, cell, direction, running)` as a step starts and
+`walker_entered(walker, cell)` halfway into its last cell, and gives them
+all (`all()`).
 
 ## Steps
 
