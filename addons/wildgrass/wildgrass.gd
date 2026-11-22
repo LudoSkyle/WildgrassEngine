@@ -33,6 +33,7 @@ const Audio := preload("res://addons/wildgrass/audio/audio.gd")
 const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const Weather := preload("res://addons/wildgrass/weather/weather.gd")
 const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
+const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -67,6 +68,7 @@ var audio: Audio
 var daytime: Daytime
 var weather: Weather
 var grass: TallGrass
+var footprints: Footprints
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -114,6 +116,7 @@ func _init() -> void:
 	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
 	walkers.encounters = encounters
 	grass = _service(&"grass", TallGrass, [hooks, walkers, tiles])
+	footprints = _service(&"footprints", Footprints, [paths, config, maps, walkers, tiles])
 	var audio_host := Node.new()
 	audio_host.name = "Audio"
 	add_child(audio_host)
@@ -148,6 +151,7 @@ func _init() -> void:
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
 	config.register(&"daytime", WgDaytimeConfig, "daytime")
+	config.register(&"footprints", WgFootprintsConfig, "footprints")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex, encounters)
@@ -225,6 +229,7 @@ func _process(delta: float) -> void:
 	clock.advance(delta)
 	daytime.advance(delta)
 	grass.advance(delta)
+	footprints.advance(delta)
 	audio.advance(delta)
 
 
