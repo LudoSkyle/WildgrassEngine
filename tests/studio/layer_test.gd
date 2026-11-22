@@ -160,3 +160,23 @@ func test_a_godot_project_never_meets_the_layer() -> void:
 	assert_object(engine.studio).is_not_null()
 	assert_bool(engine.studio.installed).is_false()
 	assert_str(engine.texts.label("Bag")).is_equal("Bag")
+
+
+func test_studio_s_sound_design_becomes_the_engine_s_named_sounds() -> void:
+	_world.sandbox.write_json("Data/configs/sound_design_config.json", {"klass": "Configs::Project::SoundDesign",
+		"soundEffects": {"decision": {"name": "audio/se/select.wav", "pitch": 100, "volume": 80}, "buzzer": {"name": "audio/se/buzzer.ogg", "pitch": 90, "volume": 100}},
+		"musicEffects": {"receiveKeyItem": {"name": "audio/me/key.ogg", "volume": 100, "pitch": 100}, "gameOver": {"name": "", "pitch": 100, "volume": 100}},
+		"backgroundMusic": {"acroBike": {"name": "audio/bgm/bicycle.ogg", "volume": 100, "pitch": 100}}, "backgroundSound": {}})
+	_world.sandbox.write_json("Data/configs/scene_title_config.json", {"bgmName": "audio/bgm/title.ogg"})
+	_studio = StudioProject.install(_world)
+	var audio := _world.audio.config()
+	var root := _world.sandbox.root
+	assert_that(audio.folders).is_equal({"music": "bgm", "ambience": "bgs", "jingles": "me", "effects": "se"})
+	assert_that(audio.sounds["confirm"]).is_equal({"kind": "effect", "name": root + "audio/se/select.wav", "volume": 80.0, "pitch": 100.0})
+	assert_str(audio.sounds["buzzer"]["name"]).is_equal(root + "audio/se/buzzer.ogg")
+	assert_that(audio.sounds["key_item"]).is_equal({"kind": "jingle", "name": root + "audio/me/key.ogg", "volume": 100.0, "pitch": 100.0})
+	assert_str(audio.sounds["acro_bike"]["kind"]).is_equal("music")
+	assert_bool(audio.sounds.has("game_over")).is_false()
+	assert_that(audio.sounds["menu"]).is_equal({"kind": "effect", "name": ""})
+	assert_str(_world.title.config().music).is_equal(root + "audio/bgm/title.ogg")
+	assert_str(_world.audio.path_of(&"effects", StringName(audio.sounds["confirm"]["name"]))).is_equal(root + "audio/se/select.wav")

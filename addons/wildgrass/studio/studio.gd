@@ -25,6 +25,14 @@ const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const SETTING := "wildgrass/studio/enabled"
 ## The title's images, inside the graphics folder.
 const TITLES := "titles/"
+## Studio's names of the engine's sound roles.
+const SOUND_ROLES: Dictionary[String, String] = {
+	"decision": "confirm", "receiveItem": "item", "receiveKeyItem": "key_item",
+}
+## Each part of Studio's sound design, and the kind of its sounds.
+const SOUND_KINDS: Dictionary[String, String] = {
+	"soundEffects": "effect", "musicEffects": "jingle", "backgroundMusic": "music", "backgroundSound": "ambience",
+}
 ## The engine's English labels, and the Studio text line that says them.
 const LABELS: Dictionary[String, String] = {
 	"Bag": "100014:2",
@@ -106,6 +114,7 @@ func install(engine_texts: Texts, items: Items, quests: Quests, species: Species
 	_config.add_source(&"bag", _bag)
 	_config.add_source(&"title", _title)
 	_config.add_source(&"pokedex", _pokedex)
+	_config.add_source(&"audio", _audio)
 	engine_texts.add_placeholder("text", texts.text_reference)
 	_hooks.add(&"text_tokens", &"wildgrass_studio", texts.tokens)
 	items.add_source(_items.read)
@@ -178,10 +187,32 @@ func _title() -> Dictionary:
 		given["splashes"] = (splashes as Array).map(func(splash: Variant) -> String: return _paths.resolve(&"graphics", TITLES + "%s.png" % splash))
 	given.merge(_fields("infos_config", {"gameTitle": "name"}))
 	given["show_prompt"] = false
+	var music := str(config_file("scene_title_config").get("bgmName", ""))
+	if not music.is_empty():
+		given["music"] = _paths.resolve(&"studio", music)
 	for field: String in ["background", "logo"]:
 		var path := _paths.resolve(&"graphics", TITLES + ("title" if field == "logo" else field) + ".png")
 		if _paths.exists(path):
 			given[field] = path
+	return given
+
+
+## Studio's folders, and its sound design as named sounds: its names of the
+## engine's roles mapped, the others kept in snake case.
+func _audio() -> Dictionary:
+	var sounds := {}
+	var design := config_file("sound_design_config")
+	for part: String in SOUND_KINDS:
+		var entries: Variant = design.get(part, {})
+		for key: Variant in entries if entries is Dictionary else {}:
+			var sound: Variant = entries[key]
+			if not sound is Dictionary or str(sound.get("name", "")).is_empty():
+				continue
+			var role: String = SOUND_ROLES.get(str(key), str(key).to_snake_case())
+			sounds[role] = {"kind": SOUND_KINDS[part], "name": _paths.resolve(&"studio", str(sound["name"])), "volume": float(sound.get("volume", 100)), "pitch": float(sound.get("pitch", 100))}
+	var given := {"folders": {"music": "bgm", "ambience": "bgs", "jingles": "me", "effects": "se"}}
+	if not sounds.is_empty():
+		given["sounds"] = sounds
 	return given
 
 
