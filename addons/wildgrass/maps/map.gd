@@ -15,6 +15,10 @@ extends Node2D
 @export var music: StringName = &""
 ## The ambience under the music; empty: none.
 @export var ambience: StringName = &""
+## Outside: tinted by the moment of the day (feature 16).
+@export var outside := false
+## Multiplies the moment's tint outside: a wood in half-light.
+@export var shade := Color.WHITE
 
 
 ## The node the traveller goes in, or the map itself if missing.

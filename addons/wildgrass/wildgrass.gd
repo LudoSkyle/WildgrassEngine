@@ -90,6 +90,7 @@ func _init() -> void:
 	map_host.y_sort_enabled = true
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
+	daytime.follow(maps)
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	story = _service(&"story", Story, [log, hooks, maps])
 	quests = _service(&"quests", Quests, [log, hooks, paths])
@@ -200,6 +201,8 @@ func _ready() -> void:
 	options.add_volume_options(audio.config().buses)
 	Clock.declare_shader_global()
 	clock.updates_shader_global = true
+	Daytime.declare_shader_globals()
+	daytime.updates_shader_globals = true
 	_start.call_deferred()
 
 
