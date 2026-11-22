@@ -137,6 +137,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.encounters = encounters
 	audio = Audio.new(paths, logger, config, species, root)
 	daytime = Daytime.new(logger, config, hooks)
+	daytime.follow(maps)
 	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)

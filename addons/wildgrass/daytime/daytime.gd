@@ -6,6 +6,10 @@ const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
+## The shader globals it keeps up to date.
+const TINT_GLOBAL := &"day_tint"
+const LIGHT_GLOBAL := &"night_light"
+
 ## The hour crossed a mark of another moment.
 signal moment_changed(old: StringName, new: StringName)
 
@@ -13,11 +17,16 @@ signal moment_changed(old: StringName, new: StringName)
 var log: Log
 ## An hour that wins over the others, 0 to 24; -1: none. Not saved.
 var forced_hour := -1.0
+## Keeps `day_tint` and `night_light` up to date; set once they are declared.
+var updates_shader_globals := false
+## What tints the maps outside, under the maps' host.
+var canvas_modulate: CanvasModulate
 
 var _config: ConfigRegistry
 ## The game's own time, in minutes since day 0 at midnight.
 var _minutes := -1.0
 var _moment: StringName = &""
+var _maps: Object
 
 
 func _init(logger: Log, config_registry: ConfigRegistry, hooks: Hooks) -> void:
@@ -57,11 +66,40 @@ func weekday() -> int:
 	return (int(Time.get_date_dict_from_system()["weekday"]) + 6) % 7
 
 
-## Moves the game's own hour on by `delta` seconds of the game clock, and
-## tells when the moment changes.
+## Tints the maps outside: the current map's, under the maps' host.
+func follow(maps: Object) -> void:
+	_maps = maps
+
+
+## Declares the shader globals the project does not.
+static func declare_shader_globals() -> void:
+	if not ProjectSettings.has_setting("shader_globals/" + TINT_GLOBAL):
+		RenderingServer.global_shader_parameter_add(TINT_GLOBAL, RenderingServer.GLOBAL_VAR_TYPE_COLOR, Color.WHITE)
+	if not ProjectSettings.has_setting("shader_globals/" + LIGHT_GLOBAL):
+		RenderingServer.global_shader_parameter_add(LIGHT_GLOBAL, RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 0.0)
+
+
+## The tint of the maps now: the moment's times the current map's shade
+## outside, white inside.
+func map_tint() -> Color:
+	var map: WgMap = _maps.current if _maps != null else null
+	if map == null or not map.outside:
+		return Color.WHITE
+	return tint() * map.shade
+
+
+## The light of lights now: the moment's outside, 0 inside.
+func map_light() -> float:
+	var map: WgMap = _maps.current if _maps != null else null
+	return light() if map != null and map.outside else 0.0
+
+
+## Moves the game's own hour on by `delta` seconds of the game clock, tints
+## the maps, and tells when the moment changes.
 func advance(delta: float) -> void:
 	if config().source == "game":
 		_minutes = _game_minutes() + maxf(delta, 0.0) * config().minutes_per_second
+	_apply()
 	var now := moment()
 	if now != _moment:
 		var old := _moment
@@ -89,6 +127,22 @@ func light(at := -1.0) -> float:
 	var marks := _between(at)
 	var moments := config().moments
 	return lerpf(float(moments[marks[0][1]].get("light", 0.0)), float(moments[marks[1][1]].get("light", 0.0)), marks[2])
+
+
+func _apply() -> void:
+	var color := map_tint()
+	if _maps != null and is_instance_valid(_maps.host):
+		if not is_instance_valid(canvas_modulate):
+			canvas_modulate = CanvasModulate.new()
+			_maps.host.add_child(canvas_modulate)
+		canvas_modulate.color = color
+	if updates_shader_globals:
+		_set_shader_globals(color, map_light())
+
+
+func _set_shader_globals(color: Color, strength: float) -> void:
+	RenderingServer.global_shader_parameter_set(TINT_GLOBAL, color)
+	RenderingServer.global_shader_parameter_set(LIGHT_GLOBAL, strength)
 
 
 ## The game's own time: a part of the saved game.
