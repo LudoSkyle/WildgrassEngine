@@ -30,6 +30,7 @@ const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
+const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -61,6 +62,7 @@ var types: Types
 var pokedex: Pokedex
 var encounters: Encounters
 var audio: Audio
+var daytime: Daytime
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -76,6 +78,7 @@ func _init() -> void:
 	display = _service(&"display", Display)
 	hooks = _service(&"hooks", Hooks)
 	clock = _service(&"clock", Clock)
+	daytime = _service(&"daytime", Daytime, [log, config, hooks])
 	texts = _service(&"texts", Texts, [paths, log, config, hooks])
 	screen_layer = CanvasLayer.new()
 	screen_layer.name = "Screens"
@@ -135,6 +138,7 @@ func _init() -> void:
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
+	config.register(&"daytime", WgDaytimeConfig, "daytime")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex, encounters)
@@ -162,6 +166,7 @@ func _add_parts() -> void:
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
+	save.add_part(&"daytime", daytime.state, daytime.restore, daytime.reset)
 	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
@@ -207,6 +212,7 @@ func _notification(what: int) -> void:
 
 func _process(delta: float) -> void:
 	clock.advance(delta)
+	daytime.advance(delta)
 	audio.advance(delta)
 
 
