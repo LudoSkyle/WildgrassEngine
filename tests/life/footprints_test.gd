@@ -154,3 +154,17 @@ func test_prints_gone_with_their_map_leave_at_the_next_advance() -> void:
 	_walk(_world.walker(Vector2i(1, 1)), Vector2i.RIGHT)
 	assert_int(_world.footprints.prints.size()).is_equal(2)
 	assert_object(_world.footprints.prints[0].get_parent().get_parent()).is_same(next)
+
+
+func test_no_prints_from_a_walker_that_leaves_none_or_is_hidden() -> void:
+	var walker := _world.walker(Vector2i(1, 5))
+	walker.prints = false
+	_walk(walker, Vector2i.RIGHT)
+	assert_array(_world.footprints.prints).is_empty()
+	walker.prints = true
+	walker.hide()
+	_walk(walker, Vector2i.RIGHT)
+	assert_array(_world.footprints.prints).is_empty()
+	walker.show()
+	_walk(walker, Vector2i.RIGHT)
+	assert_int(_world.footprints.prints.size()).is_equal(2)

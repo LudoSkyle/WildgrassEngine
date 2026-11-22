@@ -138,7 +138,7 @@ func test_it_sways_a_pixel_four_times_a_second() -> void:
 	assert_array(places).is_equal([56.0, 57.0, 56.0, 55.0, 56.0])
 
 
-func test_no_reflection_under_a_jetty_off_water_or_for_a_walker_that_does_not_reflect() -> void:
+func test_no_reflection_under_a_jetty_off_water_or_for_a_walker_hidden_or_that_does_not_reflect() -> void:
 	var jetty := T.layer(_map, _ground.tile_set, {Vector2i(3, 4): T.JETTY, Vector2i(3, 5): T.JETTY}, 0)
 	assert_object(_glass()).is_null()
 	jetty.free()
@@ -146,6 +146,10 @@ func test_no_reflection_under_a_jetty_off_water_or_for_a_walker_that_does_not_re
 	_walker.reflects = false
 	assert_bool(_glass().visible).is_false()
 	_walker.reflects = true
+	_walker.hide()
+	assert_bool(_glass().visible).is_false()
+	_walker.show()
+	assert_bool(_glass().visible).is_true()
 	_walker.position = Vector2(120, 56)
 	assert_bool(_glass().visible).is_false()
 	_walker.position = Vector2(56, 56)

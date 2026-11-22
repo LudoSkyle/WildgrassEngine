@@ -101,3 +101,20 @@ func test_a_rustle_whose_map_is_gone_is_dropped() -> void:
 func _walk_in(walker: WgWalker) -> void:
 	walker.step(Vector2i.RIGHT)
 	walker.advance(0.15)
+
+
+func test_a_walker_that_rustles_nothing_or_is_hidden_leaves_the_tuft_alone() -> void:
+	var walker := _world.walker(Vector2i(2, 5))
+	walker.rustles = false
+	_walk_in(walker)
+	assert_that(_layer.get_cell_atlas_coords(Vector2i(3, 5))).is_equal(T.TUFT)
+	walker.advance(1.0)
+	walker.rustles = true
+	walker.hide()
+	_walk_in(walker)
+	assert_that(_layer.get_cell_atlas_coords(Vector2i(4, 5))).is_equal(T.TUFT)
+	walker.advance(1.0)
+	walker.show()
+	walker.step(Vector2i.LEFT)
+	walker.advance(0.15)
+	assert_that(_layer.get_cell_atlas_coords(Vector2i(3, 5))).is_equal(T.TUFT_PARTING)

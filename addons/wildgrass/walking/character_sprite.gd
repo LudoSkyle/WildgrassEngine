@@ -25,12 +25,21 @@ extends AnimatedSprite2D
 	set(value):
 		fps = value
 		_build()
-## Pixels below the walker's origin where the feet stand: the bottom of its
-## cell, 8 for 16-pixel cells.
+## Pixels below the walker's origin where the feet stand, whatever the
+## sprite's scale: the bottom of its cell, 8 for 16-pixel cells.
 @export var foot_line := 8.0:
 	set(value):
 		foot_line = value
 		_build()
+
+
+func _init() -> void:
+	set_notify_local_transform(true)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_LOCAL_TRANSFORM_CHANGED:
+		_place_feet()
 
 
 func _build() -> void:
@@ -50,8 +59,20 @@ func _build() -> void:
 			frames.add_frame("walk_" + direction, _cut(Vector2(column, row) * size, size))
 	sprite_frames = frames
 	centered = true
-	offset = Vector2(0.0, foot_line - size.y / 2.0)
 	animation = "idle_" + rows_order[0]
+	_place_feet()
+
+
+## The offset is scaled with the picture: the feet stay on `foot_line`.
+func _place_feet() -> void:
+	if sprite_frames == null or not sprite_frames.has_animation(animation):
+		return
+	var texture := sprite_frames.get_frame_texture(animation, 0)
+	if texture == null:
+		return
+	var height := texture.get_size().y
+	var stretch := absf(scale.y) if not is_zero_approx(scale.y) else 1.0
+	offset = Vector2(0.0, foot_line / stretch - height / 2.0)
 
 
 func _cut(from: Vector2, size: Vector2) -> AtlasTexture:
