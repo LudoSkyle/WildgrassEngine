@@ -427,7 +427,8 @@ func _known(action_key: String) -> bool:
 
 
 ## The `map` part of a saved game: the current map, the traveller's cell,
-## level and facing on it, and every walker's of that map, by its path in it.
+## level and facing on it, and every walker's of that map, by its path in it,
+## followers aside.
 ## Cells are the map's own, from its corner. Empty with no map or traveller.
 func map_state() -> Dictionary:
 	var map := maps.current
@@ -437,7 +438,7 @@ func map_state() -> Dictionary:
 	state.merge(_place_of(maps.traveller, map))
 	var others := {}
 	for walker: WgWalker in _held:
-		if walker != maps.traveller and is_instance_valid(walker) and map.is_ancestor_of(walker):
+		if walker != maps.traveller and is_instance_valid(walker) and not walker is WgFollower and map.is_ancestor_of(walker):
 			others[str(map.get_path_to(walker))] = _place_of(walker, map)
 	state["walkers"] = others
 	return state

@@ -66,6 +66,20 @@ var destination: Vector2i:
 var heading: Vector2i:
 	get:
 		return _heading if is_moving else Vector2i.ZERO
+## The level its step under way reaches; its own at rest.
+var destination_level: int:
+	get:
+		return _to_level if is_moving else level
+## How far its step under way has gone, 0 to 1; 0 at rest.
+var step_progress: float:
+	get:
+		return _progress if is_moving else 0.0
+## How long its step under way lasts, in seconds; 0 at rest.
+var step_seconds: float:
+	get:
+		return _length / _pace if is_moving and _pace > 0.0 else 0.0
+## Steps started since it was made.
+var step_count := 0
 
 var _cell := Vector2i.ZERO
 var _from := Vector2.ZERO
@@ -214,6 +228,7 @@ func _start_step(direction: Vector2i, pace: float, run: bool) -> bool:
 	else:
 		return false
 	is_moving = true
+	step_count += 1
 	_entered = false
 	walkers.walker_left.emit(self, _cell, direction, run and length == 1)
 	is_jumping = length == 2
@@ -385,8 +400,13 @@ func _animate() -> void:
 			_sprite.pause()
 	elif frames.has_animation("walk" + suffix):
 		_play("walk" + suffix, _pace / walkers.movement().walk_pace if is_moving and not always_stepping else 1.0)
-	if is_sliding:
+	if _legs_still():
 		_sprite.pause()
+
+
+## True while its legs stay still: sliding.
+func _legs_still() -> bool:
+	return is_sliding
 
 
 func _play(animation_name: String, speed: float) -> void:
