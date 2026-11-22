@@ -156,6 +156,10 @@ func test_a_flock_of_one_seed_keeps_its_gap_each_bobbing_its_own_way() -> void:
 	var settings := {"zone": Rect2i(0, 0, 30, 30), "drift": -1, "seed": 3}
 	var first := _flyer(Vector2i(20, 5), settings)
 	var second := _flyer(Vector2i(22, 6), settings)
+	# Each draws its own bob, never from the seed; drawn by chance, two could
+	# fall in step, so the second is put half a beat away to see it apart.
+	assert_float(second.get(&"_bob")).is_not_equal(first.get(&"_bob"))
+	second.set(&"_bob", float(first.get(&"_bob")) + PI / WgFlyer.BOB_BEAT)
 	var bobs_apart := false
 	for tick in 300:
 		first.advance(0.02)
