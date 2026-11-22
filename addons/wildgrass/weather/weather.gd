@@ -12,6 +12,10 @@ signal changed(old: StringName, new: StringName)
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
+## What draws the weather, under the maps' host, on maps outside.
+var layer: WgWeatherLayer
+## The day and night the sun's tone fades with.
+var daytime: RefCounted
 ## The weather on, unless the current map has its own; not saved.
 var current: StringName = &"none":
 	set(value):
@@ -68,6 +72,7 @@ func follow(maps: Object) -> void:
 
 func _on_map_changed(_map: WgMap) -> void:
 	_tell()
+	_refresh()
 
 
 ## The id of the weather shown now: the current map's own, else `current`.
@@ -96,3 +101,16 @@ func _tell() -> void:
 		var old := _shown
 		_shown = now
 		changed.emit(old, now)
+		_refresh()
+
+
+## The layer draws the weather shown on a map outside, nothing inside.
+func _refresh() -> void:
+	if _maps == null or not is_instance_valid(_maps.host):
+		return
+	if not is_instance_valid(layer):
+		layer = WgWeatherLayer.new()
+		_maps.host.add_child(layer)
+	layer.daytime = daytime
+	var map: WgMap = _maps.current
+	layer.show_weather(weather() if map != null and map.outside else null)

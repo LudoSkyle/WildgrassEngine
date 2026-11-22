@@ -94,6 +94,7 @@ func _init() -> void:
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	daytime.follow(maps)
 	weather = _service(&"weather", Weather, [paths, log])
+	weather.daytime = daytime
 	weather.follow(maps)
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	story = _service(&"story", Story, [log, hooks, maps])
