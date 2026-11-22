@@ -25,7 +25,7 @@ func _start_engine() -> Engine_:
 
 func test_the_autoload_provides_every_service() -> void:
 	var engine: Engine_ = get_tree().root.get_node("Wildgrass")
-	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests, engine.items, engine.bag, engine.save, engine.menu, engine.options, engine.title, engine.species, engine.types]:
+	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests, engine.items, engine.bag, engine.save, engine.menu, engine.options, engine.title, engine.species, engine.types, engine.pokedex]:
 		assert_object(service).is_not_null()
 	assert_bool(engine.config.is_registered(&"display")).is_true()
 	assert_bool(engine.config.is_registered(&"log")).is_true()
@@ -33,8 +33,8 @@ func test_the_autoload_provides_every_service() -> void:
 	assert_bool(engine.config.is_registered(&"language")).is_true()
 	assert_bool(engine.config.is_registered(&"save")).is_true()
 	assert_bool(engine.config.is_registered(&"title")).is_true()
-	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock", &"map"])
-	assert_array(engine.hooks.names(&"save_summary")).is_equal([&"wildgrass_clock", &"wildgrass_map"])
+	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"clock", &"pokedex", &"map"])
+	assert_array(engine.hooks.names(&"save_summary")).is_equal([&"wildgrass_clock", &"wildgrass_map", &"wildgrass_pokedex"])
 	assert_array(engine.menu.entries()).is_equal([&"bag", &"options", &"save", &"exit"])
 	assert_object(engine.walkers.menu).is_same(engine.menu)
 	assert_bool(engine.config.is_registered(&"options")).is_true()
@@ -101,7 +101,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgType", "WgWalker", "WgWalkerController", "WgWander"])
+	assert_array(names).is_equal(["WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDex", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgPokedexConfig", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgType", "WgWalker", "WgWalkerController", "WgWander"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 
