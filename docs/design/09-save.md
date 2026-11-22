@@ -169,7 +169,8 @@ in place of the save service's, and `open_options`; else
 - Options (message speed, volume, language): their own file, feature 10.
 - Pokémon, the party, the Pokédex as parts: features 12 and after.
 - Reading Studio's binary saves, encrypting them: not planned.
-- Autosave, saving anywhere from a debug key: the debug tools (feature 20).
+- Autosave, a key to save anywhere: with the options' keys (the debug tools,
+  feature 20, save where saving is off).
 
 ## Tests
 

@@ -95,6 +95,8 @@ Wildgrass.quests.complete(&"bell", 0)          # objective 0 done
 Wildgrass.quests.record(&"obtain_item", &"potion", 1)   # counts for every quest
 Wildgrass.quests.is_finished(&"bell")
 Wildgrass.quests.claim(&"bell")                # its earnings, once
+Wildgrass.quests.forget(&"bell")               # as never started; signal forgotten
+Wildgrass.quests.ids()                         # every quest known
 ```
 
 - **Defined** as a `WgQuest` resource the game registers
@@ -151,7 +153,6 @@ nothing.
 - Found items (a flag per find, an item given): with the bag, feature 8.
 - Badges: with trainers. Flags set at a given time: with day and night,
   feature 16.
-- Jumping to a quest's step: the debug tools, feature 20.
 
 ## Tests
 

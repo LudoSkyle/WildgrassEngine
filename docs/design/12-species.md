@@ -45,6 +45,7 @@ unknown), `name`, `genus` ("Seed Pokémon"), `description`, `forms` (one
 - `picture(kind, shiny = false, female = false)`: the variant asked, else
   without `_female`, else without `_shiny`, else the plain one; a path is loaded the first time it
   shows, a missing file reported once (paths). `cry()` likewise.
+  `has_picture(kind)`: whether that picture is there, nothing loaded.
 - Abilities, moves and items are named by id: their own data come with the
   features that use them (battles, the party).
 - A game registers its species (`Wildgrass.species.register(species)`), else

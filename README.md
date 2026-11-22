@@ -8,7 +8,8 @@ GDScript only, ships no assets.
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
 layer, the title screen, Pokémon species and types, the Pokédex, wild
-encounters, sound, day and night, weather, life on the maps, and followers.
+encounters, sound, day and night, weather, life on the maps, followers, and
+the debug tools.
 
 ## Install
 
@@ -294,6 +295,16 @@ Pokémon shows its species' `character` sheet; set
 Wildgrass.followers.follow_pokemon(&"wingull")
 Wildgrass.followers.add(friend)
 Wildgrass.followers.enabled = false
+```
+
+**Debug tools**: in debug builds, the pause menu's Debug entry opens the
+engine's tools (fill the bag, quests, hour, weather, the species view, fill
+the Pokédex, speed, warp, walk through walls…) and the game's own, apart.
+`config/debug.json`: `enabled` (`"auto"`, true, false), `hours`, `speeds`.
+
+```gdscript
+Wildgrass.debug.add_tool(&"rod", "Give the rod", _give_rod)   # in Game
+Wildgrass.debug.add_page(&"bell", "Bell quest", {"lines": _bell_lines})
 ```
 
 ## License

@@ -37,10 +37,14 @@ and the engine's labels in Studio's words.
 Wildgrass.texts.language = "fr"          # TranslationServer.set_locale()
 Wildgrass.texts.languages()              # ["fr", "en"]: choosable, in order
 Wildgrass.texts.language_name("fr")      # "Français"
+Wildgrass.texts.label_in("fr", "Bag")    # "Sac": another language than the one shown
+Wildgrass.texts.is_given_in("fr", "Bag") # true if it has words of its own in French
 ```
 
 - Signal `language_changed(code)`. Godot refreshes labels itself; what a game
   built from texts, it builds again.
+- `label_in()` tells nothing that follows the language; a placeholder that
+  picks a language asks `reading_language()` (Studio's texts do).
 - At start: `default` if set, else Godot's choice (the system's).
   Keeping the player's choice is the options' (feature 10); asking it on the
   first launch, the title screen's (feature 11).
