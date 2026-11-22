@@ -7,6 +7,13 @@ const Log := preload("res://addons/wildgrass/core/log/log.gd")
 const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+
+## A project setting naming the scene of the line's Pokémon.
+const POKEMON_SCENE_SETTING := "wildgrass/followers/pokemon_scene"
+## The engine's Pokémon walks at 6 frames a second: a drawing a third of a
+## second.
+const POKEMON_FPS := 6.0
 
 ## Someone joined or left the line.
 signal line_changed
@@ -32,17 +39,27 @@ var log: Log
 var hooks: Hooks
 var maps: Maps
 var walkers: Walkers
+var species: SpeciesData
+## The scene of the line's Pokémon, a WgFollower; empty: the engine's, made
+## in code. The project setting `wildgrass/followers/pokemon_scene` sets it.
+var pokemon_scene := ""
+## The line's Pokémon, or null.
+var pokemon: WgFollower:
+	get:
+		return _pokemon[0] if not _pokemon.is_empty() and is_instance_valid(_pokemon[0]) else null
 
 var _people: Array[WgFollower] = []
 ## The Pokémon, if one follows: none or one.
 var _pokemon: Array[WgFollower] = []
 
 
-func _init(logger: Log, hook_registry: Hooks, maps_service: Maps, walkers_service: Walkers) -> void:
+func _init(logger: Log, hook_registry: Hooks, maps_service: Maps, walkers_service: Walkers, species_data: SpeciesData) -> void:
 	log = logger
 	hooks = hook_registry
 	maps = maps_service
 	walkers = walkers_service
+	species = species_data
+	pokemon_scene = str(ProjectSettings.get_setting(POKEMON_SCENE_SETTING, ""))
 	hooks.add(&"map_leaving", &"wildgrass_followers", _on_map_leaving)
 	maps.map_changed.connect(_on_map_changed)
 	maps.cleared.connect(_take_out)
@@ -75,6 +92,116 @@ func remove(follower: WgFollower) -> void:
 	_pokemon.erase(follower)
 	_leave(follower)
 	_relink()
+	line_changed.emit()
+
+
+## Puts `species_id`'s Pokémon at the end of the line, in place of the one
+## following; null, logged and nobody following for an unknown species or
+## one with no `character` picture.
+func follow_pokemon(species_id: StringName, form := 0, shiny := false, female := false) -> WgFollower:
+	stop_pokemon()
+	var species_form := species.form(species_id, form) if species.has(species_id) else null
+	if species_form == null:
+		log.error(&"followers", "no species '%s' to follow" % species_id)
+		return null
+	var follower := _make_pokemon()
+	if follower == null:
+		return null
+	if not follower._dress(species_form, shiny, female):
+		log.error(&"followers", "'%s' has no character picture to follow with" % species_id)
+		follower.free()
+		return null
+	follower.species = species_id
+	follower.form = species_form.form
+	follower.shiny = shiny
+	follower.female = female
+	_pokemon.append(follower)
+	_joined(follower)
+	return follower
+
+
+## No Pokémon follows any more.
+func stop_pokemon() -> void:
+	var following := pokemon
+	_pokemon.clear()
+	if following == null:
+		return
+	_leave(following)
+	following.free()
+	_relink()
+	line_changed.emit()
+
+
+## The scene of `pokemon_scene`, else the engine's: a WgFollower with a
+## WgCharacterSprite, always stepping, leaving no prints in sand.
+func _make_pokemon() -> WgFollower:
+	if not pokemon_scene.is_empty():
+		var packed := load(pokemon_scene) as PackedScene if ResourceLoader.exists(pokemon_scene) else null
+		var made := packed.instantiate() if packed != null else null
+		if made is WgFollower:
+			return made
+		if made != null:
+			made.free()
+		log.error(&"followers", "%s must be a scene whose root is a WgFollower, got '%s'" % [POKEMON_SCENE_SETTING, pokemon_scene])
+		return null
+	var follower := WgFollower.new()
+	follower.name = "Pokemon"
+	follower.always_stepping = true
+	follower.prints = false
+	var drawn := WgCharacterSprite.new()
+	drawn.name = "Sprite"
+	drawn.fps = POKEMON_FPS
+	follower.add_child(drawn)
+	return follower
+
+
+## The `followers` part of a saved game: `enabled`, the Pokémon, and the
+## people's scenes in order. Where they stand is not saved.
+func state() -> Dictionary:
+	var people: Array[String] = []
+	for follower: Variant in _people:
+		if not is_instance_valid(follower):
+			continue
+		var path := (follower as Node).scene_file_path
+		if path.is_empty():
+			log.warn(&"followers", "%s was made in code: it is not saved" % (follower as Node).name)
+			continue
+		people.append(path)
+	var saved := {"enabled": enabled, "people": people}
+	var following := pokemon
+	if following != null:
+		saved["pokemon"] = {"species": str(following.species), "form": following.form, "shiny": following.shiny, "female": following.female}
+	return saved
+
+
+## Puts back the line `state()` saw, on the traveller's cell, hidden.
+func restore(saved: Dictionary) -> void:
+	reset()
+	enabled = bool(saved.get("enabled", true))
+	var people: Variant = saved.get("people", [])
+	if people is Array:
+		for path: Variant in people:
+			var packed := load(str(path)) as PackedScene if ResourceLoader.exists(str(path)) else null
+			var made := packed.instantiate() if packed != null else null
+			if made is WgFollower:
+				add(made)
+				continue
+			if made != null:
+				made.free()
+			log.error(&"followers", "the saved follower '%s' is not a WgFollower scene" % path)
+	var following: Variant = saved.get("pokemon")
+	if following is Dictionary:
+		follow_pokemon(StringName(str(following.get("species", ""))), int(following.get("form", 0)), bool(following.get("shiny", false)), bool(following.get("female", false)))
+
+
+## A new game: no one follows, and following is on.
+func reset() -> void:
+	for follower: WgFollower in line:
+		_leave(follower)
+		follower.free()
+	_people.clear()
+	_pokemon.clear()
+	enabled = true
 	line_changed.emit()
 
 

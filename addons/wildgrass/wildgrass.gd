@@ -123,7 +123,7 @@ func _init() -> void:
 	walkers.bag = bag
 	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
 	walkers.encounters = encounters
-	followers = _service(&"followers", Followers, [log, hooks, maps, walkers])
+	followers = _service(&"followers", Followers, [log, hooks, maps, walkers, species])
 	grass = _service(&"grass", TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", Footprints, [paths, config, maps, walkers, tiles])
 	reflections = _service(&"reflections", Reflections, [config, walkers, tiles])
@@ -197,6 +197,7 @@ func _add_parts() -> void:
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
 	save.add_part(&"daytime", daytime.state, daytime.restore, daytime.reset)
 	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)
+	save.add_part(&"followers", followers.state, followers.restore, followers.reset)
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
