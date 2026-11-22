@@ -27,6 +27,7 @@ func test_resolve_uses_the_studio_folders_by_default() -> void:
 	assert_str(paths.resolve(&"pokemon", "eevee.tres")).is_equal("res://pokemon/eevee.tres")
 	assert_str(paths.resolve(&"types", "fire.tres")).is_equal("res://types/fire.tres")
 	assert_str(paths.resolve(&"dex", "kanto.tres")).is_equal("res://dex/kanto.tres")
+	assert_str(paths.resolve(&"encounters", "route.tres")).is_equal("res://encounters/route.tres")
 
 
 func test_resolve_follows_the_project_setting_with_or_without_trailing_slash() -> void:
