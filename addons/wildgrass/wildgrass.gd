@@ -92,13 +92,14 @@ func _init() -> void:
 	species = _service(&"species", SpeciesData, [paths, log])
 	types = _service(&"types", Types, [paths, log])
 	pokedex = _service(&"pokedex", Pokedex, [paths, log, config, species])
-	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species])
 	bag = _service(&"bag", Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
 	walkers.story = story
 	walkers.bag = bag
+	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
+	walkers.encounters = encounters
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	save = _service(&"save", Save, [paths, log, config, hooks])

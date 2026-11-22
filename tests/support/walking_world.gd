@@ -120,12 +120,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	species = SpeciesData.new(paths, logger)
 	types = Types.new(paths, logger)
 	pokedex = Pokedex.new(paths, logger, config, species)
-	encounters = Encounters.new(paths, logger, config, maps, story, species)
 	bag = Bag.new(logger, hooks, items, quests)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
 	walkers.bag = bag
+	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
+	walkers.encounters = encounters
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	clock = Clock.new()

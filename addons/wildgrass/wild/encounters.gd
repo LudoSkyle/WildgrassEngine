@@ -10,21 +10,49 @@ const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
+const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+
+## What the engine's `start` says.
+const ANNOUNCE := "A wild {name} appeared!"
+
+## A wild Pokémon came out: `{species, form, level, shiny, table}`.
+signal encountered(pokemon: Dictionary)
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
+## -1: the chance; 1: every step that can; 0: never.
+var forced := -1
+## How many wild Pokémon came out.
+var count := 0
+## The last one.
+var last := {}
+## Awaited with a wild Pokémon once it came out: the engine's says so in the
+## message box. Battles replace it.
+var start: Callable
 
 var _config: ConfigRegistry
 var _maps: Maps
 var _story: Story
 var _species: SpeciesData
 var _catalog: Catalog
+var _tiles: Tiles
+var _hooks: Hooks
+var _pokedex: Pokedex
+var _dialogue: Dialogue
 var _rng := RandomNumberGenerator.new()
 var _warned: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, maps: Maps, story: Story, species: SpeciesData) -> void:
+func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, maps: Maps, story: Story, species: SpeciesData, tiles: Tiles, hooks: Hooks, pokedex: Pokedex, dialogue: Dialogue) -> void:
 	log = logger
+	_tiles = tiles
+	_hooks = hooks
+	_pokedex = pokedex
+	_dialogue = dialogue
+	start = announce
 	_config = config_registry
 	_maps = maps
 	_story = story
@@ -118,6 +146,50 @@ func draw(terrain: StringName, tool := &"", area := 0) -> Dictionary:
 		"shiny": _rng.randi_range(1, shiny_rate) == 1,
 		"table": chosen["table"],
 	}
+
+
+## What a step of `walker` brings out: a wild Pokémon, or {}. Its cell's
+## terrain must have a table; the chance is the tables' own, else the map's
+## for a step walked or run.
+func roll(walker: WgWalker) -> Dictionary:
+	if forced == 0:
+		return {}
+	var terrain: Variant = _tiles.data(walker.cell, &"encounter")
+	if terrain == null or str(terrain).is_empty():
+		return {}
+	var area := int(_tiles.data(walker.cell, &"encounter_area")) if _tiles.data(walker.cell, &"encounter_area") != null else 0
+	var tables := tables_for(StringName(str(terrain)), &"", area)
+	if tables.is_empty():
+		return {}
+	var rate := 0.0
+	for table in tables:
+		rate = maxf(rate, table.rate)
+	if rate <= 0.0:
+		rate = map_node().chance(walker.is_running)
+	if forced != 1 and _rng.randf() * 100.0 >= rate:
+		return {}
+	return draw(StringName(str(terrain)), &"", area)
+
+
+## A wild Pokémon comes out: the hook `wild_encounter` may change it or return
+## {} to cancel it; then it is counted, seen in the Pokédex, and `start` is
+## awaited. False if cancelled.
+func meet(pokemon: Dictionary) -> bool:
+	var met: Variant = _hooks.filter(&"wild_encounter", pokemon)
+	if not met is Dictionary or (met as Dictionary).is_empty():
+		return false
+	count += 1
+	last = met
+	encountered.emit(met)
+	_pokedex.see(met["species"], int(met.get("form", 0)))
+	await start.call(met)
+	return true
+
+
+## The engine's `start`: "A wild {name} appeared!".
+func announce(pokemon: Dictionary) -> void:
+	var found := _species.find(pokemon["species"])
+	await _dialogue.say(ANNOUNCE, {"values": {"name": found.name if found != null else str(pokemon["species"])}})
 
 
 ## True for an entry that can be drawn; a wrong one is logged once.
