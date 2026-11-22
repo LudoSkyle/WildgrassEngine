@@ -16,6 +16,9 @@ static var _token := RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
+## Gives the language read now; set by the Studio layer to the engine
+## texts' `reading_language`.
+var language_of := Callable()
 
 var _paths: Paths
 var _config: ConfigRegistry
@@ -44,7 +47,7 @@ func file_lines(file: int) -> PackedStringArray:
 	if data.is_empty():
 		return lines
 	for row: PackedStringArray in data["rows"]:
-		lines.append(_pick(data["header"], row, TranslationServer.get_locale()))
+		lines.append(_pick(data["header"], row, _language()))
 	return lines
 
 
@@ -60,6 +63,21 @@ func cells(file: int, at: int) -> Dictionary:
 		if not is_empty(row[index]):
 			found[header[index]] = row[index].replace("\\nl", "\n")
 	return found
+
+
+## True if `{text:file:line}` has a cell of its own in language `code`, not
+## the fallback's.
+func text_given(argument: String, code: String) -> bool:
+	var parts := argument.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return false
+	var data := _file(parts[0].to_int(), false)
+	var at := parts[1].to_int()
+	if data.is_empty() or at < 0 or at >= (data["rows"] as Array).size():
+		return false
+	var row: PackedStringArray = data["rows"][at]
+	var index := column(data["header"], code)
+	return index >= 0 and index < row.size() and not is_empty(row[index])
 
 
 ## `{text:file:line}`: the placeholder texts gain.
@@ -101,7 +119,7 @@ func _line(file: int, at: int, report: bool) -> String:
 		if report:
 			_warn_once("no line %d in Studio text file %d" % [at, file])
 		return ""
-	return _pick(data["header"], rows[at], TranslationServer.get_locale())
+	return _pick(data["header"], rows[at], _language())
 
 
 func _file(file: int, report: bool) -> Dictionary:
@@ -149,6 +167,12 @@ func column(header: PackedStringArray, locale: String) -> int:
 		if index >= 0:
 			return index
 	return -1
+
+
+## The language read: the engine texts' (`label_in()` reading another), else
+## the one shown.
+func _language() -> String:
+	return language_of.call() if language_of.is_valid() else TranslationServer.get_locale()
 
 
 func _warn_once(message: String) -> void:

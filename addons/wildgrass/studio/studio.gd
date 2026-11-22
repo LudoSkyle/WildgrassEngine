@@ -119,7 +119,8 @@ func install(engine_texts: Texts, items: Items, quests: Quests, species: Species
 	_config.add_source(&"title", _title)
 	_config.add_source(&"pokedex", _pokedex)
 	_config.add_source(&"audio", _audio)
-	engine_texts.add_placeholder("text", texts.text_reference)
+	engine_texts.add_placeholder("text", texts.text_reference, texts.text_given)
+	texts.language_of = engine_texts.reading_language
 	_hooks.add(&"text_tokens", &"wildgrass_studio", texts.tokens)
 	items.add_source(_items.read, _items.ids)
 	quests.add_source(_quests.read_all)

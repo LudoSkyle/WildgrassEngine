@@ -30,6 +30,9 @@ var _values: Dictionary[StringName, Variant] = {}
 static var _placeholder: RegEx
 ## Placeholders plugins add: name -> callable given the argument.
 var _placeholders: Dictionary[String, Callable] = {}
+## Name -> callable given the argument and a language, true if the
+## placeholder has a text of its own in it.
+var _givens: Dictionary[String, Callable] = {}
 
 
 func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
@@ -91,9 +94,7 @@ func value(value_name: StringName) -> Variant:
 ## as a tag. `values` come first: one text's own.
 func format(text: String, escape := false, values := {}) -> String:
 	text = str(_hooks.filter(&"text_tokens", text))
-	if _placeholder == null:
-		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
-	return _replace(_placeholder, text, _fill_placeholder.bind(escape, values))
+	return _replace(_pattern(), text, _fill_placeholder.bind(escape, values))
 
 
 ## A label of the game or the engine, written in English: translated through
@@ -102,11 +103,61 @@ func label(text: String, values := {}) -> String:
 	return format(TranslationServer.translate(text), false, values)
 
 
+## A label as `label()` gives it, in language `code` instead of the one
+## shown: Godot's translations and the placeholders alike. Nothing that
+## follows the language is told.
+func label_in(code: String, text: String, values := {}) -> String:
+	var main := TranslationServer.get_or_add_domain(&"")
+	var before := main.get_locale_override()
+	main.set_locale_override(code)
+	var result := label(text, values)
+	main.set_locale_override(before)
+	return result
+
+
+## True if `text` has its own words in language `code`, not another's in
+## their place: each placeholder that can tell has a text of its own there,
+## and what is written around them is translated to `code`, or `code` has no
+## translation at all (the language it is written in).
+func is_given_in(code: String, text: String) -> bool:
+	if text.strip_edges().is_empty():
+		return false
+	for found in _pattern().search_all(text):
+		var given: Callable = _givens.get(found.get_string(1), Callable())
+		if given.is_valid() and not bool(given.call(found.get_string(2), code)):
+			return false
+	if _pattern().sub(text, "", true).strip_edges().is_empty():
+		return true
+	if not TranslationServer.has_translation_for_locale(code, true):
+		return true
+	var translation := TranslationServer.get_translation_object(code)
+	return translation != null and not String(translation.get_message(text)).is_empty()
+
+
+## The language texts are read in now: the one shown, or `label_in()`'s
+## while it reads. A placeholder that picks a language asks it.
+func reading_language() -> String:
+	var override := TranslationServer.get_or_add_domain(&"").get_locale_override()
+	return override if not override.is_empty() else TranslationServer.get_locale()
+
+
+## `{name}`, `{name:argument}`, `{name?if true|if false}`.
+static func _pattern() -> RegEx:
+	if _placeholder == null:
+		_placeholder = RegEx.create_from_string("\\{(\\w+)(?::([^{}?|]*))?(?:\\?([^{}|]*)\\|([^{}]*))?\\}")
+	return _placeholder
+
+
 ## Adds a placeholder `{name:argument}`: `callable` is given the argument and
 ## returns what shows, or null to leave it as written. A name taken again is
-## replaced.
-func add_placeholder(placeholder_name: String, callable: Callable) -> void:
+## replaced. `given`, if any, is given the argument and a language, and says
+## whether the placeholder has a text of its own in it (`is_given_in()`).
+func add_placeholder(placeholder_name: String, callable: Callable, given := Callable()) -> void:
 	_placeholders[placeholder_name] = callable
+	if given.is_valid():
+		_givens[placeholder_name] = given
+	else:
+		_givens.erase(placeholder_name)
 
 
 func config() -> WgLanguageConfig:
