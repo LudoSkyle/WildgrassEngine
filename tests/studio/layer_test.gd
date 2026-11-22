@@ -180,3 +180,22 @@ func test_studio_s_sound_design_becomes_the_engine_s_named_sounds() -> void:
 	assert_that(audio.sounds["menu"]).is_equal({"kind": "effect", "name": ""})
 	assert_str(_world.title.config().music).is_equal(root + "audio/bgm/title.ogg")
 	assert_str(_world.audio.path_of(&"effects", StringName(audio.sounds["confirm"]["name"]))).is_equal(root + "audio/se/select.wav")
+
+
+func test_a_label_in_another_language_reads_studio_s_texts_in_it() -> void:
+	_world.sandbox.write("Data/Text/Dialogs/100014.csv", "en,fr\nPOKÉMON,Pokémon\nPOKÉDEX,Pokédex\nBAG,Sac\n")
+	_world.sandbox.write("Data/Text/Dialogs/100000.csv", "en,fr\nEgg,Œuf\nBulbasaur,Bulbizarre\n")
+	_studio = StudioProject.install(_world)
+	_world.texts.language = "en"
+	assert_str(_world.texts.label_in("fr", "{text:100000:1}")).is_equal("Bulbizarre")
+	assert_str(_world.texts.label_in("fr", "Bag")).is_equal("Sac")
+	assert_str(_world.texts.label("{text:100000:1}")).is_equal("Bulbasaur")
+
+
+func test_a_studio_text_is_given_in_a_language_when_its_cell_is_not_empty() -> void:
+	_world.sandbox.write("Data/Text/Dialogs/100000.csv", "en,fr\nEgg,Œuf\nBulbasaur,\n")
+	_studio = StudioProject.install(_world)
+	assert_bool(_world.texts.is_given_in("fr", "{text:100000:0}")).is_true()
+	assert_bool(_world.texts.is_given_in("fr", "{text:100000:1}")).is_false()
+	assert_bool(_world.texts.is_given_in("en", "{text:100000:1}")).is_true()
+	assert_bool(_world.texts.is_given_in("en", "{text:100000:9}")).is_false()
