@@ -10,6 +10,7 @@ const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_regi
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const Followers := preload("res://addons/wildgrass/walking/followers.gd")
 const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
@@ -44,6 +45,7 @@ var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
 var walkers: Walkers
+var followers: Followers
 var dialogue: Dialogue
 var texts: Texts
 var story: Story
@@ -151,6 +153,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.bag = bag
 	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
 	walkers.encounters = encounters
+	followers = Followers.new(logger, hooks, maps, walkers)
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
 	reflections = Reflections.new(config, walkers, tiles)

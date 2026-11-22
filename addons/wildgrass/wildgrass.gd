@@ -15,6 +15,7 @@ const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_regi
 const Maps := preload("res://addons/wildgrass/maps/maps.gd")
 const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
 const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const Followers := preload("res://addons/wildgrass/walking/followers.gd")
 const Story := preload("res://addons/wildgrass/story/story.gd")
 const Quests := preload("res://addons/wildgrass/story/quests.gd")
 const Items := preload("res://addons/wildgrass/bag/items.gd")
@@ -54,6 +55,7 @@ var screens: ScreenRegistry
 var maps: Maps
 var tiles: Tiles
 var walkers: Walkers
+var followers: Followers
 var story: Story
 var quests: Quests
 var items: Items
@@ -121,6 +123,7 @@ func _init() -> void:
 	walkers.bag = bag
 	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
 	walkers.encounters = encounters
+	followers = _service(&"followers", Followers, [log, hooks, maps, walkers])
 	grass = _service(&"grass", TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", Footprints, [paths, config, maps, walkers, tiles])
 	reflections = _service(&"reflections", Reflections, [config, walkers, tiles])
