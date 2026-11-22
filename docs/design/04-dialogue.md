@@ -121,11 +121,15 @@ the label and acted on when writing reaches them:
 - A tag that returns a signal holds writing until it is emitted, and the key
   does nothing meanwhile: a jingle plays to its end.
 
-**A game adds its own**: `Wildgrass.dialogue.add_tag(&"jingle", _jingle)`.
-The callable gets the tag's value as a `String` (`[jingle=item]` → `"item"`)
+**A game adds its own**: `Wildgrass.dialogue.add_tag(&"fanfare", _fanfare)`.
+The callable gets the tag's value as a `String` (`[fanfare=item]` → `"item"`)
 and runs when writing reaches it; if it returns a signal, writing waits for it
 (a jingle). A name of Godot's BBCode, or one already taken, is refused. An
 unknown tag is left to the label, which shows it, and logged.
+
+`hold_until(signal)`: the message shown does not go on before the signal
+comes; the key still finishes writing it (sound's jingles, feature 15, which
+adds `[jingle=…]` and `[sound=…]`).
 
 `add_tag(name, callable, true)` declares a tag that **narrates**: a message
 holding it is the game's voice, not the character's ("You got a Potion!"), and

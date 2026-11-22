@@ -102,8 +102,9 @@ and for the screen `name`, `description`, `texts` (one per value),
   options shown (`shown()`); an id no option has is skipped, so a Studio
   project's list (its `game_options_config.json`, through the Studio layer)
   works before battles exist. By default: `message_speed`,
-  `message_frame`, `volume`, `language`. An option with fewer than two values
-  is not shown.
+  `message_frame`, `music_volume`, `effects_volume`, `cries_volume`,
+  `language` (feature 15); `volume` is shown when the order names it, as a
+  Studio project's does. An option with fewer than two values is not shown.
 - `text_of(id)`: the value's text, else its format, else the value.
 - `was_kept(id)`: the player's machine holds a value for it, read or
   written; the title asks the language at first launch only when none was
@@ -116,6 +117,7 @@ and for the screen `name`, `description`, `texts` (one per value),
   | `message_speed` | 1, 2, 3 (slow, normal, fast; 2) | `Wildgrass.dialogue.letters_per_second`: the config's × 0.5, 1, 2 |
   | `message_frame` | the `frames` of the `dialogue` config (`{"style", "name"}`; none by default) | `Wildgrass.dialogue.style` |
   | `volume` | 0 to 100 by 5, a slider (100) | the volume of the `Master` audio bus, muted at 0 |
+  | `music_volume`, `effects_volume`, `cries_volume` | the same | the `Music`, `Effects`, `Cries` buses (feature 15) |
   | `language` | the choosable languages (feature 5), by their names | `Wildgrass.texts.language` |
 
   Studio's `screen_scale` has no engine option: the window is resized by
@@ -146,7 +148,6 @@ beneath.
 
 - `battle_animation`, `battle_style`: with battles; `auto_run`: with an
   option for running.
-- Music, cries and effects volumes apart: with sound (feature 15).
 - The trainer card entry, Pokémon and Pokédex entries: with their features.
 - Keys held to scroll a list: with the screens that need it.
 - Back to the title from the menu: a game adds the entry (feature 11).

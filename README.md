@@ -7,8 +7,8 @@ GDScript only, ships no assets.
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
-layer, the title screen, Pokémon species and types, the Pokédex, and wild
-encounters.
+layer, the title screen, Pokémon species and types, the Pokédex, wild
+encounters, and sound.
 
 ## Install
 
@@ -242,6 +242,19 @@ seen in the Pokédex; the engine says it appeared until battles come.
 ```gdscript
 Wildgrass.encounters.start = _start_battle       # what follows a wild Pokémon
 Wildgrass.hooks.add(&"wild_encounter", &"repel", _repel)
+```
+
+**Sound**: music and ambience crossfaded (a map's `music`, `ambience`; the
+title's `music`), jingles that pause the music, effects, cries; files in
+`res://audio/music`, `jingles`, `effects`, `ambience`. `config/audio.json`
+names the sounds the engine plays (`confirm`, `bump`, `door`, `save`…),
+silent by default. Messages play `[jingle=…]` and `[sound=…]`. Three
+volumes in the options: music, effects, cries.
+
+```gdscript
+Wildgrass.audio.play_music(&"route_1")
+await Wildgrass.audio.jingle(&"key_item")
+Wildgrass.audio.cry(&"pikachu")
 ```
 
 ## License
