@@ -29,6 +29,7 @@ const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
+const Audio := preload("res://addons/wildgrass/audio/audio.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -59,6 +60,7 @@ var species: SpeciesData
 var types: Types
 var pokedex: Pokedex
 var encounters: Encounters
+var audio: Audio
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -100,6 +102,10 @@ func _init() -> void:
 	walkers.bag = bag
 	encounters = _service(&"encounters", Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
 	walkers.encounters = encounters
+	var audio_host := Node.new()
+	audio_host.name = "Audio"
+	add_child(audio_host)
+	audio = _service(&"audio", Audio, [paths, log, config, species, audio_host])
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	save = _service(&"save", Save, [paths, log, config, hooks])
@@ -125,6 +131,7 @@ func _init() -> void:
 	config.register(&"title", WgTitleConfig, "title")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
+	config.register(&"audio", WgAudioConfig, "audio")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex, encounters)
@@ -181,6 +188,8 @@ func _ready() -> void:
 	texts.apply_default()
 	options.read()
 	options.add_engine_options(dialogue, texts)
+	audio.setup()
+	options.add_volume_options(audio.config().buses)
 	Clock.declare_shader_global()
 	clock.updates_shader_global = true
 	_start.call_deferred()
@@ -195,6 +204,7 @@ func _notification(what: int) -> void:
 
 func _process(delta: float) -> void:
 	clock.advance(delta)
+	audio.advance(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -124,5 +124,5 @@ func test_the_engine_s_options_apply_to_the_dialogue_the_sound_and_the_language(
 	options.set_value(&"language", "fr")
 	assert_str(_world.texts.language).is_equal("fr")
 	assert_str(options.text_of(&"language")).is_equal("Français")
-	assert_array(options.shown()).is_equal([&"message_speed", &"message_frame", &"volume", &"language"])
+	assert_array(options.shown()).is_equal([&"message_speed", &"message_frame", &"language"])
 	assert_array(_world.logged).is_equal(["WARN dialogue.json: frames: a frame needs a style, got {\"name\":\"no style\"}"])
