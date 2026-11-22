@@ -20,6 +20,7 @@ const DEFAULTS: Dictionary[StringName, String] = {
 	&"types": "res://types/",
 	&"dex": "res://dex/",
 	&"encounters": "res://encounters/",
+	&"weather": "res://weather/",
 	&"studio": "res://",
 }
 

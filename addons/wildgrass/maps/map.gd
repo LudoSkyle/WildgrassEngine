@@ -19,6 +19,8 @@ extends Node2D
 @export var outside := false
 ## Multiplies the moment's tint outside: a wood in half-light.
 @export var shade := Color.WHITE
+## Its own weather (feature 17); empty: the one on.
+@export var weather: StringName = &""
 
 
 ## The node the traveller goes in, or the map itself if missing.
