@@ -8,6 +8,8 @@ const SETTING_PREFIX := "wildgrass/screens/"
 
 signal screen_opened(screen_name: StringName, screen: WgScreen)
 signal screen_closed(screen_name: StringName)
+## The top screen took `event`.
+signal input_taken(event: InputEvent)
 
 var _log: Log
 var _layer: Node
@@ -96,6 +98,7 @@ func handle_input(event: InputEvent) -> bool:
 	if screen == null or not screen._on_input(event):
 		return false
 	_took_frame = Engine.get_process_frames()
+	input_taken.emit(event)
 	return true
 
 

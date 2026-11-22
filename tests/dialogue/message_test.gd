@@ -227,8 +227,8 @@ func test_every_tag_runs_once_in_order_however_the_text_is_shown() -> void:
 
 
 func test_a_tag_returning_a_signal_holds_writing_and_the_key_does_nothing() -> void:
-	_world.dialogue.add_tag(&"jingle", func(_value: String) -> Signal: return jingle_done)
-	_say("a[jingle]b")
+	_world.dialogue.add_tag(&"fanfare", func(_value: String) -> Signal: return jingle_done)
+	_say("a[fanfare]b")
 	_box().advance(10.0)
 	assert_str(_shown()).is_equal("a")
 	_press("ui_accept")
