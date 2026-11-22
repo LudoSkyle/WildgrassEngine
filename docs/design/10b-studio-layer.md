@@ -120,7 +120,8 @@ read as before (names `{text:100045:<id>}`, descriptions
 **Species and types** (`Data/Studio/pokemon`, `types`): sources of the
 species and types services (feature 12). **Pokédexes**
 (`Data/Studio/dex`): the Pokédex service's, the regional one shown first
-(feature 13).
+(feature 13). **Wild groups** (`Data/Studio/groups`): encounter tables
+found by id (feature 14).
 
 **Later**, with their features: maps (the importer), zones, the
 introduction map, music.
