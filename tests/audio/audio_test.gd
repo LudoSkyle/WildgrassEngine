@@ -12,7 +12,7 @@ func before_test() -> void:
 	_world.paths.asset_missing.connect(func(path: String, _by: String) -> void: _missing.append(path.get_file()))
 	for kind: String in ["music", "jingles", "effects", "ambience"]:
 		for sound: String in ["a", "b", "c"]:
-			_wav("audio/%s/%s.wav" % [kind, sound], 0.05)
+			_wav("audio/%s/%s.wav" % [kind, sound], 0.5 if kind == "effects" else 0.05)
 
 
 func after_test() -> void:
