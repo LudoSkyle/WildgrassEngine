@@ -230,3 +230,21 @@ func test_without_a_traveller_maps_still_load() -> void:
 	_town_and_house()
 	assert_bool(await _maps.go_to(&"town", &"Spawn")).is_true()
 	assert_str(_events[0]).is_equal("arrived (0, -1) Spawn")
+
+
+func test_a_map_outside_the_maps_folder_is_reached_by_its_scene_path() -> void:
+	var field := _build.map(&"tests")
+	MapBuilder.spawn(field, "Spawn", Vector2(48, 32))
+	var packed := PackedScene.new()
+	for child: Node in field.get_children():
+		child.owner = field
+	packed.pack(field)
+	field.free()
+	var path := _sandbox.root + "elsewhere/field.tscn"
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	ResourceSaver.save(packed, path)
+	assert_bool(_maps.has_map(StringName(path))).is_true()
+	assert_bool(_maps.has_map(&"field")).is_false()
+	assert_bool(await _maps.go_to(StringName(path), &"Spawn")).is_true()
+	assert_that(_maps.current_id).is_equal(StringName(path))
+	assert_that(_traveller.global_position).is_equal(Vector2(48, 32))

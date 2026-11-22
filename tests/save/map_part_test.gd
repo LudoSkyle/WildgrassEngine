@@ -114,3 +114,18 @@ func test_a_traveller_that_is_no_walker_lands_on_its_cell_facing_its_way() -> vo
 	assert_that(traveller.global_position).is_equal(_world.tiles.center_of(Vector2i(3, 4)))
 	assert_array(arrived).is_equal([Vector2i.LEFT])
 	assert_that(_world.walkers.map_state()["cell"]).is_equal([3, 4])
+
+
+func test_a_map_reached_by_its_scene_path_is_saved_and_loaded_by_it() -> void:
+	var build := MapBuilder.new(_world.sandbox)
+	var field := build.map(&"", Vector2i(8, 8))
+	MapBuilder.spawn(field, "Spawn", Vector2(24, 24))
+	build.save("hidden/field", field)
+	var path := _world.sandbox.root + "maps/hidden/field.tscn"
+	await _world.maps.go_to(StringName(path), &"Spawn")
+	_player.place_at(Vector2i(4, 5))
+	_world.save.write(1)
+	await _world.maps.go_to(&"cave", &"Entrance")
+	assert_bool(await _world.save.load_game(1)).is_true()
+	assert_str(_world.maps.current_id).is_equal(path)
+	assert_that(_player.cell).is_equal(Vector2i(4, 5))
