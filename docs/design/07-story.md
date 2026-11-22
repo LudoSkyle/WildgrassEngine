@@ -42,6 +42,7 @@ A condition is a text, written in the inspector:
 | `!bell_hung` | the flag is not set |
 | `badges >= 3` | the value compares so (`=`, `!=`, `<`, `<=`, `>`, `>=`) |
 | `local:taken` | the local flag of the thing the condition is on |
+| `time:night` | the moment of the day (feature 16) |
 
 `!` denies any term. Terms joined by `,` must all hold; an empty condition is
 true. `Wildgrass.story.check("bell_told, !bell_hung", node)`: `node` is what

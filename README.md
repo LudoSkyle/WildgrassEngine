@@ -8,7 +8,7 @@ GDScript only, ships no assets.
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
 layer, the title screen, Pokémon species and types, the Pokédex, wild
-encounters, and sound.
+encounters, sound, and day and night.
 
 ## Install
 
@@ -255,6 +255,17 @@ volumes in the options: music, effects, cries.
 Wildgrass.audio.play_music(&"route_1")
 await Wildgrass.audio.jingle(&"key_item")
 Wildgrass.audio.cry(&"pikachu")
+```
+
+**Day and night**: the hour is the player's clock, or the game's own
+(`config/daytime.json`); moments (night, dawn, day, dusk by default) tint
+the maps marked `outside`, times their `shade`; `WgNightLight` comes on at
+night; `time:night` in a story condition; the shader globals `day_tint`
+and `night_light` for a game's shaders.
+
+```gdscript
+Wildgrass.daytime.moment()         # &"dusk"
+Wildgrass.daytime.forced_hour = 23.0
 ```
 
 ## License

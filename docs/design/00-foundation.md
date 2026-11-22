@@ -160,6 +160,7 @@ Wildgrass.log.info(&"screens", "Opening bag")
 - `speed`: `Engine.time_scale`, so movement and timers stay in step. Never
   negative.
 - Shader global `game_time`, declared by the plugin (or at start if missing).
+  Day and night adds `day_tint` and `night_light` (feature 16).
 
 ## Tests
 
