@@ -36,6 +36,7 @@ const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
 const ReflectionsDriver := preload("res://addons/wildgrass/life/reflections_driver.gd")
+const Zones := preload("res://addons/wildgrass/maps/zones.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -72,6 +73,7 @@ var weather: Weather
 var grass: TallGrass
 var footprints: Footprints
 var reflections: Reflections
+var zones: Zones
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -100,6 +102,7 @@ func _init() -> void:
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	daytime.follow(maps)
+	zones = _service(&"zones", Zones, [paths, log, maps, screens, texts, screen_layer])
 	weather = _service(&"weather", Weather, [paths, log])
 	weather.daytime = daytime
 	weather.follow(maps)
@@ -163,7 +166,7 @@ func _init() -> void:
 	config.register(&"reflections", WgReflectionsConfig, "reflections")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
-		studio.install(texts, items, quests, species, types, pokedex, encounters)
+		studio.install(texts, items, quests, species, types, pokedex, encounters, zones)
 	menu.services.merge({"pokedex": pokedex, "species": species, "types": types, "screens": screens})
 	menu.add_entry(&"pokedex", "Pokédex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
@@ -180,6 +183,7 @@ func _init() -> void:
 	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
 	screens.register(&"pokedex", "res://addons/wildgrass/pokedex/pokedex_screen.tscn")
 	screens.register(&"pokedex_entry", "res://addons/wildgrass/pokedex/pokedex_entry_screen.tscn")
+	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
 
 
 ## The engine's parts of a saved game, in the order they are restored.

@@ -31,11 +31,14 @@ const Weather := preload("res://addons/wildgrass/weather/weather.gd")
 const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
+const Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
 var sandbox: Sandbox
 var logged: Array[String] = []
+## Where screens open.
+var screen_layer: Control
 var hooks: Hooks
 var screens: ScreenRegistry
 var maps: Maps
@@ -68,6 +71,7 @@ var weather: Weather
 var grass: TallGrass
 var footprints: Footprints
 var reflections: Reflections
+var zones: Zones
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -111,7 +115,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	root = Node2D.new()
 	parent.add_child(root)
 	# Screens show at the game's size: 320×240.
-	var screen_layer := Control.new()
+	screen_layer = Control.new()
 	screen_layer.size = Vector2(320, 240)
 	root.add_child(screen_layer)
 	screens = ScreenRegistry.new(logger, screen_layer)
@@ -125,6 +129,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	screens.register(&"save_slots", "res://addons/wildgrass/save/save_slots_screen.tscn")
 	screens.register(&"menu", "res://addons/wildgrass/menu/menu_screen.tscn")
 	screens.register(&"options", "res://addons/wildgrass/options/options_screen.tscn")
+	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
 	var host := Node2D.new()
 	root.add_child(host)
 	maps = Maps.new(Paths.new(false), logger, config, hooks, screens, host)
@@ -134,6 +139,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	story = Story.new(logger, hooks, maps)
 	quests = Quests.new(logger, hooks, Paths.new(false))
 	paths = Paths.new(false)
+	zones = Zones.new(paths, logger, maps, screens, texts, screen_layer)
 	items = Items.new(paths, logger, config)
 	species = SpeciesData.new(paths, logger)
 	types = Types.new(paths, logger)

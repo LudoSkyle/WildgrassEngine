@@ -25,7 +25,7 @@ func _start_engine() -> Engine_:
 
 func test_the_autoload_provides_every_service() -> void:
 	var engine: Engine_ = get_tree().root.get_node("Wildgrass")
-	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests, engine.items, engine.bag, engine.save, engine.menu, engine.options, engine.title, engine.species, engine.types, engine.pokedex, engine.encounters, engine.audio, engine.daytime, engine.weather, engine.grass, engine.footprints, engine.reflections]:
+	for service: Object in [engine.paths, engine.log, engine.config, engine.display, engine.hooks, engine.clock, engine.texts, engine.screens, engine.maps, engine.tiles, engine.walkers, engine.dialogue, engine.story, engine.quests, engine.items, engine.bag, engine.save, engine.menu, engine.options, engine.title, engine.species, engine.types, engine.pokedex, engine.encounters, engine.audio, engine.daytime, engine.weather, engine.grass, engine.footprints, engine.reflections, engine.zones]:
 		assert_object(service).is_not_null()
 	assert_bool(engine.config.is_registered(&"display")).is_true()
 	assert_bool(engine.config.is_registered(&"log")).is_true()
@@ -47,6 +47,7 @@ func test_the_autoload_provides_every_service() -> void:
 		assert_bool(engine.options.has_option(id)).is_true()
 	assert_str(engine.options.file_path).is_equal("user://test_options.json")
 	assert_str(engine.screens.scene_path(&"message_box")).is_equal("res://addons/wildgrass/dialogue/message_box.tscn")
+	assert_str(engine.screens.scene_path(&"location_banner")).is_equal("res://addons/wildgrass/maps/location_banner.tscn")
 
 
 func test_engine_ready_hooks_run_after_the_scene_is_ready_then_the_signal() -> void:
@@ -106,7 +107,7 @@ func test_the_engine_declares_exactly_its_public_classes_none_of_them_godot_ones
 		if str(entry["path"]).begins_with("res://addons/wildgrass/"):
 			names.append(str(entry["class"]))
 	names.sort()
-	assert_array(names).is_equal(["WgAudioConfig", "WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDaytimeConfig", "WgDex", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgEncounterTable", "WgEncounters", "WgEncountersConfig", "WgFlyer", "WgFootprintsConfig", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgNightLight", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgPokedexConfig", "WgPokedexEntryScreen", "WgPokedexScreen", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgReflectionsConfig", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgTwinkle", "WgType", "WgWalker", "WgWalkerController", "WgWander", "WgWeather", "WgWeatherLayer"])
+	assert_array(names).is_equal(["WgAudioConfig", "WgBagConfig", "WgBagScreen", "WgCamera", "WgCharacterSprite", "WgConfig", "WgDaytimeConfig", "WgDex", "WgDialogueConfig", "WgDisplayConfig", "WgDoor", "WgEncounterTable", "WgEncounters", "WgEncountersConfig", "WgFlyer", "WgFootprintsConfig", "WgInteractable", "WgItem", "WgItemBall", "WgItemReveal", "WgLanguageChoiceScreen", "WgLanguageConfig", "WgLocationBanner", "WgLogConfig", "WgMap", "WgMapConfig", "WgMapLink", "WgMenuScreen", "WgMessageBox", "WgMovementConfig", "WgNightLight", "WgOptionsConfig", "WgOptionsScreen", "WgPatrol", "WgPlayerInput", "WgPokedexConfig", "WgPokedexEntryScreen", "WgPokedexScreen", "WgQuest", "WgQuestEarning", "WgQuestObjective", "WgReflectionsConfig", "WgRoadblock", "WgSaveConfig", "WgSaveScreen", "WgSaveSlotsScreen", "WgScreen", "WgShowIf", "WgSign", "WgSpawnPoint", "WgSpecies", "WgSpeciesForm", "WgSplashScreen", "WgStudioConfig", "WgTalk", "WgTitleConfig", "WgTitleScreen", "WgTransition", "WgTrigger", "WgTwinkle", "WgType", "WgWalker", "WgWalkerController", "WgWander", "WgWeather", "WgWeatherLayer", "WgZone"])
 	for class_name_ in names:
 		assert_bool(ClassDB.class_exists(class_name_)).override_failure_message("%s is a Godot class" % class_name_).is_false()
 
