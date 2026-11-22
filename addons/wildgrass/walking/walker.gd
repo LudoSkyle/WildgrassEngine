@@ -258,6 +258,7 @@ func _finish_step() -> void:
 			walkers.maps.use(door)
 		else:
 			walkers.trigger_at(self)
+			walkers.encounter_at(self)
 
 
 ## Puts the walker on `at` of the current map's grid, at once, on `on_level`,

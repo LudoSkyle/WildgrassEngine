@@ -28,6 +28,8 @@ var story: Story
 var bag: Bag
 ## The pause menu, opened by the player's `menu` action.
 var menu: Menu
+## The wild encounters, set by the engine: a step in grass may bring one.
+var encounters: RefCounted
 
 ## Walker -> the [cell, level] pairs it holds: where it stands, and where its
 ## step goes.
@@ -194,6 +196,24 @@ func trigger_at(walker: WgWalker) -> void:
 	var number := _interactions
 	_busy[walker] = [found, number]
 	await found.trigger(walker)
+	if _busy.has(walker) and _busy[walker][1] == number:
+		_busy.erase(walker)
+
+
+## A step of `walker`, the traveller, may bring out a wild Pokémon: it is
+## held until it is over. Not while it interacts, a script walks it, a screen
+## is open or the map changes.
+func encounter_at(walker: WgWalker) -> void:
+	if encounters == null or walker != maps.traveller or is_scripted(walker) or is_busy(walker) or maps.is_changing or not screens.stack().is_empty():
+		return
+	var pokemon: Dictionary = encounters.roll(walker)
+	if pokemon.is_empty():
+		return
+	walker.is_sliding = false
+	_interactions += 1
+	var number := _interactions
+	_busy[walker] = [walker, number]
+	await encounters.meet(pokemon)
 	if _busy.has(walker) and _busy[walker][1] == number:
 		_busy.erase(walker)
 
