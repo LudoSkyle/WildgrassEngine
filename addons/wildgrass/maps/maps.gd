@@ -224,7 +224,11 @@ func rect(map: WgMap) -> Rect2:
 	return Rect2(map.global_position, Vector2(map.size * _tile_size()))
 
 
+## The scene of map `map_id`: in the maps folder, or `map_id` itself when it
+## is a scene path (`res://…`), for a map kept elsewhere.
 func _map_path(map_id: StringName) -> String:
+	if String(map_id).contains("://"):
+		return String(map_id)
 	return _paths.resolve(&"maps", "%s.tscn" % map_id)
 
 
