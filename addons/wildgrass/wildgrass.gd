@@ -31,6 +31,7 @@ const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
 const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
+const Weather := preload("res://addons/wildgrass/weather/weather.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -63,6 +64,7 @@ var pokedex: Pokedex
 var encounters: Encounters
 var audio: Audio
 var daytime: Daytime
+var weather: Weather
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -91,6 +93,8 @@ func _init() -> void:
 	add_child(map_host)
 	maps = _service(&"maps", Maps, [paths, log, config, hooks, screens, map_host])
 	daytime.follow(maps)
+	weather = _service(&"weather", Weather, [paths, log])
+	weather.follow(maps)
 	tiles = _service(&"tiles", Tiles, [log, config, hooks, maps])
 	story = _service(&"story", Story, [log, hooks, maps])
 	quests = _service(&"quests", Quests, [log, hooks, paths])
