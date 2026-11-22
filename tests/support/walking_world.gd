@@ -26,6 +26,7 @@ const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
+const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -57,6 +58,8 @@ var pokedex: Pokedex
 var encounters: Encounters
 ## Its players are added under the world's root.
 var audio: Audio
+## Its save part is added by the tests that need it.
+var daytime: Daytime
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -93,6 +96,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
+	config.register(&"daytime", WgDaytimeConfig, "daytime")
 	hooks = Hooks.new()
 	root = Node2D.new()
 	parent.add_child(root)
@@ -132,6 +136,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
 	walkers.encounters = encounters
 	audio = Audio.new(paths, logger, config, species, root)
+	daytime = Daytime.new(logger, config, hooks)
 	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
