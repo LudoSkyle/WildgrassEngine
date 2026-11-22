@@ -32,6 +32,7 @@ func use_data_folder() -> String:
 	set_setting("wildgrass/paths/encounters", root + "encounters/")
 	set_setting("wildgrass/paths/audio", root + "audio/")
 	set_setting("wildgrass/paths/weather", root + "weather/")
+	set_setting("wildgrass/paths/zones", root + "zones/")
 	return root + "Data/"
 
 

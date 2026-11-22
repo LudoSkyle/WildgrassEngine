@@ -15,7 +15,9 @@ const StudioItems := preload("res://addons/wildgrass/studio/studio_items.gd")
 const StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
 const StudioSpecies := preload("res://addons/wildgrass/studio/studio_species.gd")
 const StudioEncounters := preload("res://addons/wildgrass/studio/studio_encounters.gd")
+const StudioZones := preload("res://addons/wildgrass/studio/studio_zones.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
+const Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
@@ -72,6 +74,7 @@ var _items: StudioItems
 var _quests: StudioQuests
 var _species: StudioSpecies
 var _encounters: StudioEncounters
+var _zones: StudioZones
 ## Studio config file -> its data, read once.
 var _files: Dictionary[String, Dictionary] = {}
 var _translations: Array[Translation] = []
@@ -87,6 +90,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_regi
 	_quests = StudioQuests.new(paths, logger)
 	_species = StudioSpecies.new(paths, logger)
 	_encounters = StudioEncounters.new(paths, logger)
+	_zones = StudioZones.new(paths, logger)
 
 
 ## True when the project is a Studio project, as the setting says.
@@ -100,9 +104,9 @@ func is_project() -> bool:
 
 
 ## Plugs the project into the engine: its configs as sources, its texts, its
-## items, pockets, quests, species, types, Pokédexes and wild groups. Done
-## once.
-func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types, pokedex: Pokedex, encounters: Encounters) -> void:
+## items, pockets, quests, species, types, Pokédexes, wild groups and
+## zones. Done once.
+func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types, pokedex: Pokedex, encounters: Encounters, zones: Zones) -> void:
 	if installed:
 		return
 	installed = true
@@ -123,6 +127,7 @@ func install(engine_texts: Texts, items: Items, quests: Quests, species: Species
 	types.add_source(_species.read_type, _species.type_ids)
 	pokedex.add_source(_species.read_dex, _species.dex_ids)
 	encounters.add_source(_encounters.read, _encounters.ids)
+	zones.add_source(_zones.read, _zones.ids)
 	_add_translations()
 
 
