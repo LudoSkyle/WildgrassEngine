@@ -113,7 +113,7 @@ When the player steps on it:
    held, as after a door.
 
 A walker may step into a cell another walker is leaving: that is how the
-guard steps in behind the player, and how a follower will (feature 19).
+guard steps in behind the player; a follower goes through anyone (feature 19).
 
 The player always gets control back: if it cannot back away, the guard
 speaks from its post; without a guard, or with one freed on the way, the text
@@ -125,9 +125,10 @@ is said all the same, and nothing waits for the guard.
 character sheet as Studio and RPG Maker draw them: 4 columns of steps, 4 rows
 facing down, left, right, up. `idle_<dir>` is the first column, `walk_<dir>`
 the four, at `fps` (8) at the walk pace; the feet sit at `foot_line` (8: the
-bottom of a 16-pixel cell). `columns`, `rows_order`, `fps` and `foot_line`
-change the layout; it shows in the editor too. A game with its own
-`SpriteFrames` uses a plain `AnimatedSprite2D`.
+bottom of a 16-pixel cell), whatever the sprite's scale. `columns`,
+`rows_order`, `fps` and `foot_line` change the layout; it shows in the
+editor too. A game with its own `SpriteFrames` uses a plain
+`AnimatedSprite2D`.
 
 ## Config
 
@@ -143,7 +144,7 @@ logged and reset.
   player, emotions above a head: with battles.
 - Moves relative to the character, as event routes have them: an importer
   builds them on `walk()`.
-- Grass over feet, reflections, footprints: feature 18. Followers: feature 19.
+- Grass over feet, reflections, footprints: feature 18.
 
 ## Tests
 

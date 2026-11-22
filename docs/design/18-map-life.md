@@ -27,14 +27,16 @@ A tile of tall grass declares, in tile data:
   `rustle_seconds` (0.07) each, then back to its own; the front strip
   follows. A tuft rustling does not start again.
 
-Every walker rustles it; a map needs nothing more.
+Every walker shown rustles it, unless its `rustles` is off; a map needs
+nothing more.
 
 ## Footprints
 
 A tile whose `footprints` data is true keeps prints: a walker leaving it
 for the next cell puts a pair there, halfway through its step, one foot each
 side of its way, the leading foot changing each step (a zigzag) — so twice
-as fast running. A jump or a warp leaves none. A print darkens the ground
+as fast running. A jump or a warp leaves none, nor a walker hidden or
+whose `prints` is off. A print darkens the ground
 by `darkness` (0.26) for half its life, then fades: `life_seconds` (1) in
 all, even once its walker is gone. Prints lie just above the ground layer,
 under the rest of the map.
@@ -57,7 +59,8 @@ It shows only where it falls on water: going down from its top, the first
 stretch of water in each column of cells, a bank ending it; then the widest
 run of columns whose water shares some height, cut to that height. So it
 rises into view through a step, stops at a bank, and keeps to the water
-during a step sideways. It sways by a pixel four times a second. It lies
+during a step sideways. It sways by a pixel four times a second. A walker
+hidden shows none. It lies
 just above the water layer: whatever stands over the water covers it.
 
 - `WgWalker` gains `reflects` (true; false for a Pokémon flying) and
