@@ -15,6 +15,11 @@ const Menu := preload("res://addons/wildgrass/menu/menu.gd")
 
 @warning_ignore("shadowed_global_identifier")
 var log: Log
+
+## A walker's step starts, leaving `cell` toward `direction`.
+signal walker_left(walker: WgWalker, cell: Vector2i, direction: Vector2i, running: bool)
+## A walker's step is halfway into `cell`: it is in it now.
+signal walker_entered(walker: WgWalker, cell: Vector2i)
 var config: ConfigRegistry
 var hooks: Hooks
 var screens: ScreenRegistry
