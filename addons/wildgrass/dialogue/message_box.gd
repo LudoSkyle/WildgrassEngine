@@ -21,9 +21,12 @@ enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD,
 @export var portrait: NodePath = ^"Portrait"
 ## Shown while a written page waits for the key; optional.
 @export var waiting: NodePath = ^"Waiting"
-## A container of the choices of a question, holding one Button as a model;
-## optional.
+## The choices of a question, shown and placed as one: a container holding
+## one Button as a model, at any depth (a frame around a column); the
+## choices go beside the model. Optional.
 @export var choices: NodePath = ^"Choices"
+## Shown at the left of the selected choice, as games point at it; optional.
+@export var choice_cursor: NodePath = ^"Choices/Cursor"
 ## Shown with the number asked by `ask_number()`; optional.
 @export var number: NodePath = ^"Number"
 ## The `Label` of that number.
@@ -53,6 +56,9 @@ var _waiting: CanvasItem
 var _frame_height := 0.0
 var _options: Dictionary = {}
 var _choices: Control
+## Where the choices go: the model's parent.
+var _choice_list: Control
+var _cursor: Control
 var _model: Button
 var _buttons: Array[Button] = []
 ## Each `{"text", "disabled"}`.
@@ -100,12 +106,13 @@ func _ready() -> void:
 	if _number != null:
 		_number.hide()
 	if _choices != null:
-		for child: Node in _choices.get_children():
-			if child is Button:
-				_model = child
-				break
+		_model = _first_button(_choices)
 		if _model != null:
-			_choices.remove_child(_model)
+			_choice_list = _model.get_parent() as Control
+			_choice_list.remove_child(_model)
+		_cursor = get_node_or_null(choice_cursor) as Control
+		if _cursor != null:
+			_cursor.hide()
 		_choices.hide()
 	if _frame == null or _text == null:
 		push_error("%s: a message box needs a frame and a RichTextLabel" % name)
@@ -411,7 +418,7 @@ func _open_choices() -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		button.pressed.connect(_pick.bind(index))
-		_choices.add_child(button)
+		_choice_list.add_child(button)
 		_buttons.append(button)
 	_choices.show()
 	_room = dialogue.config().max_choices
@@ -426,8 +433,10 @@ func _open_choices() -> void:
 func _close_choices() -> void:
 	for button in _buttons:
 		button.queue_free()
-		_choices.remove_child(button)
+		_choice_list.remove_child(button)
 	_buttons.clear()
+	if _cursor != null:
+		_cursor.hide()
 	if _choices != null:
 		_choices.hide()
 
@@ -443,8 +452,34 @@ func _select(index: int, announce := true) -> void:
 	for i in _buttons.size():
 		_buttons[i].visible = i >= _first_shown and i < _first_shown + room
 		_buttons[i].set_pressed_no_signal(i == _selected)
+	if _cursor != null:
+		_point_at.call_deferred(_selected)
 	if announce:
 		dialogue.choice_moved.emit(_selected)
+
+
+## Puts the cursor at the left of choice `index`, once the choices are laid
+## out, its middle at the choice's.
+func _point_at(index: int) -> void:
+	if _cursor == null or index != _selected or index >= _buttons.size() or not is_instance_valid(_buttons[index]):
+		return
+	var button := _buttons[index]
+	var parent := _cursor.get_parent() as CanvasItem
+	var left := button.get_global_rect().position + Vector2(-_cursor.size.x, (button.size.y - _cursor.size.y) / 2.0)
+	_cursor.global_position = left
+	_cursor.show()
+	if parent != null and not parent.is_visible_in_tree():
+		_cursor.hide()
+
+
+static func _first_button(node: Node) -> Button:
+	for child: Node in node.get_children():
+		if child is Button:
+			return child
+		var deeper := _first_button(child)
+		if deeper != null:
+			return deeper
+	return null
 
 
 func _pick(index: int) -> void:
@@ -467,7 +502,7 @@ func _answer(index: int) -> void:
 ## Rows of choices between the frame and the edge of the screen, at least one.
 func _rows_that_fit() -> int:
 	var row := _buttons[0].get_combined_minimum_size().y
-	var gap := float(_choices.get_theme_constant(&"separation")) if _choices is BoxContainer else 0.0
+	var gap := float(_choice_list.get_theme_constant(&"separation")) if _choice_list is BoxContainer else 0.0
 	var area := _frame.get_rect()
 	var below := str(_options.get("place", "bottom")) == "top"
 	var space := (size.y - area.end.y if below else area.position.y) - margin

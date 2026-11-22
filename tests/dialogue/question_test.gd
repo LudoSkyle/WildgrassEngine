@@ -225,3 +225,54 @@ func test_wrong_questions_are_logged() -> void:
 		"WARN default 5 is not a choice; using 0",
 		"WARN cancel 7 is not a choice; using 1",
 	])
+
+
+## A game's box: its choices in a frame (a column inside a panel), and a
+## cursor pointing at the selected one.
+func _framed_box() -> void:
+	var box := (load("res://addons/wildgrass/dialogue/message_box.tscn") as PackedScene).instantiate()
+	var column := box.get_node("Choices")
+	box.remove_child(column)
+	var frame := PanelContainer.new()
+	frame.name = "Framed"
+	box.add_child(frame)
+	frame.add_child(column)
+	var cursor := ColorRect.new()
+	cursor.name = "Cursor"
+	cursor.size = Vector2(6, 10)
+	box.add_child(cursor)
+	box.set(&"choices", ^"Framed")
+	box.set(&"choice_cursor", ^"Cursor")
+	for node: Node in [frame, column, column.get_child(0), cursor]:
+		node.owner = box
+	var packed := PackedScene.new()
+	packed.pack(box)
+	box.free()
+	var path := _world.sandbox.root + "framed_box.tscn"
+	ResourceSaver.save(packed, path)
+	_world.screens.set_scene(&"message_box", path)
+
+
+func test_a_game_s_box_frames_its_choices_and_points_at_the_selected_one() -> void:
+	_framed_box()
+	var answer := _ask("Which one?", ["Apple", "Pear", "Plum"], {"default": 1})
+	_press("ui_accept")
+	var box := _world.dialogue.box
+	var frame := box.get_node("Framed") as Control
+	var column := box.get_node("Framed/Choices") as Control
+	var cursor := box.get_node("Cursor") as Control
+	assert_bool(frame.visible).is_true()
+	assert_int(column.get_child_count()).is_equal(3)
+	await get_tree().process_frame
+	var pear := column.get_child(1) as Button
+	assert_bool(cursor.visible).is_true()
+	assert_float(cursor.get_global_rect().end.x).is_equal_approx(pear.get_global_rect().position.x, 0.01)
+	assert_float(cursor.get_global_rect().get_center().y).is_equal_approx(pear.get_global_rect().get_center().y, 0.01)
+	_press("ui_down")
+	await get_tree().process_frame
+	var plum := column.get_child(2) as Button
+	assert_float(cursor.get_global_rect().get_center().y).is_equal_approx(plum.get_global_rect().get_center().y, 0.01)
+	_press("ui_accept")
+	assert_that(answer[0]).is_equal(2)
+	assert_bool(frame.visible).is_false()
+	assert_bool(cursor.visible).is_false()
