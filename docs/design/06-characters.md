@@ -30,7 +30,7 @@ three, a game writes others.
 | Controller | Moves |
 |---|---|
 | none | stands, facing its `facing` |
-| `WgWander` | after a pause of `pause` seconds (a range), turns to a random direction, and steps that way `step_chance` of the time (0.7) if the cell is in its `area` (a `Rect2i`) or carries its `tile_data` (`&"grass"`: it stays in the grass, whatever its shape) |
+| `WgWander` | after a pause of `pause` seconds (a range), turns to a random direction, and steps that way `step_chance` of the time (0.7) if the cell is in its `area` (a `Rect2i`) or carries its `tile_data` (`&"grass"`: it stays in the grass, whatever its shape), or that its `layer` draws (a layer of its map) |
 | `WgPatrol` | walks to each cell of its `route` in turn, in a straight line, and loops; waits while someone is in the way |
 
 - `area` and `route` are cells of the character's own map, wherever that map

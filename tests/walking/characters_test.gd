@@ -75,6 +75,20 @@ func test_a_wanderer_keeps_to_its_tiles() -> void:
 		assert_bool(grass.has(cell)).override_failure_message("left the grass: %s" % cell).is_true()
 
 
+func test_a_wanderer_keeps_to_the_cells_a_layer_draws() -> void:
+	var map := _world.map({}, Vector2i(20, 20))
+	var patch := {Vector2i(10, 5): T.GROUND, Vector2i(11, 5): T.GROUND, Vector2i(11, 6): T.GROUND, Vector2i(11, 7): T.GROUND, Vector2i(12, 7): T.GROUND}
+	var drawn := T.layer(map, _world.tile_set, patch, 0)
+	drawn.name = "Patch"
+	var wander := _wander()
+	wander.layer = ^"Patch"
+	var walker := _world.walker(Vector2i(11, 6), wander)
+	var cells := _run(walker, 60.0)
+	assert_int(cells.size()).is_greater(3)
+	for cell: Vector2i in cells:
+		assert_bool(patch.has(cell)).override_failure_message("left the layer: %s" % cell).is_true()
+
+
 func test_a_wanderer_keeps_to_its_map_and_area_wherever_the_map_is_shown() -> void:
 	var map := _world.map({}, Vector2i(4, 4))
 	map.position = Vector2(32, 16)
