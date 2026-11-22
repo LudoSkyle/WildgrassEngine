@@ -55,7 +55,8 @@ Wildgrass.save.add_part(&"pokedex", _state, _restore, _reset, _check)
   load before anything is restored. Callables are methods, never lambdas
   holding their object. A name taken twice is refused, logged.
 - The engine's own parts: `story` and `quests` (feature 7), `bag` (feature 8),
-  `clock` (the play time, `Wildgrass.clock.seconds`) and `map`, last.
+  `clock` (the play time, `Wildgrass.clock.seconds`), `pokedex` (feature 13)
+  and `map`, last.
 - A part a game file holds and no one added is kept as read and written back
   as it was: a plugin removed then put back loses nothing; a new game drops
   it. A part added that a file lacks (a game saved before it existed) is

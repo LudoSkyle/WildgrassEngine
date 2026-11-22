@@ -47,6 +47,7 @@ await Wildgrass.menu.show_screen(&"pokedex")   # an entry's screen, the menu hid
 
   | Id | Text | Condition | Does |
   |---|---|---|---|
+  | `pokedex` | Pokédex | the `pokedex` config's `condition` | opens `pokedex`, stays (feature 13) |
   | `bag` | Bag | | opens `bag`, stays |
   | `options` | Options | | opens `options`, stays |
   | `save` | Save | `!save_disabled` | opens `save`; closes once saved |
