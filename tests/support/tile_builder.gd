@@ -48,7 +48,7 @@ static func tile_set(size := 16) -> TileSet:
 	for bit: int in [1, 4, 2, 5]:
 		tiles.add_physics_layer()
 		tiles.set_physics_layer_collision_layer(tiles.get_physics_layers_count() - 1, 1 << (bit - 1))
-	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING], ["grass", TYPE_BOOL], ["encounter", TYPE_STRING], ["encounter_area", TYPE_INT], ["front_source", TYPE_INT], ["rustle", TYPE_ARRAY], ["footprints", TYPE_BOOL]]:
+	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING], ["grass", TYPE_BOOL], ["encounter", TYPE_STRING], ["encounter_area", TYPE_INT], ["front_source", TYPE_INT], ["rustle", TYPE_ARRAY], ["footprints", TYPE_BOOL], ["reflects", TYPE_BOOL]]:
 		tiles.add_custom_data_layer()
 		tiles.set_custom_data_layer_name(tiles.get_custom_data_layers_count() - 1, data[0])
 		tiles.set_custom_data_layer_type(tiles.get_custom_data_layers_count() - 1, data[1])
@@ -81,6 +81,7 @@ static func tile_set(size := 16) -> TileSet:
 	_data(source, SAND, "sand", true)
 	_data(source, SAND, "footprints", true)
 	_data(source, WATER, "water", true)
+	_data(source, WATER, "reflects", true)
 	_data(source, JETTY, "covers", true)
 	_data(source, JETTY, "floor", 1)
 	_data(source, DECK, "floor", 1)

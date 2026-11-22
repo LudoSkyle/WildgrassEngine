@@ -98,6 +98,15 @@ func at(cell: Vector2i, level := 0) -> WgWalker:
 	return null
 
 
+## Every walker on the maps.
+func all() -> Array[WgWalker]:
+	var found: Array[WgWalker] = []
+	for walker: Variant in _held:
+		if is_instance_valid(walker):
+			found.append(walker)
+	return found
+
+
 ## `walker` now holds `cell` on `level`, as well as what it held.
 func hold(walker: WgWalker, cell: Vector2i, level: int) -> void:
 	if not _held.has(walker):

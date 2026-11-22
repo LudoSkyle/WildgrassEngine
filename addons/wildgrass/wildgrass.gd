@@ -34,6 +34,8 @@ const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const Weather := preload("res://addons/wildgrass/weather/weather.gd")
 const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
+const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
+const ReflectionsDriver := preload("res://addons/wildgrass/life/reflections_driver.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -69,6 +71,7 @@ var daytime: Daytime
 var weather: Weather
 var grass: TallGrass
 var footprints: Footprints
+var reflections: Reflections
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -117,6 +120,11 @@ func _init() -> void:
 	walkers.encounters = encounters
 	grass = _service(&"grass", TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", Footprints, [paths, config, maps, walkers, tiles])
+	reflections = _service(&"reflections", Reflections, [config, walkers, tiles])
+	var reflections_driver := ReflectionsDriver.new()
+	reflections_driver.name = "Reflections"
+	reflections_driver.reflections = reflections
+	add_child(reflections_driver)
 	var audio_host := Node.new()
 	audio_host.name = "Audio"
 	add_child(audio_host)
@@ -152,6 +160,7 @@ func _init() -> void:
 	config.register(&"audio", WgAudioConfig, "audio")
 	config.register(&"daytime", WgDaytimeConfig, "daytime")
 	config.register(&"footprints", WgFootprintsConfig, "footprints")
+	config.register(&"reflections", WgReflectionsConfig, "reflections")
 	studio = _service(&"studio", Studio, [paths, log, config, hooks])
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex, encounters)
@@ -230,6 +239,7 @@ func _process(delta: float) -> void:
 	daytime.advance(delta)
 	grass.advance(delta)
 	footprints.advance(delta)
+	reflections.advance(delta)
 	audio.advance(delta)
 
 
