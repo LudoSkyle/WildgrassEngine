@@ -8,7 +8,7 @@ GDScript only, ships no assets.
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
 layer, the title screen, Pokémon species and types, the Pokédex, wild
-encounters, sound, day and night, and weather.
+encounters, sound, day and night, weather, and life on the maps.
 
 ## Install
 
@@ -276,6 +276,13 @@ maps outside: the one on (`Wildgrass.weather.current`), or a map's own
 ```gdscript
 Wildgrass.weather.current = &"rain"
 ```
+
+**Life on the maps**, from tile data: tall grass hiding legs and rustling
+(`front_source`, `rustle`), footprints in sand (`footprints`), walkers'
+reflections in water (`reflects`). `WgFlyer`, a Pokémon flying over the
+map with its shadow; `WgTwinkle` on anything that shines. `WgZone`
+resources in `res://zones/` name the places: arriving in another, the
+`location_banner` slides down.
 
 ## License
 

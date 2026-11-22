@@ -135,6 +135,7 @@ var rate := Wildgrass.hooks.filter(&"encounter_rate", 10, [map])
 | `dex` | `res://dex/` (feature 13) |
 | `encounters` | `res://encounters/` (feature 14) |
 | `weather` | `res://weather/` (feature 17) |
+| `zones` | `res://zones/` (feature 18) |
 | `data`, `studio` | `res://Data/`, `res://`: the Studio layer's (feature 10 bis) |
 
 - Settings `wildgrass/paths/<key>`; a game can add keys.

@@ -27,7 +27,8 @@ StartIsland (WgMap)
 
 - **The zone carries map-wide data**: name, location panel, fly point,
   weather, wild groups. Several maps share a zone. Features that need it read
-  the zone data; a Studio project's zones will come through the Studio layer.
+  the zone data, a `WgZone` (feature 18: its name and banner), a Studio
+  project's through the Studio layer; a zone needs none.
 - **Anything a zone does not carry** (music, darkness) is a small node inside
   the map, found with `map.find_part(Type)`. A game adds its own the same way.
 
