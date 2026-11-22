@@ -86,3 +86,7 @@ func test_a_game_item_wins_and_an_unknown_one_is_logged_once() -> void:
 		"ERROR %sData/Studio/items/odd.json: not a Studio item" % _world.sandbox.root,
 		"ERROR unknown item 'odd'",
 	])
+
+
+func test_the_project_s_items_are_listed_by_their_files() -> void:
+	assert_array(_world.items.ids()).contains([&"potion", &"tm56", &"letter"])

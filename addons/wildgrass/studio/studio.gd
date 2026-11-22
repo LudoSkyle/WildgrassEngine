@@ -121,7 +121,7 @@ func install(engine_texts: Texts, items: Items, quests: Quests, species: Species
 	_config.add_source(&"audio", _audio)
 	engine_texts.add_placeholder("text", texts.text_reference)
 	_hooks.add(&"text_tokens", &"wildgrass_studio", texts.tokens)
-	items.add_source(_items.read)
+	items.add_source(_items.read, _items.ids)
 	quests.add_source(_quests.read_all)
 	species.add_source(_species.read_species, _species.species_ids)
 	types.add_source(_species.read_type, _species.type_ids)

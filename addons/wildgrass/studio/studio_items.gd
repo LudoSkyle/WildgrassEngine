@@ -49,6 +49,20 @@ static func pockets() -> Array:
 	return shown
 
 
+## Every item id of the project, by its file.
+func ids() -> Array[StringName]:
+	var found: Array[StringName] = []
+	var path := _paths.resolve(&"data", FOLDER)
+	if not DirAccess.dir_exists_absolute(path):
+		return found
+	var files := DirAccess.get_files_at(path)
+	files.sort()
+	for file in files:
+		if file.ends_with(".json"):
+			found.append(StringName(file.get_basename()))
+	return found
+
+
 ## The item of `id`, or null if the project has none.
 func read(id: StringName) -> WgItem:
 	var path := _paths.resolve(&"data", FOLDER + "%s.json" % id)

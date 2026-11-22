@@ -180,3 +180,23 @@ func test_quests_are_registered_else_resources_of_the_quests_folder_else_a_sourc
 	_world.quests.quest(&"race")
 	assert_int(asked[0]).is_equal(1)
 	assert_array(_world.logged).is_equal(["ERROR odd.tres: not a WgQuest"])
+
+
+func test_every_quest_known_is_listed() -> void:
+	_world.quests.register(_quest(&"race", [_objective(&"custom", "")]))
+	_world.quests.add_source(func() -> Array: return [_quest(&"lost", []), _quest(&"bell", [])])
+	assert_array(_world.quests.ids()).is_equal([&"bell", &"race", &"lost"])
+
+
+func test_a_forgotten_quest_is_as_never_started_and_says_so() -> void:
+	var forgotten: Array[StringName] = []
+	_world.quests.forgotten.connect(func(id: StringName) -> void: forgotten.append(id))
+	assert_bool(_world.quests.forget(&"bell")).is_false()
+	_world.quests.start(&"bell")
+	_world.quests.complete(&"bell", 0)
+	assert_bool(_world.quests.forget(&"bell")).is_true()
+	assert_array(forgotten).is_equal([&"bell"])
+	assert_bool(_world.quests.is_active(&"bell")).is_false()
+	assert_int(_world.quests.progress(&"bell", 0)).is_equal(0)
+	assert_bool(_world.quests.start(&"bell")).is_true()
+	assert_bool(_world.quests.is_done(&"bell", 0)).is_false()

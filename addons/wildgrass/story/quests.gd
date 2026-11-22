@@ -11,6 +11,8 @@ signal started(id: StringName)
 signal objective_done(id: StringName, index: int)
 signal finished(id: StringName)
 signal failed(id: StringName)
+## A quest was forgotten: as never started.
+signal forgotten(id: StringName)
 
 const ACTIVE := "active"
 const FINISHED := "finished"
@@ -49,6 +51,24 @@ func register(quest: WgQuest) -> void:
 ## once, before any quest is asked for.
 func add_source(source: Callable) -> void:
 	_sources.append(source)
+
+
+## Every quest id known: registered, the folder's, the sources'.
+func ids() -> Array[StringName]:
+	_read_all()
+	var known: Array[StringName] = []
+	known.assign(_quests.keys())
+	return known
+
+
+## Forgets quest `id`: as never started, its objectives counted for nothing,
+## its earnings unclaimed. False if it was not started.
+func forget(id: StringName) -> bool:
+	if not _progress.has(id):
+		return false
+	_progress.erase(id)
+	forgotten.emit(id)
+	return true
 
 
 func quest(id: StringName) -> WgQuest:
