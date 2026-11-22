@@ -83,6 +83,8 @@ func _on_map_loaded(map: WgMap) -> void:
 
 ## A walker in a cell of tall grass makes it rustle, unless it rustles already.
 func _on_entered(walker: WgWalker, cell: Vector2i) -> void:
+	if not walker.rustles or not walker.is_visible_in_tree():
+		return
 	var at: Vector2 = _tiles.center_of(cell)
 	for pair: Array in _fronts.values():
 		if not is_instance_valid(pair[0]) or not (pair[0] as Node).is_inside_tree():

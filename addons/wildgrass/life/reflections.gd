@@ -120,12 +120,12 @@ func _picture(walker: WgWalker) -> Dictionary:
 		if animated.sprite_frames == null or not animated.sprite_frames.has_animation(animated.animation):
 			return {}
 		var texture := animated.sprite_frames.get_frame_texture(animated.animation, animated.frame)
-		if texture == null or not animated.visible:
+		if texture == null or not animated.is_visible_in_tree():
 			return {}
 		return {"sprite": animated, "texture": texture, "frame": Rect2(Vector2.ZERO, texture.get_size()), "flip_h": animated.flip_h}
 	if sprite is Sprite2D:
 		var still := sprite as Sprite2D
-		if still.texture == null or not still.visible:
+		if still.texture == null or not still.is_visible_in_tree():
 			return {}
 		var frame := still.get_rect()
 		frame.position = still.region_rect.position if still.region_enabled else Vector2.ZERO

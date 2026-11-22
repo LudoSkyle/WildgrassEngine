@@ -37,3 +37,15 @@ func test_the_layout_can_change() -> void:
 	assert_that(sprite.offset).is_equal(Vector2(0, 4))
 	sprite.sheet = null
 	assert_object(sprite.sprite_frames).is_null()
+
+
+func test_the_feet_stay_on_the_foot_line_at_any_scale() -> void:
+	var sprite: WgCharacterSprite = auto_free(WgCharacterSprite.new())
+	sprite.scale = Vector2(0.5, 0.5)
+	sprite.sheet = _sheet()
+	# 24 px high, centred: its bottom at (offset + 12) * 0.5 = 8.
+	assert_that(sprite.offset).is_equal(Vector2(0, 4))
+	add_child(sprite)
+	sprite.scale = Vector2(2, 2)
+	assert_that(sprite.offset).is_equal(Vector2(0, -8))
+	assert_float((sprite.offset.y + 12.0) * sprite.scale.y).is_equal(8.0)

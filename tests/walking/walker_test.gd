@@ -280,3 +280,36 @@ func test_movement_config_resets_impossible_values_and_keeps_unset_actions() -> 
 	assert_str(config.actions["run"]).is_equal("dash")
 	assert_str(config.actions["up"]).is_equal("ui_up")
 	assert_bool(config.actions.has("jump")).is_false()
+
+
+func test_a_walker_always_stepping_plays_its_walk_at_one_cadence_and_stills_it_on_ice() -> void:
+	_world.map({Vector2i(4, 1): T.ICE, Vector2i(5, 1): T.ICE})
+	var walker := _world.walker(Vector2i(2, 1), null, World.frames(["idle_down", "walk_down", "walk_right", "run_right", "turn_left", "walk_left", "jump_right"]))
+	walker.always_stepping = true
+	var sprite := _sprite(walker)
+	walker.advance(0.0)
+	assert_str(sprite.animation).is_equal("walk_down")
+	assert_bool(sprite.is_playing()).is_true()
+	assert_float(sprite.speed_scale).is_equal(1.0)
+	walker.turn(LEFT)
+	walker.advance(0.0)
+	assert_str(sprite.animation).is_equal("walk_left")
+	walker.step(RIGHT, true)
+	walker.advance(0.01)
+	assert_str(sprite.animation).is_equal("walk_right")
+	assert_float(sprite.speed_scale).is_equal(1.0)
+	walker.advance(0.2)
+	walker.step(RIGHT)
+	walker.advance(0.01)
+	assert_bool(walker.is_sliding).is_true()
+	assert_bool(sprite.is_playing()).is_false()
+
+
+func test_a_walker_always_stepping_keeps_its_jump() -> void:
+	_world.map({Vector2i(2, 2): T.LEDGE})
+	var walker := _world.walker(Vector2i(2, 1), null, World.frames(["walk_down", "jump_down"]))
+	walker.always_stepping = true
+	walker.step(DOWN)
+	walker.advance(0.01)
+	assert_bool(walker.is_jumping).is_true()
+	assert_str(_sprite(walker).animation).is_equal("jump_down")

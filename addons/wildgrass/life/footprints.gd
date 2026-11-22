@@ -89,7 +89,7 @@ func _on_entered(walker: WgWalker, cell: Vector2i) -> void:
 	_leaving.erase(id)
 	var from: Vector2i = left[0]
 	var direction: Vector2i = left[1]
-	if from + direction != cell:
+	if from + direction != cell or not walker.prints or not walker.is_visible_in_tree():
 		return
 	var centre: Vector2 = _tiles.center_of(from)
 	var ground := ground_at(centre)

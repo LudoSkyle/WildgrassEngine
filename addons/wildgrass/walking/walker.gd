@@ -38,6 +38,13 @@ signal bumped(direction: Vector2i)
 ## Its ground line below its origin, in pixels: its feet, where water mirrors
 ## it.
 @export var ground_offset := 8.0
+## Leaves prints in sand.
+@export var prints := true
+## Rustles the tall grass it walks into.
+@export var rustles := true
+## Its walk plays all the time, standing too, at the same cadence whatever its
+## pace, as Pokémon do on the map; still while it slides.
+@export var always_stepping := false
 
 ## The walkers service: the engine's, unless set before entering the tree.
 var walkers: Walkers
@@ -353,6 +360,9 @@ func _animate() -> void:
 		state = "walk"
 	elif _turning:
 		state = "turn"
+	if always_stepping and state != "jump":
+		_turning = false
+		state = "walk"
 	state = str(walkers.hooks.filter(&"walker_animation", state, [self]))
 	var suffix := "_" + DIRECTION_NAMES[facing]
 	var frames := _sprite.sprite_frames
@@ -365,7 +375,7 @@ func _animate() -> void:
 		state = "idle"
 	if frames.has_animation(state + suffix):
 		var scale := 1.0
-		if is_moving:
+		if is_moving and not always_stepping:
 			scale = _pace / (walkers.movement().run_pace if state == "run" else walkers.movement().walk_pace)
 		_play(state + suffix, scale)
 	elif state == "idle":
@@ -374,7 +384,7 @@ func _animate() -> void:
 			_sprite.frame = 0
 			_sprite.pause()
 	elif frames.has_animation("walk" + suffix):
-		_play("walk" + suffix, _pace / walkers.movement().walk_pace if is_moving else 1.0)
+		_play("walk" + suffix, _pace / walkers.movement().walk_pace if is_moving and not always_stepping else 1.0)
 	if is_sliding:
 		_sprite.pause()
 
