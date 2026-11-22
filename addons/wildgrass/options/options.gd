@@ -196,6 +196,25 @@ func add_engine_options(dialogue: Dialogue, texts: Texts) -> void:
 	})
 
 
+## The volumes of the music, the effects and the cries, each its bus's
+## (`buses`: kind -> bus name, the `audio` config's).
+func add_volume_options(buses: Dictionary) -> void:
+	for spec: Array in [
+		[&"music_volume", "Music", "Set the volume of the music.", "music"],
+		[&"effects_volume", "Sound effects", "Set the volume of the sound effects and jingles.", "effects"],
+		[&"cries_volume", "Cries", "Set the volume of the Pokémon's cries.", "cries"],
+	]:
+		add_option(spec[0], {
+			"name": spec[1],
+			"description": spec[2],
+			"values": range(0, 101, 5),
+			"slider": true,
+			"format": "%d%%",
+			"default": 100,
+			"apply": _apply_bus_volume.bind(StringName(str(buses.get(spec[3], "Master")))),
+		})
+
+
 func _apply(id: StringName) -> void:
 	var apply: Variant = _options[id].get("apply")
 	if apply is Callable and (apply as Callable).is_valid():
@@ -234,8 +253,14 @@ func _apply_frame(style: Variant) -> void:
 
 
 func _apply_volume(volume: Variant) -> void:
-	var bus := AudioServer.get_bus_index(&"Master")
-	AudioServer.set_bus_volume_db(bus, linear_to_db(float(volume) / 100.0))
+	_apply_bus_volume(volume, &"Master")
+
+
+func _apply_bus_volume(volume: Variant, bus_name: StringName) -> void:
+	var bus := AudioServer.get_bus_index(bus_name)
+	if bus < 0:
+		return
+	AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(float(volume) / 100.0, 0.0001)))
 	AudioServer.set_bus_mute(bus, float(volume) <= 0.0)
 
 

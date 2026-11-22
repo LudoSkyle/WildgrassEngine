@@ -3,4 +3,4 @@ class_name WgOptionsConfig
 extends WgConfig
 
 ## Option ids; one no option has is skipped.
-@export var order: Array[String] = ["message_speed", "message_frame", "volume", "language"]
+@export var order: Array[String] = ["message_speed", "message_frame", "music_volume", "effects_volume", "cries_volume", "language"]
