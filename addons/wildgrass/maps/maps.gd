@@ -213,6 +213,11 @@ func map_at(global_position: Vector2) -> WgMap:
 	return null
 
 
+## The maps folder: where a map id is looked for.
+func maps_folder() -> String:
+	return _paths.root(&"maps")
+
+
 ## The global rectangle of `map`, from its size.
 ## The id of a map built from its scene, on screen or about to be; empty for
 ## another.

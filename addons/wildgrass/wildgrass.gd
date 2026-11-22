@@ -38,6 +38,8 @@ const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
 const ReflectionsDriver := preload("res://addons/wildgrass/life/reflections_driver.gd")
 const Zones := preload("res://addons/wildgrass/maps/zones.gd")
+const Debug := preload("res://addons/wildgrass/debug/debug.gd")
+const EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -76,6 +78,10 @@ var grass: TallGrass
 var footprints: Footprints
 var reflections: Reflections
 var zones: Zones
+## The debug tools.
+var debug: Debug
+## The engine's debug tools, on the `engine` page.
+var debug_tools: EngineTools
 ## The Studio layer, installed when the project is a Studio project.
 var studio: Studio
 ## Parent of every open screen, above the game.
@@ -187,6 +193,15 @@ func _init() -> void:
 	screens.register(&"pokedex", "res://addons/wildgrass/pokedex/pokedex_screen.tscn")
 	screens.register(&"pokedex_entry", "res://addons/wildgrass/pokedex/pokedex_entry_screen.tscn")
 	screens.register(&"location_banner", "res://addons/wildgrass/maps/location_banner.tscn")
+	screens.register(&"debug", "res://addons/wildgrass/debug/debug_screen.tscn")
+	config.register(&"debug", WgDebugConfig, "debug")
+	debug = _service(&"debug", Debug, [log, config, screens])
+	debug.services = {"dialogue": dialogue, "texts": texts, "species": species, "screens": screens}
+	debug_tools = EngineTools.new(debug, {
+		"texts": texts, "dialogue": dialogue, "bag": bag, "items": items, "quests": quests, "maps": maps,
+		"daytime": daytime, "weather": weather, "pokedex": pokedex, "species": species, "clock": clock,
+		"encounters": encounters, "followers": followers, "save": save, "hooks": hooks,
+	})
 
 
 ## The engine's parts of a saved game, in the order they are restored.
@@ -232,7 +247,14 @@ func _ready() -> void:
 	clock.updates_shader_global = true
 	Daytime.declare_shader_globals()
 	daytime.updates_shader_globals = true
+	if debug.is_enabled():
+		menu.add_entry(&"debug", "Debug", _open_debug, "", &"exit")
 	_start.call_deferred()
+
+
+## The pause menu's Debug entry.
+func _open_debug() -> bool:
+	return await debug.open_from_menu(menu)
 
 
 ## A traveller out of the tree, back at the title, has no one else to free it:
