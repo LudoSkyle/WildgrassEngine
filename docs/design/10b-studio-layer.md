@@ -121,7 +121,9 @@ read as before (names `{text:100045:<id>}`, descriptions
 species and types services (feature 12). **Pokédexes**
 (`Data/Studio/dex`): the Pokédex service's, the regional one shown first
 (feature 13). **Wild groups** (`Data/Studio/groups`): encounter tables
-found by id (feature 14).
+found by id (feature 14). **Sound design** (`sound_design_config`,
+`scene_title_config`'s `bgmName`): the `audio` config and the title's music
+(feature 15).
 
 **Later**, with their features: maps (the importer), zones, the
 introduction map, music.

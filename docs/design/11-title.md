@@ -185,8 +185,6 @@ importer reads it.
 
 - Studio's `introMovieMapId` (a map played as an introduction) and its start
   map: with the Studio map importer.
-- The title music (Studio's `bgmName`, `bgmDuration`): with sound (feature
-  15).
 - Credits (Studio's `credits_config.json`): a screen of their own, later; a
   game adds a Credits choice meanwhile.
 - A "Back to the title" entry in the pause menu: a game adds it in one line,

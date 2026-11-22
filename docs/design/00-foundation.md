@@ -101,7 +101,8 @@ if bag and not bag.is_closed():
 - Screens stack. Only the top one gets `_on_input`, mouse and focus.
 - `took_input()`: true in the frame a screen handled an input event, even if
   it closed since; the game does not act on that press too.
-- Signals `screen_opened(name, screen)`, `screen_closed(name)`.
+- Signals `screen_opened(name, screen)`, `screen_closed(name)`,
+  `input_taken(event)` (the top screen took it: sound, feature 15).
 
 ## Hooks
 

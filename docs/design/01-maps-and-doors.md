@@ -95,6 +95,8 @@ A warp, in order:
 - `reload()` loads the current map and its neighbours again, in place: the
   maps and the traveller keep their position, the traveller its facing. It
   runs the map hooks, but neither `traveller_arrived` nor `zone_changed`.
+- A map's `music` and `ambience` play when it shows (feature 15). Signal
+  `door_used(door)` before a door's warp.
 - `clear()` frees every map on screen, hook `map_leaving(map)` for each,
   drops the neighbours loading, takes the traveller out of the tree and
   forgets the zone: the next warp starts afresh. Signal `cleared`; it ends
