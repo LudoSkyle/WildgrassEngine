@@ -66,6 +66,8 @@ var _pace := 0.0
 var _heading := Vector2i.ZERO
 var _pushing := false
 var _pushed := false
+## True once the step reached halfway into its last cell.
+var _entered := false
 var _turning := false
 var _crossing := false
 var _sprite: AnimatedSprite2D
@@ -200,6 +202,8 @@ func _start_step(direction: Vector2i, pace: float, run: bool) -> bool:
 	else:
 		return false
 	is_moving = true
+	_entered = false
+	walkers.walker_left.emit(self, _cell, direction, run and length == 1)
 	is_jumping = length == 2
 	is_running = run and not is_jumping
 	_length = length
@@ -232,6 +236,9 @@ func _can_jump(direction: Vector2i) -> bool:
 ## Moves the step on by `delta`; returns the time left once it ends, else 0.
 func _move(delta: float) -> float:
 	_progress += delta * _pace / _length
+	if not _entered and _progress >= 1.0 - 0.5 / _length:
+		_entered = true
+		walkers.walker_entered.emit(self, _to_cell)
 	if _progress < 1.0:
 		global_position = _from.lerp(_to, _progress)
 		_lift()

@@ -28,6 +28,7 @@ const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
 const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const Weather := preload("res://addons/wildgrass/weather/weather.gd")
+const TallGrass := preload("res://addons/wildgrass/life/tall_grass.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
 
@@ -62,6 +63,7 @@ var audio: Audio
 ## Its save part is added by the tests that need it.
 var daytime: Daytime
 var weather: Weather
+var grass: TallGrass
 var logger: Log
 ## The paths of this world: missing assets are reported there.
 var paths: Paths
@@ -137,6 +139,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.bag = bag
 	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
 	walkers.encounters = encounters
+	grass = TallGrass.new(hooks, walkers, tiles)
 	audio = Audio.new(paths, logger, config, species, root)
 	daytime = Daytime.new(logger, config, hooks)
 	daytime.follow(maps)

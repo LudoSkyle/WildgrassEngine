@@ -30,6 +30,11 @@ const SHELF := Vector2i(7, 1)
 const GRASS := Vector2i(8, 1)
 ## Grass of the map's second area.
 const NORTH_GRASS := Vector2i(9, 1)
+## A tuft of tall grass standing, then its two rustling states; their front
+## strips are the same coordinates of source 1.
+const TUFT := Vector2i(5, 2)
+const TUFT_PARTING := Vector2i(6, 2)
+const TUFT_PARTED := Vector2i(7, 2)
 ## 3×3, centred on its cell; blocks its two lower rows.
 const TREE := Vector2i(0, 1)
 
@@ -43,17 +48,23 @@ static func tile_set(size := 16) -> TileSet:
 	for bit: int in [1, 4, 2, 5]:
 		tiles.add_physics_layer()
 		tiles.set_physics_layer_collision_layer(tiles.get_physics_layers_count() - 1, 1 << (bit - 1))
-	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING], ["grass", TYPE_BOOL], ["encounter", TYPE_STRING], ["encounter_area", TYPE_INT]]:
+	for data: Array in [["sand", TYPE_BOOL], ["water", TYPE_BOOL], ["covers", TYPE_BOOL], ["ramp", TYPE_BOOL], ["floor", TYPE_INT], ["ice", TYPE_BOOL], ["jump", TYPE_VECTOR2I], ["counter", TYPE_BOOL], ["message", TYPE_STRING], ["grass", TYPE_BOOL], ["encounter", TYPE_STRING], ["encounter_area", TYPE_INT], ["front_source", TYPE_INT], ["rustle", TYPE_ARRAY]]:
 		tiles.add_custom_data_layer()
 		tiles.set_custom_data_layer_name(tiles.get_custom_data_layers_count() - 1, data[0])
 		tiles.set_custom_data_layer_type(tiles.get_custom_data_layers_count() - 1, data[1])
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(Image.create(size * 10, size * 4, false, Image.FORMAT_RGBA8))
 	source.texture_region_size = Vector2i(size, size)
-	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP, ICE, LEDGE, COUNTER, SHELF, GRASS, NORTH_GRASS]:
+	for coords: Vector2i in [GROUND, WALL, SAND, WATER, JETTY, TOP_EDGE, HALF, FLOWER, DECK, RAMP, RAILED_RAMP, ICE, LEDGE, COUNTER, SHELF, GRASS, NORTH_GRASS, TUFT, TUFT_PARTING, TUFT_PARTED]:
 		source.create_tile(coords)
 	source.create_tile(TREE, Vector2i(3, 3))
 	tiles.add_source(source, 0)
+	var fronts := TileSetAtlasSource.new()
+	fronts.texture = source.texture
+	fronts.texture_region_size = Vector2i(size, size)
+	for coords: Vector2i in [TUFT, TUFT_PARTING, TUFT_PARTED]:
+		fronts.create_tile(coords)
+	tiles.add_source(fronts, 1)
 	var k := size / 16.0
 	_polygon(source, WALL, 0, FULL, k)
 	_polygon(source, WATER, 0, FULL, k)
@@ -84,6 +95,10 @@ static func tile_set(size := 16) -> TileSet:
 	_data(source, GRASS, "encounter", "grass")
 	_data(source, NORTH_GRASS, "encounter", "grass")
 	_data(source, NORTH_GRASS, "encounter_area", 1)
+	_data(source, TUFT, "front_source", 1)
+	_data(source, TUFT, "rustle", [TUFT_PARTING, TUFT_PARTED, TUFT_PARTED, TUFT_PARTING])
+	# A rustling state that says it rustles too: a tuft rustling is not started again.
+	_data(source, TUFT_PARTING, "rustle", [TUFT_PARTED])
 	return tiles
 
 
