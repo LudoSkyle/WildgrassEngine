@@ -104,7 +104,6 @@ importer.
 ## Later
 
 - Seasons, a calendar of months: when a game needs them.
-- Weather's own tint under the moment's: with weather (feature 17).
 - Studio's switches of the moments: with the event importer.
 
 ## Tests
