@@ -28,6 +28,8 @@ var log: Log
 var services := {}
 ## The title screen while it shows.
 var screen: WgScreen
+## The sound service (feature 15): the title's music.
+var audio: RefCounted
 ## Called by the `quit` choice; the engine's quits the game.
 var quit_game := func() -> void: (Engine.get_main_loop() as SceneTree).quit()
 
@@ -110,6 +112,8 @@ func show_title() -> WgScreen:
 		return screen
 	screen = _screens.open(&"title", _given({"title": self}))
 	if screen != null and not screen.is_closed():
+		if audio != null and not config().music.is_empty():
+			audio.play_music(config().music)
 		title_shown.emit()
 	return screen
 
