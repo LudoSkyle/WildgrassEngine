@@ -137,13 +137,13 @@ func draw(terrain: StringName, tool := &"", area := 0) -> Dictionary:
 	var entry: Dictionary = chosen["entry"]
 	var low := int(entry.get("min_level", 1))
 	var shiny_rate := int(entry.get("shiny_rate", 0))
-	if shiny_rate <= 0:
+	if shiny_rate == 0:
 		shiny_rate = config().shiny_rate
 	return {
 		"species": StringName(str(entry["species"])),
 		"form": int(entry.get("form", 0)),
 		"level": _rng.randi_range(low, int(entry.get("max_level", low))),
-		"shiny": _rng.randi_range(1, shiny_rate) == 1,
+		"shiny": shiny_rate > 0 and _rng.randi_range(1, shiny_rate) == 1,
 		"table": chosen["table"],
 	}
 
