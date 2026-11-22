@@ -8,7 +8,7 @@ GDScript only, ships no assets.
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
 layer, the title screen, Pokémon species and types, the Pokédex, wild
-encounters, sound, and day and night.
+encounters, sound, day and night, and weather.
 
 ## Install
 
@@ -266,6 +266,15 @@ and `night_light` for a game's shaders.
 ```gdscript
 Wildgrass.daytime.moment()         # &"dusk"
 Wildgrass.daytime.forced_hour = 23.0
+```
+
+**Weather**: `WgWeather` resources in `res://weather/` with the game's
+pictures (what falls, a drifting layer, the screen's tone), drawn over the
+maps outside: the one on (`Wildgrass.weather.current`), or a map's own
+(`weather`). Particles live and die on their own, anchored to the map.
+
+```gdscript
+Wildgrass.weather.current = &"rain"
 ```
 
 ## License
