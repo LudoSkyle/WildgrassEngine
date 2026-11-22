@@ -14,6 +14,8 @@ const StudioTexts := preload("res://addons/wildgrass/studio/studio_texts.gd")
 const StudioItems := preload("res://addons/wildgrass/studio/studio_items.gd")
 const StudioQuests := preload("res://addons/wildgrass/studio/studio_quests.gd")
 const StudioSpecies := preload("res://addons/wildgrass/studio/studio_species.gd")
+const StudioEncounters := preload("res://addons/wildgrass/studio/studio_encounters.gd")
+const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
@@ -61,6 +63,7 @@ var _texts: Texts
 var _items: StudioItems
 var _quests: StudioQuests
 var _species: StudioSpecies
+var _encounters: StudioEncounters
 ## Studio config file -> its data, read once.
 var _files: Dictionary[String, Dictionary] = {}
 var _translations: Array[Translation] = []
@@ -75,6 +78,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_regi
 	_items = StudioItems.new(paths, logger)
 	_quests = StudioQuests.new(paths, logger)
 	_species = StudioSpecies.new(paths, logger)
+	_encounters = StudioEncounters.new(paths, logger)
 
 
 ## True when the project is a Studio project, as the setting says.
@@ -88,8 +92,9 @@ func is_project() -> bool:
 
 
 ## Plugs the project into the engine: its configs as sources, its texts, its
-## items, pockets, quests, species, types and Pokédexes. Done once.
-func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types, pokedex: Pokedex) -> void:
+## items, pockets, quests, species, types, Pokédexes and wild groups. Done
+## once.
+func install(engine_texts: Texts, items: Items, quests: Quests, species: SpeciesData, types: Types, pokedex: Pokedex, encounters: Encounters) -> void:
 	if installed:
 		return
 	installed = true
@@ -108,6 +113,7 @@ func install(engine_texts: Texts, items: Items, quests: Quests, species: Species
 	species.add_source(_species.read_species, _species.species_ids)
 	types.add_source(_species.read_type, _species.type_ids)
 	pokedex.add_source(_species.read_dex, _species.dex_ids)
+	encounters.add_source(_encounters.read, _encounters.ids)
 	_add_translations()
 
 

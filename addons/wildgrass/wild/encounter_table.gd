@@ -16,7 +16,7 @@ extends Resource
 ## Two at once, for battles.
 @export var double := false
 ## `[{species, form, min_level, max_level, weight, shiny_rate}]`; `shiny_rate`
-## 0: the config's.
+## 0: the config's, -1: never.
 @export var pokemon: Array[Dictionary] = []
 
 
