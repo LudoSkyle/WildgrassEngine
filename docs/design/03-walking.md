@@ -6,7 +6,7 @@ Characters that walk cell by cell: the player with the keyboard or a pad,
 later the characters of the map (feature 6) through the same API. Covers
 facing, steps, running, ledges, ice, levels, the player's doors and seams, the
 animation contract and the camera. Talking to what you face is feature 4;
-followers come later.
+followers are feature 19.
 
 ## A walker
 
@@ -36,6 +36,9 @@ enters the game, and when a warp or a reload places it.
 | `pace` | `0` | its walking pace; 0: the config's (feature 6) |
 | `reflects` | `true` | shows its reflection over water (feature 18) |
 | `ground_offset` | `8` | its ground line below its origin, where water mirrors it |
+| `prints` | `true` | leaves prints in sand (feature 18) |
+| `rustles` | `true` | rustles the tall grass it walks into (feature 18) |
+| `always_stepping` | `false` | its walk plays all the time, standing too, at one cadence whatever its pace (a Pokémon); still while it slides |
 
 ```gdscript
 walker.turn(Vector2i.LEFT)
@@ -76,8 +79,9 @@ all (`all()`).
   feature 8) blocks its cells the same way; `Wildgrass.walkers.at(cell, level)` finds who stands
   there. `walker.destination` is the cell it ends on, `walker.heading` the
   direction of its step, `walker.can_step(direction)` whether a step would
-  start. `walker.place_at(cell, level, facing)` puts it on a cell at once (a
-  loaded game, a scene).
+  start; `step_progress` (0 to 1), `step_seconds`, `destination_level` and
+  `step_count` describe its step. `walker.place_at(cell, level, facing)`
+  puts it on a cell at once (a loaded game, a scene).
 - **The level changes** as `Wildgrass.tiles.level_after()` says, and
   `z_index` is twice the level: 0 on the ground, 2 on a level 1 deck. Draw a
   deck of level L at `z_index` 2L − 1, and what covers every walker (roofs,

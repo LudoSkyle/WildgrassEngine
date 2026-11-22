@@ -8,7 +8,7 @@ GDScript only, ships no assets.
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
 layer, the title screen, Pokémon species and types, the Pokédex, wild
-encounters, sound, day and night, weather, and life on the maps.
+encounters, sound, day and night, weather, life on the maps, and followers.
 
 ## Install
 
@@ -173,7 +173,7 @@ Wildgrass.screens.open(&"bag")
 
 **Save**: games are JSON files in slots (`user://saves/game-1.json`), as
 `config/save.json` sets them (`slots`, `file`, `save_anywhere`). The story, quests, the bag, the play time and where everyone
-stands are saved; add your own parts. The `save` screen asks before writing,
+stands are saved, with who follows; add your own parts. The `save` screen asks before writing,
 `save_slots` chooses a game.
 
 ```gdscript
@@ -283,6 +283,18 @@ reflections in water (`reflects`). `WgFlyer`, a Pokémon flying over the
 map with its shadow; `WgTwinkle` on anything that shines. `WgZone`
 resources in `res://zones/` name the places: arriving in another, the
 `location_banner` slides down.
+
+**Followers**: the player's Pokémon walks behind it, replaying its steps one
+behind, and anyone else in line before it: a scene whose root is a
+`WgFollower`. Hidden on arrival, they unfold as the player walks. The
+Pokémon shows its species' `character` sheet; set
+*wildgrass/followers/pokemon_scene* to draw it your way.
+
+```gdscript
+Wildgrass.followers.follow_pokemon(&"wingull")
+Wildgrass.followers.add(friend)
+Wildgrass.followers.enabled = false
+```
 
 ## License
 
