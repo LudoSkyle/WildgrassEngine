@@ -27,21 +27,21 @@ func _init(debug: _Debug, services: Dictionary) -> void:
 	var hooks: Object = _s.get("hooks")
 	if hooks != null:
 		hooks.add(&"can_step", &"wildgrass_debug_walls", _walk_through, WALLS_PRIORITY)
-	_tool(&"fill_bag", "Fill the bag", fill_bag)
-	debug.add_page(&"quests", "Quests", {"page": PAGE, "lines": quest_lines, "shown": _has_quests})
+	_tool(&"fill_bag", "wg.debug.fill_bag", fill_bag)
+	debug.add_page(&"quests", "wg.debug.quests", {"page": PAGE, "lines": quest_lines, "shown": _has_quests})
 	_tool(&"hour", hour_label, next_hour)
 	_tool(&"weather", weather_label, next_weather)
-	_tool(&"species", "Species", show_species, {"shown": _has_species})
-	_tool(&"fill_pokedex", "Fill the Pokédex", fill_pokedex)
+	_tool(&"species", "wg.debug.species", show_species, {"shown": _has_species})
+	_tool(&"fill_pokedex", "wg.debug.fill_pokedex", fill_pokedex)
 	_tool(&"speed", speed_label, next_speed)
-	_tool(&"empty_bag", "Empty the bag", empty_bag)
-	_tool(&"empty_pokedex", "Empty the Pokédex", empty_pokedex)
-	debug.add_page(&"warp", "Warp", {"page": PAGE, "lines": map_lines})
-	_tool(&"reload", "Reload the map", reload_map, {"shown": _has_map})
+	_tool(&"empty_bag", "wg.debug.empty_bag", empty_bag)
+	_tool(&"empty_pokedex", "wg.debug.empty_pokedex", empty_pokedex)
+	debug.add_page(&"warp", "wg.debug.warp", {"page": PAGE, "lines": map_lines})
+	_tool(&"reload", "wg.debug.reload", reload_map, {"shown": _has_map})
 	_tool(&"walls", walls_label, toggle_walls)
 	_tool(&"encounters", encounters_label, next_encounters)
 	_tool(&"followers", followers_label, toggle_followers)
-	_tool(&"save_here", "Save here", save_here, {"shown": _has_map})
+	_tool(&"save_here", "wg.debug.save_here", save_here, {"shown": _has_map})
 
 
 func _tool(id: StringName, label: Variant, action: Callable, options := {}) -> void:
@@ -72,7 +72,7 @@ func fill_bag() -> bool:
 			continue
 		bag.add(id, mini(count, config.max_count))
 		count += 1
-	_say("Test items were added to the bag.")
+	_say("wg.debug.bag_filled")
 	return false
 
 
@@ -81,7 +81,7 @@ func empty_bag() -> bool:
 	for pocket: Dictionary in bag.config().pockets:
 		for id: StringName in bag.items(StringName(str(pocket.get("id", "")))):
 			bag.remove(id, bag.count(id))
-	_say("The bag was emptied.")
+	_say("wg.debug.bag_emptied")
 	return false
 
 
@@ -98,18 +98,18 @@ func quest_lines() -> Array:
 
 func _quest_actions(id: StringName, name: String) -> Array:
 	return [
-		{"label": _label("Start over"), "action": start_over.bind(id, name)},
-		{"label": _label("Next objective"), "action": next_objective.bind(id, name)},
-		{"label": _label("Finish"), "action": finish_quest.bind(id, name)},
+		{"label": _label("wg.debug.quest_start_over"), "action": start_over.bind(id, name)},
+		{"label": _label("wg.debug.quest_next"), "action": next_objective.bind(id, name)},
+		{"label": _label("wg.debug.quest_finish"), "action": finish_quest.bind(id, name)},
 	]
 
 
 func start_over(id: StringName, name: String) -> bool:
 	if _s["quests"].forget(id):
-		_say("{quest}: started over.", {"quest": _label(name)})
+		_say("wg.debug.quest_started_over", {"quest": _label(name)})
 		_reload_after()
 	else:
-		_say("{quest} has not started.", {"quest": _label(name)})
+		_say("wg.debug.quest_not_started", {"quest": _label(name)})
 	return false
 
 
@@ -126,7 +126,7 @@ func finish_quest(id: StringName, name: String) -> bool:
 func _advance(id: StringName, name: String, all: bool) -> bool:
 	var quests: Object = _s["quests"]
 	if quests.is_finished(id):
-		_say("{quest} is already done.", {"quest": _label(name)})
+		_say("wg.debug.quest_already_done", {"quest": _label(name)})
 		return false
 	if not quests.is_active(id):
 		quests.start(id)
@@ -139,9 +139,9 @@ func _advance(id: StringName, name: String, all: bool) -> bool:
 		if not all:
 			break
 	if quests.is_finished(id):
-		_say("{quest} is finished.", {"quest": _label(name)})
+		_say("wg.debug.quest_finished", {"quest": _label(name)})
 	else:
-		_say("{quest}: one objective more.", {"quest": _label(name)})
+		_say("wg.debug.quest_advanced", {"quest": _label(name)})
 	_reload_after()
 	return false
 
@@ -160,8 +160,8 @@ func _has_quests() -> bool:
 func hour_label() -> String:
 	var at := _hour_index()
 	if at < 0:
-		return _label("Hour: real")
-	return _label("Hour: {moment}", {"moment": _label(str(_hours()[at][0]))})
+		return _label("wg.debug.hour_real")
+	return _label("wg.debug.hour", {"moment": _label("wg.debug.moment." + str(_hours()[at][0]))})
 
 
 ## The next hour of the config's, then the real one again.
@@ -191,9 +191,9 @@ func _hour_index() -> int:
 ## instead.
 func weather_label() -> String:
 	var weather: Object = _s["weather"]
-	var shown := _label("Weather: {name}", {"name": _weather_name(weather.current)})
+	var shown := _label("wg.debug.weather", {"name": _weather_name(weather.current)})
 	if weather.shown() != weather.current:
-		shown += " " + _label("(this map: {name})", {"name": _weather_name(weather.shown())})
+		shown += " " + _label("wg.debug.weather_here", {"name": _weather_name(weather.shown())})
 	return shown
 
 
@@ -231,7 +231,7 @@ func fill_pokedex() -> bool:
 				pokedex.catch(entry["species"], entry["form"])
 			1:
 				pokedex.see(entry["species"], entry["form"])
-	_say("The Pokédex was filled.")
+	_say("wg.debug.pokedex_filled")
 	return false
 
 
@@ -240,12 +240,12 @@ func empty_pokedex() -> bool:
 	for id: StringName in _s["species"].ids():
 		if pokedex.is_seen(id):
 			pokedex.forget(id)
-	_say("The Pokédex was emptied.")
+	_say("wg.debug.pokedex_emptied")
 	return false
 
 
 func speed_label() -> String:
-	return _label("Speed: x{speed}", {"speed": _number(_s["clock"].speed)})
+	return _label("wg.debug.speed", {"speed": _number(_s["clock"].speed)})
 
 
 ## The next speed of the config's after the one on.
@@ -297,7 +297,7 @@ func _has_map() -> bool:
 
 
 func walls_label() -> String:
-	return _label("Through walls: on") if through_walls else _label("Through walls: off")
+	return _label("wg.debug.walls_on") if through_walls else _label("wg.debug.walls_off")
 
 
 func toggle_walls() -> bool:
@@ -314,10 +314,10 @@ func _walk_through(allowed: bool, _cell: Vector2i, _direction: Vector2i, _level:
 func encounters_label() -> String:
 	match int(_s["encounters"].forced):
 		1:
-			return _label("Encounters: always")
+			return _label("wg.debug.encounters_always")
 		0:
-			return _label("Encounters: never")
-	return _label("Encounters: chance")
+			return _label("wg.debug.encounters_never")
+	return _label("wg.debug.encounters_chance")
 
 
 ## Chance, always, never, chance.
@@ -334,7 +334,7 @@ func next_encounters() -> bool:
 
 
 func followers_label() -> String:
-	return _label("Followers: on") if _s["followers"].enabled else _label("Followers: off")
+	return _label("wg.debug.followers_on") if _s["followers"].enabled else _label("wg.debug.followers_off")
 
 
 func toggle_followers() -> bool:
@@ -346,9 +346,9 @@ func toggle_followers() -> bool:
 ## off.
 func save_here() -> bool:
 	if _s["save"].write():
-		_say("The game was saved.")
+		_say("wg.save.saved")
 	else:
-		_say("The game could not be saved.")
+		_say("wg.save.failed")
 	return false
 
 

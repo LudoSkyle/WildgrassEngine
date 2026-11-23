@@ -200,3 +200,144 @@ msgstr "A wild {name} appeared!"
 
 msgid "wg.weather.clear"
 msgstr "Clear"
+
+msgid "wg.back"
+msgstr "Back"
+
+msgid "wg.debug.title"
+msgstr "Debug"
+
+msgid "wg.debug.engine"
+msgstr "Engine"
+
+msgid "wg.debug.game"
+msgstr "Game"
+
+msgid "wg.debug.fill_bag"
+msgstr "Fill the bag"
+
+msgid "wg.debug.bag_filled"
+msgstr "Test items were added to the bag."
+
+msgid "wg.debug.empty_bag"
+msgstr "Empty the bag"
+
+msgid "wg.debug.bag_emptied"
+msgstr "The bag was emptied."
+
+msgid "wg.debug.quests"
+msgstr "Quests"
+
+msgid "wg.debug.quest_start_over"
+msgstr "Start over"
+
+msgid "wg.debug.quest_next"
+msgstr "Next objective"
+
+msgid "wg.debug.quest_finish"
+msgstr "Finish"
+
+msgid "wg.debug.quest_started_over"
+msgstr "{quest}: started over."
+
+msgid "wg.debug.quest_not_started"
+msgstr "{quest} has not started."
+
+msgid "wg.debug.quest_already_done"
+msgstr "{quest} is already done."
+
+msgid "wg.debug.quest_finished"
+msgstr "{quest} is finished."
+
+msgid "wg.debug.quest_advanced"
+msgstr "{quest}: one objective more."
+
+msgid "wg.debug.hour_real"
+msgstr "Hour: real"
+
+msgid "wg.debug.hour"
+msgstr "Hour: {moment}"
+
+msgid "wg.debug.moment.dawn"
+msgstr "dawn"
+
+msgid "wg.debug.moment.day"
+msgstr "day"
+
+msgid "wg.debug.moment.dusk"
+msgstr "dusk"
+
+msgid "wg.debug.moment.night"
+msgstr "night"
+
+msgid "wg.debug.weather"
+msgstr "Weather: {name}"
+
+msgid "wg.debug.weather_here"
+msgstr "(this map: {name})"
+
+msgid "wg.debug.species"
+msgstr "Species"
+
+msgid "wg.debug.fill_pokedex"
+msgstr "Fill the Pokédex"
+
+msgid "wg.debug.pokedex_filled"
+msgstr "The Pokédex was filled."
+
+msgid "wg.debug.empty_pokedex"
+msgstr "Empty the Pokédex"
+
+msgid "wg.debug.pokedex_emptied"
+msgstr "The Pokédex was emptied."
+
+msgid "wg.debug.speed"
+msgstr "Speed: x{speed}"
+
+msgid "wg.debug.warp"
+msgstr "Warp"
+
+msgid "wg.debug.reload"
+msgstr "Reload the map"
+
+msgid "wg.debug.walls_on"
+msgstr "Through walls: on"
+
+msgid "wg.debug.walls_off"
+msgstr "Through walls: off"
+
+msgid "wg.debug.encounters_always"
+msgstr "Encounters: always"
+
+msgid "wg.debug.encounters_never"
+msgstr "Encounters: never"
+
+msgid "wg.debug.encounters_chance"
+msgstr "Encounters: chance"
+
+msgid "wg.debug.followers_on"
+msgstr "Followers: on"
+
+msgid "wg.debug.followers_off"
+msgstr "Followers: off"
+
+msgid "wg.debug.save_here"
+msgstr "Save here"
+
+msgid "wg.debug.species_heading"
+msgstr "Species: {count}, {missing} incomplete"
+
+msgid "wg.debug.no_species"
+msgstr "No species."
+
+msgid "wg.debug.generation"
+msgstr "Generation"
+
+msgid "wg.debug.no_name"
+msgstr "no name"
+
+msgid "wg.debug.no_description"
+msgstr "no description"
+
+msgid "wg.debug.no_picture"
+msgstr "No picture:"
