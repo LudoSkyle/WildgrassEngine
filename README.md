@@ -25,7 +25,9 @@ Everything goes through the `Wildgrass` autoload.
 (`display.json`), the resource winning. Keys are the fields' names. Only set
 what you change.
 
-`config/display.json` (without it, the window is left as your project sets it):
+`config/display.json` (without it: 320 × 240 game pixels, window twice as
+large, unless your project set its window in Godot's settings, which then
+stand):
 
 ```json
 { "resolution": { "x": 320, "y": 240 }, "window_scale": 4, "fullscreen": false }

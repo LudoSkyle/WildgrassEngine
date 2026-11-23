@@ -78,11 +78,31 @@ func test_a_replacement_that_does_not_extend_the_service_is_refused() -> void:
 	assert_object(engine.hooks).is_instanceof(preload("res://addons/wildgrass/core/hooks/hooks.gd"))
 
 
-func test_without_display_config_the_display_is_left_alone() -> void:
+func test_without_display_config_the_engine_s_own_screen_is_applied() -> void:
 	_sandbox.set_setting("wildgrass/services/display", "res://tests/support/recording_display.gd")
 	var engine := _start_engine()
 	add_child(engine)
-	assert_array((engine.display as RecordingDisplay).applied).is_empty()
+	var applied := (engine.display as RecordingDisplay).applied
+	assert_array(applied).has_size(1)
+	assert_array([applied[0].resolution, applied[0].window_scale, applied[0].fullscreen]).is_equal([Vector2i(320, 240), 2, false])
+
+
+func test_a_window_chosen_in_godot_s_settings_stands_unless_a_display_config_is_given() -> void:
+	_sandbox.set_setting("wildgrass/services/display", "res://tests/support/recording_display.gd")
+	for setting: Array in [["display/window/size/viewport_width", 1280], ["display/window/stretch/mode", "viewport"]]:
+		_sandbox.set_setting(setting[0], setting[1])
+		var engine := _start_engine()
+		add_child(engine)
+		assert_array((engine.display as RecordingDisplay).applied).override_failure_message(setting[0]).is_empty()
+		remove_child(engine)
+		_sandbox.set_setting(setting[0], ProjectSettings.property_get_revert(setting[0]))
+	_sandbox.set_setting("display/window/size/viewport_width", 1280)
+	_sandbox.write_json("config/display.json", {"window_scale": 3})
+	var engine := _start_engine()
+	add_child(engine)
+	var applied := (engine.display as RecordingDisplay).applied
+	assert_array(applied).has_size(1)
+	assert_int(applied[0].window_scale).is_equal(3)
 
 
 func test_game_time_advances_with_frames() -> void:

@@ -71,8 +71,11 @@ Wildgrass.config.add_source(&"display", func() -> Dictionary: return {"window_sc
 
 ## Display
 
-The `display` config is applied at start **only if it is given** (a file or
-a source).
+The `display` config is applied at start: the one given (a file or a
+source), else its defaults, 320 × 240 game pixels in a window twice as
+large. A project that gives none but chose its window in Godot's own
+settings (viewport size, window size override, window mode, stretch mode,
+aspect or scale) keeps that window: the engine leaves it alone.
 Then:
 
 - window = resolution × window scale, or fullscreen;
