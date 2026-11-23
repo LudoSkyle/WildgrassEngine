@@ -12,6 +12,9 @@ extends WgWalkerController
 @export var area := Rect2i()
 ## Tile data it stays on (`&"grass"`); empty: any tile.
 @export var tile_data: StringName = &""
+## A layer of its map, the path from the map: it stays on the cells that
+## layer draws (the tall grass of a map), whatever their shape; empty: any.
+@export var layer: NodePath = ^""
 ## Seed of its moves, for a wander that plays the same again; 0: random.
 @export var random_seed := 0
 
@@ -55,7 +58,15 @@ func _allowed(walker: WgWalker, direction: Vector2i) -> bool:
 			return false
 		if area.has_area() and not area.has_point(local):
 			return false
+		if not layer.is_empty() and not _drawn(map, tiles.center_of(cell)):
+			return false
 	return tile_data.is_empty() or _is_true(tiles.data(cell, tile_data))
+
+
+## True if `layer` draws the cell at `point`.
+func _drawn(map: WgMap, point: Vector2) -> bool:
+	var drawn := map.get_node_or_null(layer) as TileMapLayer
+	return drawn != null and drawn.get_cell_source_id(drawn.local_to_map(drawn.to_local(point))) != -1
 
 
 static func _is_true(value: Variant) -> bool:
