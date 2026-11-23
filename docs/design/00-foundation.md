@@ -94,7 +94,8 @@ if bag and not bag.is_closed():
   `wildgrass/screens/<name>`, the registered default.
 - `open()` returns `null`, logged, if the name is unknown, the scene missing,
   or its root not a `WgScreen`.
-- `WgScreen`: override `_on_open(args)`, `_on_close()`, `_on_input(event)`;
+- `WgScreen`: override `_on_open(args)`, `_on_close()`, `_on_input(event)`,
+  `_repeats(key)` (false keeps a held key from going again, feature 4);
   call `close()`; signal `closed`, emitted once. A screen freed or removed
   without `close()` still closes. One that closes in `_on_open` comes back
   closed and is not announced.

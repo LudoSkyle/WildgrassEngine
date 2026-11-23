@@ -80,6 +80,11 @@ func _on_close() -> void:
 		bag.changed.disconnect(_on_bag_changed)
 
 
+## Left and right turn a pocket at a time, held or not.
+func _repeats(key: String) -> bool:
+	return key == "up" or key == "down"
+
+
 func _on_input(event: InputEvent) -> bool:
 	if _busy:
 		return true

@@ -26,6 +26,13 @@ func _on_input(_event: InputEvent) -> bool:
 	return false
 
 
+## True if `key` (`up`, `left`…, as the dialogue config names them) goes
+## again while held, as the dialogue config's `repeating` says. Override to
+## keep one from repeating (a key that turns a page).
+func _repeats(_key: String) -> bool:
+	return true
+
+
 func is_closed() -> bool:
 	return _closed
 
