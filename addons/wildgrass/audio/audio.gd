@@ -95,6 +95,7 @@ func follow_game(screens: Object, dialogue: Object, save: Object, bag: Object, i
 	bag.given.connect(_on_given)
 	dialogue.add_tag(&"jingle", _jingle_tag)
 	dialogue.add_tag(&"sound", _sound_tag)
+	dialogue.add_tag(&"cry", _cry_tag)
 
 
 func _on_map_changed(map: WgMap) -> void:
@@ -167,6 +168,12 @@ func _jingle_tag(value: String) -> void:
 
 func _sound_tag(value: String) -> void:
 	effect(StringName(value))
+
+
+## `[cry=species]`, or `[cry=species:form]`: the cry, over any one playing.
+func _cry_tag(value: String) -> void:
+	var parts := value.split(":")
+	cry(StringName(parts[0]), int(parts[1]) if parts.size() > 1 else 0, 1.0, true)
 
 
 ## Plays the named jingle `role`; a message shown waits for it.

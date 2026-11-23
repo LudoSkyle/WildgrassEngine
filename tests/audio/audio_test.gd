@@ -215,3 +215,18 @@ func test_three_volumes_each_their_bus_s_and_the_default_order() -> void:
 	assert_array(options.config().order).is_equal(["message_speed", "message_frame", "music_volume", "effects_volume", "cries_volume", "language"])
 	options.set_value(&"music_volume", 100)
 	options.set_value(&"cries_volume", 100)
+
+
+func test_a_message_s_cry_tag_plays_the_cry() -> void:
+	_wav("cries/wingull.wav", 0.5)
+	var wingull := WgSpecies.new()
+	wingull.id = &"wingull"
+	wingull.forms.append(WgSpeciesForm.new())
+	wingull.forms[0].pictures[&"cry"] = _world.sandbox.root + "cries/wingull.wav"
+	_world.species.register(wingull)
+	_world.dialogue.say("Goélise ![cry=wingull]")
+	_world.dialogue.box.set_process(false)
+	_world.dialogue.box.advance(10.0)
+	assert_bool(_world.audio.cry_player.playing).is_true()
+	_world.audio.cry_player.stop()
+	_world.dialogue.close()
