@@ -53,6 +53,11 @@ const ENCOUNTERS: Dictionary[int, String] = {
 	385: "ice", 389: "grass", 390: "tall_grass", 391: "cave", 397: "mountain", 398: "sand", 399: "pond", 405: "ocean", 406: "under_water", 407: "snow",
 }
 const JUMPS: Dictionary[int, Vector2i] = {392: Vector2i.RIGHT, 400: Vector2i.LEFT, 408: Vector2i.DOWN, 416: Vector2i.UP}
+## Studio counts an animated tile's frames in steps of this many game
+## frames (at 60 a second), unless its display config says otherwise.
+const IDLE_FRAMES := 6
+## The key of an animated tileset's own source, after its file name.
+const ANIMATED := "#animated"
 ## The data layers the TileSet carries, and their type.
 const DATA: Dictionary[String, int] = {
 	"covers": TYPE_BOOL, "ice": TYPE_BOOL, "jump": TYPE_VECTOR2I, "encounter": TYPE_STRING, "system_tag": TYPE_STRING,
@@ -77,6 +82,9 @@ var _tile_set: TileSet
 var _sources: Dictionary[String, int] = {}
 ## Zone id of each map id.
 var _zones: Dictionary[int, StringName] = {}
+## Each `.tsx` read, by its path.
+var _tilesets: Dictionary[String, Dictionary] = {}
+var _idle_frames := 0
 
 
 func _init(data: String, target := "res://maps") -> void:
@@ -130,13 +138,48 @@ func write_textures(symbols: Array[String]) -> Array[String]:
 			if tsx.is_empty():
 				continue
 			var png := _texture_path(tsx)
-			if FileAccess.file_exists(png) and FileAccess.get_modified_time(png) >= FileAccess.get_modified_time(tsx["image"]):
+			var strip := _strip_path(tsx)
+			var image_time := FileAccess.get_modified_time(tsx["image"])
+			var base_stale := not _is_fresh(png, image_time)
+			var strip_stale := not (tsx["animated"] as Array).is_empty() \
+				and not _is_fresh(strip, maxi(image_time, FileAccess.get_modified_time(tsx_path)))
+			if not base_stale and not strip_stale:
 				continue
 			var picture := halved(tsx["image"], tsx["trans"])
-			if picture != null and picture.save_png(png) == OK:
+			if picture == null:
+				continue
+			if base_stale and picture.save_png(png) == OK:
 				_keep_alpha(png)
 				written.append(png)
+			if strip_stale and animated_strip(tsx, picture).save_png(strip) == OK:
+				_keep_alpha(strip)
+				written.append(strip)
 	return written
+
+
+static func _is_fresh(path: String, source_time: int) -> bool:
+	return FileAccess.file_exists(path) and FileAccess.get_modified_time(path) >= source_time
+
+
+## The frames of a tileset's animated tiles, from its `halved_picture`: a
+## row each, in the order of `animated`, its frames side by side, as Godot
+## plays a tile's animation along a row.
+static func animated_strip(tsx: Dictionary, halved_picture: Image) -> Image:
+	var animated: Array = tsx["animated"]
+	var animations: Dictionary = tsx["animations"]
+	var longest := 1
+	for id: int in animated:
+		longest = maxi(longest, (animations[id] as Array).size())
+	var strip := Image.create(longest * CELL, maxi(1, animated.size()) * CELL, false, Image.FORMAT_RGBA8)
+	var columns: int = tsx["columns"]
+	for row in animated.size():
+		var frames: Array = animations[animated[row]]
+		for index in frames.size():
+			var tile: int = frames[index][0]
+			@warning_ignore("integer_division")
+			var from := Rect2i(tile % columns * CELL, tile / columns * CELL, CELL, CELL)
+			strip.blit_rect(halved_picture, from, Vector2i(index * CELL, row * CELL))
+	return strip
 
 
 ## Tells Godot to import `png` as it is: its alpha border left alone, as
@@ -191,7 +234,12 @@ func import_map(symbol: String) -> bool:
 		var name: String = tileset["path"].get_file()
 		if not _sources.has(name):
 			_sources[name] = _add_source(tile_set, name, tsx)
-		firsts.append({"first": tileset["first"], "source": _sources[name], "name": name, "columns": tsx["columns"]})
+		var entry := {"first": tileset["first"], "source": _sources[name], "name": name, "columns": tsx["columns"], "tsx": tsx}
+		if not (tsx["animated"] as Array).is_empty():
+			if not _sources.has(name + ANIMATED):
+				_sources[name + ANIMATED] = _add_animated_source(tile_set, name, tsx)
+			entry["animated_source"] = _sources[name + ANIMATED]
+		firsts.append(entry)
 	firsts.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["first"] > b["first"])
 	var width: int = map["width"]
 	var height: int = map["height"]
@@ -412,23 +460,81 @@ static func level_of(name: String, inherited: int) -> int:
 
 
 ## A `.tsx`: its `image` (a path), `trans` (a Color or null), `columns` of
-## 32 px tiles. {} with a problem if it cannot be read.
+## 32 px tiles, its `animations` (a tile's frames, each [tile, ms]) and the
+## `animated` tiles, sorted. {} with a problem if it cannot be read.
 func read_tsx(path: String) -> Dictionary:
+	if _tilesets.has(path):
+		return _tilesets[path]
 	var parser := XMLParser.new()
 	if not FileAccess.file_exists(path) or parser.open(path) != OK:
 		problems.append("%s: no such tileset" % path.get_file())
 		return {}
+	var tsx := {}
+	var size := Vector2i.ZERO
+	var animations: Dictionary[int, Array] = {}
+	var tile := -1
 	while parser.read() == OK:
-		if parser.get_node_type() == XMLParser.NODE_ELEMENT and parser.get_node_name() == "image":
-			var trans := parser.get_named_attribute_value_safe("trans")
-			var width := parser.get_named_attribute_value_safe("width").to_int()
-			var image := path.get_base_dir().path_join(parser.get_named_attribute_value_safe("source")).simplify_path()
-			if width <= 0:
-				var picture := Image.load_from_file(image)
-				width = picture.get_width() if picture != null else 0
-			return {"image": image, "trans": Color.html(trans) if trans.is_valid_html_color() else null, "columns": maxi(1, width / STUDIO_CELL)}
-	problems.append("%s: a tileset with no picture" % path.get_file())
-	return {}
+		if parser.get_node_type() != XMLParser.NODE_ELEMENT:
+			continue
+		match parser.get_node_name():
+			"image":
+				if not tsx.is_empty():
+					continue
+				var trans := parser.get_named_attribute_value_safe("trans")
+				size = Vector2i(parser.get_named_attribute_value_safe("width").to_int(), parser.get_named_attribute_value_safe("height").to_int())
+				var image := path.get_base_dir().path_join(parser.get_named_attribute_value_safe("source")).simplify_path()
+				if size.x <= 0 or size.y <= 0:
+					var picture := Image.load_from_file(image)
+					size = picture.get_size() if picture != null else Vector2i.ZERO
+				tsx = {"image": image, "trans": Color.html(trans) if trans.is_valid_html_color() else null, "columns": maxi(1, size.x / STUDIO_CELL)}
+			"tile":
+				tile = parser.get_named_attribute_value_safe("id").to_int()
+			"frame":
+				if not animations.has(tile):
+					animations[tile] = []
+				animations[tile].append([parser.get_named_attribute_value_safe("tileid").to_int(), parser.get_named_attribute_value_safe("duration").to_int()])
+	if tsx.is_empty():
+		problems.append("%s: a tileset with no picture" % path.get_file())
+		return {}
+	@warning_ignore("integer_division")
+	var count: int = tsx["columns"] * maxi(1, size.y / STUDIO_CELL)
+	var animated: Array[int] = []
+	for id: int in animations.keys():
+		var outside: Array = animations[id].filter(func(frame: Array) -> bool: return frame[0] < 0 or frame[0] >= count)
+		if id < 0 or id >= count or not outside.is_empty():
+			problems.append("%s: tile %d's animation shows a tile outside the picture, left still" % [path.get_file(), id])
+			animations.erase(id)
+		else:
+			animated.append(id)
+	animated.sort()
+	tsx["animations"] = animations
+	tsx["animated"] = animated
+	_tilesets[path] = tsx
+	return tsx
+
+
+## How long Studio shows a frame of `ms`: whole steps of its idle frames, at
+## least one, the rest dropped.
+func frame_seconds(ms: int) -> float:
+	var idle := idle_frames()
+	@warning_ignore("integer_division")
+	var step := maxi(1, idle * 1000 / 60)
+	@warning_ignore("integer_division")
+	return maxi(1, ms / step) * idle / 60.0
+
+
+## The game frames of a step of animated tiles: the display config's, else 6.
+func idle_frames() -> int:
+	if _idle_frames > 0:
+		return _idle_frames
+	_idle_frames = IDLE_FRAMES
+	var path := data_folder.path_join("configs/display_config.json")
+	var config: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+	if config is Dictionary and config.get("tilemapSettings") is Dictionary:
+		var given: Variant = config["tilemapSettings"].get("autotileIdleFrameCount")
+		if (given is float or given is int) and int(given) >= 1:
+			_idle_frames = int(given)
+	return _idle_frames
 
 
 static func _decode(text: String, encoding: String, compression: String, path: String) -> PackedInt64Array:
@@ -477,6 +583,12 @@ func _paint(node: TileMapLayer, cell: Vector2i, raw: int, firsts: Array[Dictiona
 		if gid < int(entry["first"]):
 			continue
 		var index := gid - int(entry["first"])
+		var tsx: Dictionary = entry["tsx"]
+		var animated: Array = tsx["animated"]
+		var row := animated.bsearch(index)
+		if entry.has("animated_source") and row < animated.size() and animated[row] == index:
+			node.set_cell(cell, entry["animated_source"], _animated_tile(entry["animated_source"], row, tsx["animations"][index]), _alternative(flips))
+			return
 		var source := _tile_set.get_source(entry["source"]) as TileSetAtlasSource
 		var coords := Vector2i(index % int(entry["columns"]), index / int(entry["columns"]))
 		if coords.x >= source.get_atlas_grid_size().x or coords.y >= source.get_atlas_grid_size().y:
@@ -484,15 +596,35 @@ func _paint(node: TileMapLayer, cell: Vector2i, raw: int, firsts: Array[Dictiona
 			return
 		if not source.has_tile(coords):
 			source.create_tile(coords)
-		var alternative := 0
-		if flips & FLIP_H:
-			alternative |= TileSetAtlasSource.TRANSFORM_FLIP_H
-		if flips & FLIP_V:
-			alternative |= TileSetAtlasSource.TRANSFORM_FLIP_V
-		if flips & FLIP_D:
-			alternative |= TileSetAtlasSource.TRANSFORM_TRANSPOSE
-		node.set_cell(cell, entry["source"], coords, alternative)
+		node.set_cell(cell, entry["source"], coords, _alternative(flips))
 		return
+
+
+## Tiled's flips as a Godot alternative tile.
+static func _alternative(flips: int) -> int:
+	var alternative := 0
+	if flips & FLIP_H:
+		alternative |= TileSetAtlasSource.TRANSFORM_FLIP_H
+	if flips & FLIP_V:
+		alternative |= TileSetAtlasSource.TRANSFORM_FLIP_V
+	if flips & FLIP_D:
+		alternative |= TileSetAtlasSource.TRANSFORM_TRANSPOSE
+	return alternative
+
+
+## The tile of the animated source `source_id` on `row`, made the first time
+## with its `frames`: Godot plays it as Studio does, each frame for its
+## steps, every tile of a same rhythm in step.
+func _animated_tile(source_id: int, row: int, frames: Array) -> Vector2i:
+	var source := _tile_set.get_source(source_id) as TileSetAtlasSource
+	var coords := Vector2i(0, row)
+	if not source.has_tile(coords):
+		source.create_tile(coords)
+		source.set_tile_animation_columns(coords, 0)
+		source.set_tile_animation_frames_count(coords, frames.size())
+		for index in frames.size():
+			source.set_tile_animation_frame_duration(coords, index, frame_seconds(frames[index][1]))
+	return coords
 
 
 ## Adds the atlas source of a Tiled tileset; the special ones get their
@@ -513,6 +645,15 @@ func _add_source(tile_set: TileSet, name: String, tsx: Dictionary) -> int:
 				var data := _tile(source, index)
 				data.set_custom_data("terrain_tag", index)
 	return id
+
+
+## Adds the source of a tileset's animated tiles: its strip of frames.
+func _add_animated_source(tile_set: TileSet, name: String, tsx: Dictionary) -> int:
+	var source := TileSetAtlasSource.new()
+	source.resource_name = name.get_basename() + " animated"
+	source.texture = texture_of.call(_strip_path(tsx))
+	source.texture_region_size = Vector2i(CELL, CELL)
+	return tile_set.add_source(source)
 
 
 func _tiles_in(source: TileSetAtlasSource) -> Array[int]:
@@ -596,6 +737,10 @@ func _tiles_folder() -> String:
 
 func _texture_path(tsx: Dictionary) -> String:
 	return _tiles_folder().path_join((tsx["image"] as String).get_file().get_basename() + ".png")
+
+
+func _strip_path(tsx: Dictionary) -> String:
+	return _tiles_folder().path_join((tsx["image"] as String).get_file().get_basename() + "-animated.png")
 
 
 static func _own(node: Node, owner: Node) -> void:

@@ -212,3 +212,97 @@ func test_maps_share_the_tile_set_and_what_is_missing_is_told() -> void:
 	_world.sandbox.write_json("Data/Studio/maps/map005.json", {"id": 5, "tiledFilename": "005 Nowhere"})
 	assert_bool(_importer.import_map("map005")).is_false()
 	assert_array(_importer.problems).is_equal(["map404: no Studio map record", "005 Nowhere.tmx: no such map"])
+
+
+## Tiled's first gid of the animated tileset in the water maps.
+const WATER := 1
+const WATER_COLOURS: Array[Color] = [Color.BLUE, Color.CYAN, Color.GREEN, Color.YELLOW]
+
+
+## A tileset of four tiles, each a colour: tile 0 plays all four for 100,
+## 300, 150 and 50 ms, tile 1 plays tiles 3 and 2, tile 2's animation shows a
+## tile outside the picture. Two maps use it.
+func _write_water() -> void:
+	_picture(_data + "Tiled/Assets/water.png", 4, 1, func(x: int, _y: int) -> Color: return WATER_COLOURS[x / 16])
+	var frames := func(tile: int, shown: Array) -> String:
+		var lines := shown.map(func(frame: Array) -> String: return '   <frame tileid="%d" duration="%d"/>' % frame)
+		return ' <tile id="%d">\n  <animation>\n%s\n  </animation>\n </tile>\n' % [tile, "\n".join(lines)]
+	var tsx := '<?xml version="1.0" encoding="UTF-8"?>\n<tileset version="1.10" name="water" tilewidth="32" tileheight="32" tilecount="4" columns="4">\n <image source="../Assets/water.png" trans="f05ba1" width="128" height="32"/>\n'
+	tsx += frames.call(0, [[0, 100], [1, 300], [2, 150], [3, 50]]) + frames.call(1, [[3, 100], [2, 100]]) + frames.call(2, [[9, 100]])
+	_world.sandbox.write("Data/Tiled/Tilesets/water.tsx", tsx + "</tileset>\n")
+	var tmx := '<?xml version="1.0" encoding="UTF-8"?>\n<map version="1.10" orientation="orthogonal" renderorder="right-down" width="4" height="4" tilewidth="32" tileheight="32" infinite="0">\n'
+	tmx += ' <tileset firstgid="%d" source="../Tilesets/water.tsx"/>\n' % WATER
+	tmx += _csv("Sea_1", {Vector2i(0, 0): WATER, Vector2i(1, 0): WATER | 0x80000000, Vector2i(2, 0): WATER + 1, Vector2i(3, 0): WATER + 2})
+	tmx += _csv("Wave_3", {Vector2i(0, 1): WATER})
+	_world.sandbox.write("Data/Tiled/Maps/003 Sea.tmx", tmx + "</map>\n")
+	_world.sandbox.write("Data/Tiled/Maps/004 Bay.tmx", tmx + "</map>\n")
+	for id: int in [3, 4]:
+		_world.sandbox.write_json("Data/Studio/maps/map%03d.json" % id, {"klass": "Map", "id": id, "dbSymbol": "map%03d" % id, "tiledFilename": "00%d %s" % [id, "Sea" if id == 3 else "Bay"]})
+
+
+## The id of the water tileset's animated source, -1 if none.
+func _animated_id() -> int:
+	var tile_set := _importer.tile_set()
+	for index in tile_set.get_source_count():
+		var id := tile_set.get_source_id(index)
+		if tile_set.get_source(id).resource_name == "water animated":
+			return id
+	return -1
+
+
+func test_an_animated_tileset_s_frames_are_a_row_each_in_a_texture_of_their_own() -> void:
+	_write_water()
+	var written := _importer.write_textures(["map003"])
+	assert_array(written.map(func(path: String) -> String: return path.get_file())).contains_exactly_in_any_order(["water.png", "water-animated.png"])
+	var strip := Image.load_from_file(_world.sandbox.root + "maps/tiles/water-animated.png")
+	assert_that(strip.get_size()).is_equal(Vector2i(64, 32))
+	var rows := [[0, 1, 2, 3], [3, 2]]
+	for row: int in rows.size():
+		for index: int in rows[row].size():
+			assert_that(strip.get_pixel(index * 16 + 8, row * 16 + 8)).is_equal(WATER_COLOURS[rows[row][index]])
+	assert_array(_importer.problems).is_equal(["water.tsx: tile 2's animation shows a tile outside the picture, left still"])
+	# Up to date: not written again.
+	assert_array(_importer.write_textures(["map003"])).is_empty()
+
+
+func test_an_animated_tile_plays_its_frames_for_studio_s_steps_flipped_or_not() -> void:
+	_write_water()
+	var map := _import("map003")
+	var sea := map.get_node(^"Sea_1") as TileMapLayer
+	var animated := _animated_id()
+	var source := _importer.tile_set().get_source(animated) as TileSetAtlasSource
+	assert_int(sea.get_cell_source_id(Vector2i(0, 0))).is_equal(animated)
+	assert_that(sea.get_cell_atlas_coords(Vector2i(0, 0))).is_equal(Vector2i(0, 0))
+	# Whole steps of 100 ms, at least one: 150 shows 100, 50 shows 100.
+	var durations := range(source.get_tile_animation_frames_count(Vector2i(0, 0))).map(func(index: int) -> float: return snappedf(source.get_tile_animation_frame_duration(Vector2i(0, 0), index), 0.001))
+	assert_array(durations).is_equal([0.1, 0.3, 0.1, 0.1])
+	assert_array([sea.get_cell_source_id(Vector2i(1, 0)), sea.get_cell_atlas_coords(Vector2i(1, 0)), sea.get_cell_alternative_tile(Vector2i(1, 0))]).is_equal([animated, Vector2i(0, 0), TileSetAtlasSource.TRANSFORM_FLIP_H])
+	assert_that(sea.get_cell_atlas_coords(Vector2i(2, 0))).is_equal(Vector2i(0, 1))
+	assert_int(source.get_tile_animation_frames_count(Vector2i(0, 1))).is_equal(2)
+	# The tile whose animation is wrong stays still, from the tileset's source.
+	assert_int(sea.get_cell_source_id(Vector2i(3, 0))).is_not_equal(animated)
+	assert_that(sea.get_cell_atlas_coords(Vector2i(3, 0))).is_equal(Vector2i(2, 0))
+	# Among the entities too, by its priority.
+	var wave := map.get_node(^"Entities/Wave_3") as TileMapLayer
+	assert_array([wave.get_cell_source_id(Vector2i(0, 1)), int(wave.y_sort_origin)]).is_equal([animated, 31])
+
+
+func test_a_step_is_the_display_config_s_idle_frames() -> void:
+	assert_array([_importer.idle_frames(), _importer.frame_seconds(299), _importer.frame_seconds(300)]).is_equal([6, 0.2, 0.3])
+	_world.sandbox.write_json("Data/configs/display_config.json", {"tilemapSettings": {"autotileIdleFrameCount": 12}})
+	var slower := StudioMaps.new(_data, _world.sandbox.root + "maps")
+	# Steps of 200 ms: 100 shows 200, 450 shows 400.
+	assert_array([slower.idle_frames(), slower.frame_seconds(100), slower.frame_seconds(450)]).is_equal([12, 0.2, 0.4])
+
+
+func test_maps_share_the_animated_source_and_importing_again_adds_none() -> void:
+	_write_water()
+	_import("map003")
+	var sources := _importer.tile_set().get_source_count()
+	assert_bool(_importer.import_map("map004")).is_true()
+	assert_int(_importer.tile_set().get_source_count()).is_equal(sources)
+	_importer.save_tile_set()
+	var again := StudioMaps.new(_data, _world.sandbox.root + "maps")
+	again.texture_of = _importer.texture_of
+	assert_bool(again.import_map("map003")).is_true()
+	assert_int(again.tile_set().get_source_count()).is_equal(sources)
