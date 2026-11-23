@@ -174,7 +174,12 @@ func new_game(slot := 1) -> bool:
 	var veil := await _cover()
 	_save.new_game(slot)
 	_show_screens(false, veil)
-	if not await _maps.warp(map_id, StringName(settings.start_point), &"none"):
+	var reached := false
+	if settings.start_point.is_empty() and settings.start_cell.x >= 0 and settings.start_cell.y >= 0:
+		reached = await _maps.go_to_cell(map_id, settings.start_cell, settings.start_direction)
+	else:
+		reached = await _maps.warp(map_id, StringName(settings.start_point), &"none")
+	if not reached:
 		log.error(&"title", "the new game could not reach '%s'" % map_id)
 		_save.reset()
 		_show_screens(true, veil)

@@ -8,8 +8,13 @@ extends WgConfig
 @export var show_at_start := false
 ## The map a new game starts on.
 @export var start_map := ""
-## Its point; empty: the map's first spawn point.
+## Its point; empty: the map's first spawn point, unless `start_cell` is set.
 @export var start_point := ""
+## With no point, the cell a new game starts on, and the way the player
+## faces: a map that has no spawn point (a Studio project's start). (-1, -1):
+## none.
+@export var start_cell := Vector2i(-1, -1)
+@export var start_direction := Vector2i.DOWN
 ## Images shown one after the other before the title.
 @export var splashes: Array[String] = []
 ## True: the language is asked at first launch.

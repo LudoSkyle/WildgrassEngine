@@ -22,6 +22,7 @@ with its own pictures, as a Studio project's is through the Studio layer
 |---|---|---|
 | `show_at_start` | `false` | the engine calls `Wildgrass.title.start()` itself once ready; else the game calls it, or never (a game with no title, the tests) |
 | `start_map`, `start_point` | `""` | where a new game starts; an empty point is the map's first spawn point |
+| `start_cell`, `start_direction` | `(-1, -1)`, down | with no point, the cell a new game starts on and the way the player faces (`{"x": 16, "y": 17}`): a map with no spawn point, as a Studio project's imported maps |
 | `splashes` | `[]` | images shown one after the other before the title (paths) |
 | `choose_language` | `false` | the language is asked at first launch |
 | `show_prompt` | `true` | the title waits for a key ("Press Enter") before going on |
