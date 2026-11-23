@@ -177,3 +177,11 @@ func test_opened_alone_the_screen_uses_the_engine_s_services() -> void:
 	assert_object(screen.menu).is_same(engine.menu)
 	assert_object(screen.texts).is_same(engine.texts)
 	screen.close()
+
+
+func test_a_scene_without_a_list_leaves_no_button_without_a_parent() -> void:
+	var screen := _world.menu.open() as WgMenuScreen
+	screen.list = ^"Missing"
+	screen.refresh()
+	assert_array(screen._buttons).is_empty()
+	assert_that(screen.selected()).is_not_equal(&"")

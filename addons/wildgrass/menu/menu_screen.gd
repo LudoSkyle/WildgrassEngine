@@ -74,7 +74,9 @@ func refresh() -> void:
 		if button.get_parent() != null:
 			button.get_parent().remove_child(button)
 	_buttons.clear()
-	for entry in _shown:
+	# A scene without a list shows its choices its own way: no button left
+	# without a parent.
+	for entry in _shown if box != null else []:
 		var button := Button.new()
 		button.text = texts.label(entry["text"])
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -83,8 +85,7 @@ func refresh() -> void:
 		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		_buttons.append(button)
-		if box != null:
-			box.add_child(button)
+		box.add_child(button)
 	if _cursor() < 0 and not _shown.is_empty():
 		menu.cursor = _shown[0]["id"]
 	_show_cursor()
