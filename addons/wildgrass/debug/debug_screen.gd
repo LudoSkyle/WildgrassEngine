@@ -94,7 +94,7 @@ func refresh() -> void:
 		for line: Variant in made if made is Array else []:
 			if line is Dictionary:
 				_shown.append(line)
-	_shown.append({"id": &"back", "label": "Back"})
+	_shown.append({"id": &"back", "label": "wg.back"})
 	var heading := get_node_or_null(title) as Label
 	if heading != null:
 		heading.text = debug.label_of({"label": page["title"]}, texts)

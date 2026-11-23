@@ -31,8 +31,8 @@ func _init(logger: _Log, config_registry: _ConfigRegistry, screen_registry: _Scr
 	log = logger
 	_config = config_registry
 	_screens = screen_registry
-	_entries.append(_entry(ENGINE, "Engine", Callable(), {"page": FIRST}, ENGINE))
-	_entries.append(_entry(GAME, "Game", Callable(), {"page": FIRST, "shown": _has_game_tools}, GAME))
+	_entries.append(_entry(ENGINE, "wg.debug.engine", Callable(), {"page": FIRST}, ENGINE))
+	_entries.append(_entry(GAME, "wg.debug.game", Callable(), {"page": FIRST, "shown": _has_game_tools}, GAME))
 
 
 func config() -> WgDebugConfig:
@@ -121,7 +121,7 @@ func title_of(page: StringName) -> Variant:
 	for entry in _entries:
 		if entry["opens"] == page:
 			return entry["label"]
-	return "Debug"
+	return "wg.debug.title"
 
 
 ## Runs what follows once the tools are closed: a message, a reload.

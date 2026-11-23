@@ -27,10 +27,12 @@ func after_test() -> void:
 	_world.cleanup()
 
 
-## The keys written in the engine's scripts and scenes, sorted, once each.
+## The keys written in the engine's scripts and scenes, sorted, once each;
+## a key built from a written start and an id (`"wg.debug.moment." + id`)
+## shows as that start.
 static func _keys_in(folder: String) -> Array[String]:
 	var found: Dictionary[String, bool] = {}
-	var pattern := RegEx.create_from_string("\"(wg(?:\\.[a-z_]+)+)\"")
+	var pattern := RegEx.create_from_string("\"(wg(?:\\.[a-z_]+)+\\.?)\"")
 	for path in _files_in(folder):
 		for hit in pattern.search_all(FileAccess.get_file_as_string(path)):
 			found[hit.get_string(1)] = true
@@ -123,13 +125,14 @@ func test_every_key_the_engine_writes_has_its_english_and_its_line_in_the_list()
 	var english := load(ENGLISH) as Translation
 	var listed := FileAccess.get_file_as_string(LIST)
 	var missing: Array[String] = []
-	for key in keys:
+	for key: String in keys.filter(func(written: String) -> bool: return not written.ends_with(".")):
 		if String(english.get_message(key)).is_empty():
 			missing.append("no English: " + key)
 		if not listed.contains("`%s`" % key):
 			missing.append("not in the list: " + key)
 	for key: String in english.get_message_list():
-		if not key.is_empty() and key not in keys:
+		var built := keys.any(func(start: String) -> bool: return start.ends_with(".") and key.begins_with(start))
+		if not key.is_empty() and key not in keys and not built:
 			missing.append("written nowhere: " + key)
 	assert_array(missing).is_empty()
 
@@ -153,6 +156,9 @@ func test_with_no_words_given_the_engine_s_screens_show_keys_and_no_english() ->
 		var screen := _world.screens.open(screen_name, args)
 		shown[screen_name] = _english(_texts_of(screen))
 		screen.close()
+	var debug := _world.debug.open()
+	shown[&"debug"] = _english(_texts_of(debug))
+	debug.close()
 	var title := _world.title.show_title()
 	title.set_process(false)
 	title.advance(30.0)

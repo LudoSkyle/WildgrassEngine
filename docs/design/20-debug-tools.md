@@ -26,8 +26,9 @@ Wildgrass.debug.add_tool(&"sun", "Always sunny", _sun, {"page": &"engine"})   # 
 Wildgrass.debug.remove_tool(&"speed")                                    # an engine tool a game does not want
 ```
 
-- A tool: an `id`, a `label` (a text, or a callable giving it: "Speed:
-  x2"), what it does (a callable, awaited). Options: `page` (`game` by
+- A tool: an `id`, a `label` (a text or a key, or a callable giving it:
+  "Speed: x2"); the engine's own tools, pages and messages are keys
+  (`wg.debug.fill_bag`, [the keys](05b-text-keys.md)) the game gives, what it does (a callable, awaited). Options: `page` (`game` by
   default; `engine`, or a page of either), `before` (a tool of that page;
   empty: the end), `shown` (a callable; false hides the line).
 - **What it does returns true to keep the page open** (a setting cycled in

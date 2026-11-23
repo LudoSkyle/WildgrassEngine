@@ -8,7 +8,8 @@ key with no Studio line is the game's to give, in a Studio project too.
 
 A text may hold placeholders, filled when shown: `{item}`, `{count}`,
 `{slot}`, `{place}`, `{time}`, `{name}`, `{dex}`, `{seen}`, `{caught}`,
-`{height}`, `{weight}`, `{key:action}`.
+`{height}`, `{weight}`, `{key:action}`; the debug tools add `{quest}`,
+`{moment}`, `{speed}`, `{count}`, `{missing}`.
 
 ## Choices
 
@@ -17,6 +18,7 @@ A text may hold placeholders, filled when shown: `{item}`, `{count}`,
 | `wg.yes` | Yes | `100011:27` |
 | `wg.no` | No | `100011:28` |
 | `wg.cancel` | Cancel | `100022:7` |
+| `wg.back` | Back | — |
 
 ## Pause menu
 
@@ -134,3 +136,57 @@ A text may hold placeholders, filled when shown: `{item}`, `{count}`,
 | Key | English | Studio line |
 |---|---|---|
 | `wg.weather.clear` | Clear | — |
+
+## Debug tools
+
+Shown only in debug builds, as the rest: the game gives them (the sample
+project does).
+
+| Key | English | Studio line |
+|---|---|---|
+| `wg.debug.title` | Debug | — |
+| `wg.debug.engine` | Engine | — |
+| `wg.debug.game` | Game | — |
+| `wg.debug.fill_bag` | Fill the bag | — |
+| `wg.debug.bag_filled` | Test items were added to the bag. | — |
+| `wg.debug.empty_bag` | Empty the bag | — |
+| `wg.debug.bag_emptied` | The bag was emptied. | — |
+| `wg.debug.quests` | Quests | — |
+| `wg.debug.quest_start_over` | Start over | — |
+| `wg.debug.quest_next` | Next objective | — |
+| `wg.debug.quest_finish` | Finish | — |
+| `wg.debug.quest_started_over` | {quest}: started over. | — |
+| `wg.debug.quest_not_started` | {quest} has not started. | — |
+| `wg.debug.quest_already_done` | {quest} is already done. | — |
+| `wg.debug.quest_finished` | {quest} is finished. | — |
+| `wg.debug.quest_advanced` | {quest}: one objective more. | — |
+| `wg.debug.hour_real` | Hour: real | — |
+| `wg.debug.hour` | Hour: {moment} | — |
+| `wg.debug.moment.dawn` | dawn | — |
+| `wg.debug.moment.day` | day | — |
+| `wg.debug.moment.dusk` | dusk | — |
+| `wg.debug.moment.night` | night | — |
+| `wg.debug.weather` | Weather: {name} | — |
+| `wg.debug.weather_here` | (this map: {name}) | — |
+| `wg.debug.species` | Species | — |
+| `wg.debug.fill_pokedex` | Fill the Pokédex | — |
+| `wg.debug.pokedex_filled` | The Pokédex was filled. | — |
+| `wg.debug.empty_pokedex` | Empty the Pokédex | — |
+| `wg.debug.pokedex_emptied` | The Pokédex was emptied. | — |
+| `wg.debug.speed` | Speed: x{speed} | — |
+| `wg.debug.warp` | Warp | — |
+| `wg.debug.reload` | Reload the map | — |
+| `wg.debug.walls_on` | Through walls: on | — |
+| `wg.debug.walls_off` | Through walls: off | — |
+| `wg.debug.encounters_always` | Encounters: always | — |
+| `wg.debug.encounters_never` | Encounters: never | — |
+| `wg.debug.encounters_chance` | Encounters: chance | — |
+| `wg.debug.followers_on` | Followers: on | — |
+| `wg.debug.followers_off` | Followers: off | — |
+| `wg.debug.save_here` | Save here | — |
+| `wg.debug.species_heading` | Species: {count}, {missing} incomplete | — |
+| `wg.debug.no_species` | No species. | — |
+| `wg.debug.generation` | Generation | — |
+| `wg.debug.no_name` | no name | — |
+| `wg.debug.no_description` | no description | — |
+| `wg.debug.no_picture` | No picture: | — |

@@ -119,7 +119,7 @@ func incomplete() -> int:
 func refresh() -> void:
 	var heading := get_node_or_null(title) as Label
 	if heading != null:
-		heading.text = texts.label("Species: {count}, {missing} incomplete", {"count": entries.size(), "missing": incomplete()})
+		heading.text = texts.label("wg.debug.species_heading", {"count": entries.size(), "missing": incomplete()})
 	var box := get_node_or_null(lines_box)
 	if box != null:
 		while box.get_child_count() < lines_shown:
@@ -160,7 +160,7 @@ func _show_card() -> void:
 	var text := get_node_or_null(card) as RichTextLabel
 	if entries.is_empty():
 		if text != null:
-			text.text = texts.label("No species.")
+			text.text = texts.label("wg.debug.no_species")
 		return
 	var entry := entries[selected]
 	var found := species.find(entry["id"])
@@ -180,19 +180,19 @@ func _show_card() -> void:
 	var types: Array[String] = []
 	for type: StringName in form.types if form != null else []:
 		types.append(str(type))
-	parts.append("%s %s · %s" % [texts.label("Generation"), found.generation, "/".join(types)])
+	parts.append("%s %s · %s" % [texts.label("wg.debug.generation"), found.generation, "/".join(types)])
 	parts.append("%s · %s" % [_measure("%s m" % form.height if form != null else "", "height" in lacks), _measure("%s kg" % form.weight if form != null else "", "weight" in lacks)])
 	for code in _languages():
 		var name := texts.label_in(code, found.name) if "name (%s)" % code not in lacks else ""
 		var said := texts.label_in(code, found.description) if "description (%s)" % code not in lacks else ""
-		parts.append("[b]%s[/b] %s" % [code, _or_missing(name, texts.label("no name"))])
-		parts.append(_or_missing(said, texts.label("no description")))
+		parts.append("[b]%s[/b] %s" % [code, _or_missing(name, texts.label("wg.debug.no_name"))])
+		parts.append(_or_missing(said, texts.label("wg.debug.no_description")))
 	var pictures: Array[String] = []
 	for kind: String in ["icon", "front", "character"]:
 		if kind in lacks:
 			pictures.append(kind)
 	if not pictures.is_empty():
-		parts.append("[color=%s]%s %s[/color]" % [MISSING, texts.label("No picture:"), ", ".join(pictures)])
+		parts.append("[color=%s]%s %s[/color]" % [MISSING, texts.label("wg.debug.no_picture"), ", ".join(pictures)])
 	text.text = "\n".join(parts)
 
 
