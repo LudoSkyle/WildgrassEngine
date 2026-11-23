@@ -25,6 +25,12 @@ const DEFAULT_ACTIONS: Dictionary[String, String] = {
 @export var max_choices := 6
 ## Input map action of each key of the box. Unset keys keep theirs.
 @export var actions: Dictionary[String, String] = DEFAULT_ACTIONS.duplicate()
+## Keys held on a screen go again after `repeat_delay` seconds, then every
+## `repeat_interval`: a long list runs down. Their names, as in `actions`;
+## empty: none repeats.
+@export var repeating: Array[String] = ["up", "down", "left", "right"]
+@export var repeat_delay := 0.35
+@export var repeat_interval := 0.11
 ## The frames the player may pick in the options, each `{"style", "name"}`:
 ## the box's `style` (feature 4), and its name, a text.
 @export var frames: Array[Dictionary] = []
@@ -48,6 +54,16 @@ func _validate() -> PackedStringArray:
 	for key: String in DEFAULT_ACTIONS:
 		if not actions.has(key):
 			actions[key] = DEFAULT_ACTIONS[key]
+	for key: String in repeating.duplicate():
+		if not DEFAULT_ACTIONS.has(key):
+			problems.append("repeating: unknown key '%s'" % key)
+			repeating.erase(key)
+	if repeat_delay < 0.0:
+		problems.append("repeat_delay cannot be negative, got %s; using 0.35" % repeat_delay)
+		repeat_delay = 0.35
+	if repeat_interval <= 0.0:
+		problems.append("repeat_interval must be positive, got %s; using 0.11" % repeat_interval)
+		repeat_interval = 0.11
 	var kept: Array[Dictionary] = []
 	for frame: Dictionary in frames:
 		if not frame.get("style") is String:

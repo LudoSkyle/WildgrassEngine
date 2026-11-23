@@ -272,6 +272,7 @@ func _process(delta: float) -> void:
 	footprints.advance(delta)
 	reflections.advance(delta)
 	audio.advance(delta)
+	dialogue.repeat_keys(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:

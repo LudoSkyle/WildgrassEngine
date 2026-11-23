@@ -91,6 +91,9 @@ var _queue: Array[Request] = []
 var _current: Request
 var _held_open := false
 var _missing_actions: Array[String] = []
+## Keys held on `_held_screen`: key -> seconds before it goes again.
+var _held: Dictionary[String, float] = {}
+var _held_screen: WgScreen
 
 
 func _init(logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks, screen_registry: _ScreenRegistry, maps_service: _Maps, texts_service: _Texts) -> void:
@@ -101,6 +104,7 @@ func _init(logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks
 	_screens = screen_registry
 	_maps = maps_service
 	_maps.map_changed.connect(_on_map_changed)
+	_screens.input_taken.connect(_on_input_taken)
 
 
 ## Says `text`; returns once the player has read it. See the options in the
@@ -219,6 +223,46 @@ func is_action(event: InputEvent, key: String) -> bool:
 			log.warn(&"dialogue", "no input action '%s' (dialogue config, actions.%s)" % [action, key])
 		return false
 	return event.is_action_pressed(action)
+
+
+## Keys held on the top screen go again, `delta` seconds after the last
+## call: the engine calls it each frame.
+func repeat_keys(delta: float) -> void:
+	if _held.is_empty():
+		return
+	var top := _screens.top()
+	if top != _held_screen:
+		_held.clear()
+		return
+	for key: String in _held.keys():
+		if not Input.is_action_pressed(config().actions[key]):
+			_held.erase(key)
+			continue
+		_held[key] -= delta
+		if _held[key] > 0.0:
+			continue
+		_held[key] += config().repeat_interval
+		var again := InputEventAction.new()
+		again.action = config().actions[key]
+		again.pressed = true
+		again.set_meta(&"repeat", true)
+		_screens.handle_input(again)
+		if _screens.top() != top:
+			_held.clear()
+			return
+
+
+## A key pressed on a screen starts its repeat, if it repeats there.
+func _on_input_taken(event: InputEvent) -> void:
+	if event.has_meta(&"repeat"):
+		return
+	var top := _screens.top()
+	for key: String in config().repeating:
+		if is_action(event, key) and top != null and top._repeats(key):
+			if top != _held_screen:
+				_held.clear()
+			_held_screen = top
+			_held[key] = config().repeat_delay
 
 
 ## The walking direction `event` presses, or zero.

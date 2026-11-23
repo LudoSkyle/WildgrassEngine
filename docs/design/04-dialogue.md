@@ -215,12 +215,23 @@ a television) is a game's subclass overriding `_interact()`.
 	"scroll_speed": 60,
 	"max_choices": 6,
 	"actions": { "confirm": "ui_accept", "cancel": "ui_cancel", "up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right" },
+	"repeating": ["up", "down", "left", "right"],
+	"repeat_delay": 0.35,
+	"repeat_interval": 0.11,
 	"frames": [{ "style": "", "name": "Plain" }, { "style": "gold", "name": "Gold" }]
 }
 ```
 
 `frames` lists the frames the player may pick in the options (feature 10):
 a `style` and its name; a frame with no style is logged and dropped.
+
+A key of `repeating` held on a screen (any screen: the box's choices, the
+menu, the bag, the options…) goes again after `repeat_delay` seconds, then
+every `repeat_interval`, keyboard and gamepad alike: a long list runs down.
+A key held before the screen opened does not, nor once another screen is on
+top; a screen keeps one from repeating by overriding `_repeats(key)` (the
+bag's left and right turn one pocket at a time). An unknown key, a negative
+delay or an interval not positive is logged and reset.
 
 `scroll_speed` is in pixels per second. A value not positive is logged and
 reset; an unknown `advance`, logged, gives `page`.
