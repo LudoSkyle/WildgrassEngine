@@ -23,6 +23,9 @@ func _listen() -> void:
 	if _walker.walkers == null:
 		return
 	_walker.walkers.maps.map_changed.connect(_on_map_changed)
+	# On arrival, under the transition, not once it is gone: the view would
+	# show the old map's limits for a moment, then jump.
+	_walker.walkers.maps.traveller_arrived.connect(_on_traveller_arrived)
 	apply_limits()
 
 
@@ -53,4 +56,8 @@ func _set_limits(area: Rect2) -> void:
 
 
 func _on_map_changed(_map: WgMap) -> void:
+	apply_limits()
+
+
+func _on_traveller_arrived(_direction: Vector2i, _point: Node2D) -> void:
 	apply_limits()
