@@ -81,7 +81,7 @@ func test_a_text_is_given_in_a_language_when_it_has_its_own_words_there() -> voi
 	french.locale = "fr"
 	french.add_message("Bag", "Sac")
 	TranslationServer.add_translation(french)
-	var given := [_world.texts.is_given_in("fr", "Bag"), _world.texts.is_given_in("fr", "Box"), _world.texts.is_given_in("en", "Box"), _world.texts.is_given_in("fr", "  ")]
+	var given := [_world.texts.is_given_in("fr", "Bag"), _world.texts.is_given_in("fr", "Box"), _world.texts.is_given_in("de", "Box"), _world.texts.is_given_in("fr", "  ")]
 	_world.texts.add_placeholder("line", func(argument: String) -> String: return argument, func(argument: String, code: String) -> bool: return code == "en" or argument == "1")
 	given.append_array([_world.texts.is_given_in("fr", "{line:1}"), _world.texts.is_given_in("fr", "{line:2}"), _world.texts.is_given_in("en", "{line:2}")])
 	TranslationServer.remove_translation(french)

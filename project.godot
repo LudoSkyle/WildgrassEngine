@@ -23,6 +23,10 @@ gdscript/warnings/directory_rules={
 
 enabled=PackedStringArray("res://addons/wildgrass/plugin.cfg")
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://tests/support/engine_words.en.po")
+
 [shader_globals]
 
 game_time={

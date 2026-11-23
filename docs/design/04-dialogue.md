@@ -11,7 +11,7 @@ feature 5, characters of the map feature 6, story conditions feature 7.
 ```gdscript
 await Wildgrass.dialogue.say("Welcome to the [color=red]Pokémon Center[/color]!")
 await Wildgrass.dialogue.say("I'm Alix.", {"speaker": "Alix", "speaker_color": Color.RED})
-var answer := await Wildgrass.dialogue.ask("Shall I heal your Pokémon?", ["Yes", "No"])
+var answer := await Wildgrass.dialogue.ask("Shall I heal your Pokémon?", ["wg.yes", "wg.no"])
 if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
 	pass
 ```

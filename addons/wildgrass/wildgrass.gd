@@ -152,7 +152,7 @@ func _init() -> void:
 	_add_entries()
 	options = _service(&"options", _Options, [paths, log, config])
 	menu.services["options"] = options
-	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
+	menu.add_entry(&"options", "wg.menu.options", menu.open_options, "", &"save")
 	title = _service(&"title", _Title, [paths, log, config, screens, story, maps, dialogue, save, options, texts])
 	title.audio = audio
 	audio.follow_game(screens, dialogue, save, bag, items)
@@ -177,7 +177,7 @@ func _init() -> void:
 	if studio.is_project():
 		studio.install(texts, items, quests, species, types, pokedex, encounters, zones)
 	menu.services.merge({"pokedex": pokedex, "species": species, "types": types, "screens": screens})
-	menu.add_entry(&"pokedex", "Pokédex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
+	menu.add_entry(&"pokedex", "wg.menu.pokedex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
@@ -228,9 +228,9 @@ func _open_pokedex() -> bool:
 
 ## The engine's entries of the pause menu, in order.
 func _add_entries() -> void:
-	menu.add_entry(&"exit", "Exit", menu.exit)
-	menu.add_entry(&"bag", "Bag", menu.open_bag)
-	menu.add_entry(&"save", "Save", menu.open_save, "!save_disabled")
+	menu.add_entry(&"exit", "wg.menu.exit", menu.exit)
+	menu.add_entry(&"bag", "wg.menu.bag", menu.open_bag)
+	menu.add_entry(&"save", "wg.menu.save", menu.open_save, "!save_disabled")
 
 
 func _ready() -> void:
@@ -249,7 +249,7 @@ func _ready() -> void:
 	_Daytime.declare_shader_globals()
 	daytime.updates_shader_globals = true
 	if debug.is_enabled():
-		menu.add_entry(&"debug", "Debug", _open_debug, "", &"exit")
+		menu.add_entry(&"debug", "wg.menu.debug", _open_debug, "", &"exit")
 	_start.call_deferred()
 
 

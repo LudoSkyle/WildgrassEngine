@@ -161,7 +161,7 @@ func test_save_closes_the_menu_once_saved_only() -> void:
 func test_its_labels_are_translated_and_follow_the_language() -> void:
 	var french := Translation.new()
 	french.locale = "fr"
-	french.add_message("Bag", "Sac")
+	french.add_message("wg.menu.bag", "Sac")
 	TranslationServer.add_translation(french)
 	var screen := _world.menu.open() as WgMenuScreen
 	assert_array(_labels(screen)).is_equal(["Bag", "Options", "Save", "Exit"])

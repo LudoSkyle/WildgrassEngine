@@ -87,8 +87,8 @@ func test_left_and_right_change_a_value_round_and_a_slider_stops_at_its_ends() -
 func test_a_language_changed_writes_the_rows_again_in_it() -> void:
 	var french := Translation.new()
 	french.locale = "fr"
-	french.add_message("Text speed", "Vitesse du texte")
-	french.add_message("Normal", "Normale")
+	french.add_message("wg.options.text_speed", "Vitesse du texte")
+	french.add_message("wg.options.normal", "Normale")
 	TranslationServer.add_translation(french)
 	var screen := _open()
 	assert_array(_rows(screen)[0]).is_equal(["Text speed", "Normal"])

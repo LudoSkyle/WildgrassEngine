@@ -23,17 +23,17 @@ signal done(saved: bool)
 @export var time: NodePath = ^"Summary/Margin/Box/Time"
 
 @export_group("Texts")
-@export_multiline var save_text := "Would you like to save the game?"
-@export_multiline var overwrite_text := "There is already a saved file. Is it OK to overwrite it?"
-@export_multiline var saved_text := "The game was saved."
-@export_multiline var failed_text := "The game could not be saved."
+@export_multiline var save_text := "wg.save.question"
+@export_multiline var overwrite_text := "wg.save.overwrite"
+@export_multiline var saved_text := "wg.save.saved"
+@export_multiline var failed_text := "wg.save.failed"
 ## Asked when the game may be written in any file.
-@export_multiline var file_text := "Save in which file?"
+@export_multiline var file_text := "wg.save.which_file"
 ## A file holding a game; `{slot}`, `{place}`, `{time}`.
-@export var file_choice := "File {slot}: {place}, {time}"
+@export var file_choice := "wg.save.file_choice"
 ## A free file; `{slot}`.
-@export var new_file_choice := "File {slot}: new"
-@export var cancel_choice := "Cancel"
+@export var new_file_choice := "wg.save.new_file_choice"
+@export var cancel_choice := "wg.cancel"
 ## Seconds the saved text stays, then the screen closes by itself.
 @export var saved_seconds := 1.0
 

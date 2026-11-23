@@ -55,10 +55,10 @@ func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, screen
 	_texts = texts
 	_choices = _Entries.new(story)
 	services = {"dialogue": dialogue, "texts": texts, "save": save, "options": options}
-	add_choice(&"play", "Play", play, "", &"")
-	add_choice(&"options", "Options", open_options, "", &"")
+	add_choice(&"play", "wg.title.play", play, "", &"")
+	add_choice(&"options", "wg.title.options", open_options, "", &"")
 	if not OS.has_feature("web") and not OS.has_feature("mobile"):
-		add_choice(&"quit", "Quit", quit, "", &"")
+		add_choice(&"quit", "wg.title.quit", quit, "", &"")
 
 
 func config() -> WgTitleConfig:

@@ -23,7 +23,7 @@ const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Texts")
 ## Said in the frame chosen when confirm is pressed on `message_frame`.
-@export_multiline var frame_sample_text := "This is how messages look."
+@export_multiline var frame_sample_text := "wg.options.frame_sample"
 
 var options: _Options
 var dialogue: _Dialogue

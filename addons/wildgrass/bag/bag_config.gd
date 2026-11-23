@@ -4,12 +4,12 @@ extends WgConfig
 
 ## The engine's pockets; `reveal`: giving one of its items shows it.
 const POCKETS: Array[Dictionary] = [
-	{"id": "items", "name": "Items"},
-	{"id": "medicine", "name": "Medicine"},
-	{"id": "balls", "name": "Poké Balls"},
-	{"id": "tms", "name": "TMs"},
-	{"id": "berries", "name": "Berries"},
-	{"id": "key_items", "name": "Key Items", "reveal": true},
+	{"id": "items", "name": "wg.pocket.items"},
+	{"id": "medicine", "name": "wg.pocket.medicine"},
+	{"id": "balls", "name": "wg.pocket.balls"},
+	{"id": "tms", "name": "wg.pocket.tms"},
+	{"id": "berries", "name": "wg.pocket.berries"},
+	{"id": "key_items", "name": "wg.pocket.key_items", "reveal": true},
 ]
 
 ## Each `{"id", "name", "reveal"}`, in the order shown; `name` is a label.

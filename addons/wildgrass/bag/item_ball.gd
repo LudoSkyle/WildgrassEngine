@@ -9,9 +9,9 @@ extends WgInteractable
 @export var count := 1
 ## Said when taken: `{item}` is the item's name, its plural past one,
 ## `{count}` the count.
-@export_multiline var text := "Found {item}!"
+@export_multiline var text := "wg.item.found"
 ## Said when the bag is full; the ball stays.
-@export_multiline var full_text := "No room for {item}."
+@export_multiline var full_text := "wg.item.no_room"
 ## Nobody sees it: a hidden item.
 @export var invisible := false:
 	set(value):

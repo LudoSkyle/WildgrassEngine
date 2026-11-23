@@ -162,24 +162,24 @@ func add_engine_options(dialogue: _Dialogue, texts: _Texts) -> void:
 	_dialogue = dialogue
 	_texts = texts
 	add_option(&"message_speed", {
-		"name": "Text speed",
-		"description": "Choose how fast messages are written.",
+		"name": "wg.options.text_speed",
+		"description": "wg.options.text_speed_help",
 		"values": [1, 2, 3],
-		"texts": ["Slow", "Normal", "Fast"],
+		"texts": ["wg.options.slow", "wg.options.normal", "wg.options.fast"],
 		"default": 2,
 		"apply": _apply_speed,
 	})
 	add_option(&"message_frame", {
-		"name": "Message frame",
-		"description": "Choose the frame of the message box.",
+		"name": "wg.options.message_frame",
+		"description": "wg.options.message_frame_help",
 		"values": _frame_styles,
 		"texts": _frame_names(),
 		"default": "",
 		"apply": _apply_frame,
 	})
 	add_option(&"volume", {
-		"name": "Volume",
-		"description": "Set the volume of the music and sound effects.",
+		"name": "wg.options.volume",
+		"description": "wg.options.volume_help",
 		"values": range(0, 101, 5),
 		"slider": true,
 		"format": "%d%%",
@@ -187,8 +187,8 @@ func add_engine_options(dialogue: _Dialogue, texts: _Texts) -> void:
 		"apply": _apply_volume,
 	})
 	add_option(&"language", {
-		"name": "Language",
-		"description": "Choose the language of the game.",
+		"name": "wg.options.language",
+		"description": "wg.options.language_help",
 		"values": texts.languages,
 		"texts": texts.languages().map(texts.language_name),
 		"default": texts.language if texts.language in texts.languages() else (texts.languages()[0] if not texts.languages().is_empty() else ""),
@@ -200,9 +200,9 @@ func add_engine_options(dialogue: _Dialogue, texts: _Texts) -> void:
 ## (`buses`: kind -> bus name, the `audio` config's).
 func add_volume_options(buses: Dictionary) -> void:
 	for spec: Array in [
-		[&"music_volume", "Music", "Set the volume of the music.", "music"],
-		[&"effects_volume", "Sound effects", "Set the volume of the sound effects and jingles.", "effects"],
-		[&"cries_volume", "Cries", "Set the volume of the Pokémon's cries.", "cries"],
+		[&"music_volume", "wg.options.music", "wg.options.music_help", "music"],
+		[&"effects_volume", "wg.options.effects", "wg.options.effects_help", "effects"],
+		[&"cries_volume", "wg.options.cries", "wg.options.cries_help", "cries"],
 	]:
 		add_option(spec[0], {
 			"name": spec[1],

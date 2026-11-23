@@ -43,12 +43,12 @@ kind adds). `name_for(count)`: its plural when more than one, if it has one.
 ```json
 {
 	"pockets": [
-		{ "id": "items", "name": "Items" },
-		{ "id": "medicine", "name": "Medicine" },
-		{ "id": "balls", "name": "Poké Balls" },
-		{ "id": "tms", "name": "TMs" },
-		{ "id": "berries", "name": "Berries" },
-		{ "id": "key_items", "name": "Key Items", "reveal": true }
+		{ "id": "items", "name": "wg.pocket.items" },
+		{ "id": "medicine", "name": "wg.pocket.medicine" },
+		{ "id": "balls", "name": "wg.pocket.balls" },
+		{ "id": "tms", "name": "wg.pocket.tms" },
+		{ "id": "berries", "name": "wg.pocket.berries" },
+		{ "id": "key_items", "name": "wg.pocket.key_items", "reveal": true }
 	],
 	"max_count": 99,
 	"max_money": 999999
@@ -115,7 +115,7 @@ the box says ("You got a Potion!") is the game's text.
 
 ## Found on a map
 
-`WgItemBall` (`WgInteractable`): `item`, `count`, `text` (`"Found {item}!"`
+`WgItemBall` (`WgInteractable`): `item`, `count`, `text` (`"wg.item.found"`
 by default), `full_text` (`"No room for {item}."`), `invisible`.
 
 - A visible one blocks its cell until taken; an invisible one blocks nothing

@@ -33,7 +33,7 @@ func _init(paths: _Paths, logger: _Log) -> void:
 	_catalog = _Catalog.new(paths, logger, &"weather", WgWeather, &"weather", "weather")
 	_none = WgWeather.new()
 	_none.id = &"none"
-	_none.name = "Clear"
+	_none.name = "wg.weather.clear"
 
 
 ## Makes `weather` known by its id; it wins over a resource or a source's.

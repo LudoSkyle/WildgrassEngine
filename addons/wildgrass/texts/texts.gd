@@ -9,6 +9,10 @@ const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 ## The language changed.
 signal language_changed(code: String)
 
+## What every key of the engine's own words begins with: the engine writes
+## none of them, a game gives them in its translations.
+const KEY_PREFIX := "wg."
+
 @warning_ignore("shadowed_global_identifier")
 var log: _Log
 ## The current language: Godot's locale.
@@ -97,10 +101,24 @@ func format(text: String, escape := false, values := {}) -> String:
 	return _replace(_pattern(), text, _fill_placeholder.bind(escape, values))
 
 
-## A label of the game or the engine, written in English: translated through
-## Godot's translations, then its placeholders filled.
+## A label of the game, or a key of the engine's words (`wg.menu.bag`):
+## translated through Godot's translations, then its placeholders filled.
 func label(text: String, values := {}) -> String:
-	return format(TranslationServer.translate(text), false, values)
+	return format(translate(text), false, values)
+
+
+## `text` through Godot's translations. A key of the engine's words with no
+## translation stays as written, logged once: the game has not given it.
+func translate(text: String) -> String:
+	var translated := String(TranslationServer.translate(text))
+	if translated == text and is_key(text):
+		_warn_once("no text for %s: give it in the game's translations" % text)
+	return translated
+
+
+## True if `text` is a key of the engine's words.
+static func is_key(text: String) -> bool:
+	return text.begins_with(KEY_PREFIX) and not text.contains(" ")
 
 
 ## A label as `label()` gives it, in language `code` instead of the one
@@ -117,8 +135,9 @@ func label_in(code: String, text: String, values := {}) -> String:
 
 ## True if `text` has its own words in language `code`, not another's in
 ## their place: each placeholder that can tell has a text of its own there,
-## and what is written around them is translated to `code`, or `code` has no
-## translation at all (the language it is written in).
+## and what is written around them is translated to `code`, or is written in
+## `code`: the fallback locale (the texts' own language), or a language with
+## no translation at all.
 func is_given_in(code: String, text: String) -> bool:
 	if text.strip_edges().is_empty():
 		return false
@@ -128,10 +147,15 @@ func is_given_in(code: String, text: String) -> bool:
 			return false
 	if _pattern().sub(text, "", true).strip_edges().is_empty():
 		return true
-	if not TranslationServer.has_translation_for_locale(code, true):
+	if not TranslationServer.has_translation_for_locale(code, true) or TranslationServer.compare_locales(code, _written_in()) >= 5:
 		return true
 	var translation := TranslationServer.get_translation_object(code)
 	return translation != null and not String(translation.get_message(text)).is_empty()
+
+
+## The language texts are written in: Godot's fallback locale.
+static func _written_in() -> String:
+	return str(ProjectSettings.get_setting("internationalization/locale/fallback", "en"))
 
 
 ## The language texts are read in now: the one shown, or `label_in()`'s
