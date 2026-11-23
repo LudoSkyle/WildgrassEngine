@@ -201,6 +201,20 @@ func test_choices_sit_against_the_frame_right_edge_on_its_outer_side() -> void:
 		_world.dialogue.close()
 
 
+func test_a_gap_set_on_the_box_parts_its_choices_from_the_frame() -> void:
+	for place: String in ["bottom", "top"]:
+		_ask("Pick?", ["A", "B"], {"place": place})
+		_world.dialogue.box.beside_gap = 2.0
+		_world.dialogue.box.advance(1.0)
+		var frame := (_world.dialogue.box.get_node("Frame") as Control).get_rect()
+		var choices := _choices().get_rect()
+		if place == "top":
+			assert_float(choices.position.y).is_equal(frame.end.y + 2.0)
+		else:
+			assert_float(choices.end.y).is_equal(frame.position.y - 2.0)
+		_world.dialogue.close()
+
+
 func test_a_question_cut_short_answers_its_cancel() -> void:
 	var last := _ask("Pick?", ["A", "B", "C"])
 	var none := _ask("Pick?", ["A", "B"], {"cancel": -1})

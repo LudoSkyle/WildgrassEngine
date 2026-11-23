@@ -37,6 +37,9 @@ enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD,
 @export var arrange := true
 ## Gap between the frame and the edge of the screen, in game pixels.
 @export var margin := 4.0
+## Gap between the frame and the choices or the number shown beside it, in
+## game pixels.
+@export var beside_gap := 0.0
 
 ## The dialogue service that opened the box.
 var dialogue: RefCounted
@@ -505,7 +508,7 @@ func _rows_that_fit() -> int:
 	var gap := float(_choice_list.get_theme_constant(&"separation")) if _choice_list is BoxContainer else 0.0
 	var area := _frame.get_rect()
 	var below := str(_options.get("place", "bottom")) == "top"
-	var space := (size.y - area.end.y if below else area.position.y) - margin
+	var space := (size.y - area.end.y if below else area.position.y) - margin - beside_gap
 	return maxi(1, floori((space + gap) / (row + gap)))
 
 
@@ -518,7 +521,7 @@ func _place_beside(node: Control) -> void:
 	node.reset_size()
 	var area := _frame.get_rect()
 	var below := str(_options.get("place", "bottom")) == "top"
-	node.position = Vector2(area.end.x - node.size.x, area.end.y if below else area.position.y - node.size.y)
+	node.position = Vector2(area.end.x - node.size.x, area.end.y + beside_gap if below else area.position.y - node.size.y - beside_gap)
 
 
 func _open_number() -> void:

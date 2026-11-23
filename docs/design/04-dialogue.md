@@ -81,7 +81,9 @@ a frame holding the column of choices at any depth: the choices go beside
 the model Button, the frame shows and moves as one; `choice_cursor` (a
 `Control`, optional) is shown at the left of the selected choice. Node paths are
 exports of `WgMessageBox`; `arrange = false` keeps the scene's own layout
-instead of placing the nodes as below. Optional nodes stay hidden when unused.
+instead of placing the nodes as below; `margin` parts the frame from the
+screen's edge, `beside_gap` the choices or the number from the frame. Optional
+nodes stay hidden when unused.
 
 - **Letter by letter**, through `visible_characters`: BBCode and Godot's text
   effects keep working while the text is written.
