@@ -1,0 +1,604 @@
+## Studio's maps made Godot maps, once (feature 10 ter): a Tiled `.tmx` and
+## its tilesets become a `WgMap` scene, one `TileMapLayer` per Tiled layer,
+## and the TileSet every map shares, its textures halved to 16 px. The rules
+## are Studio's: layer levels, special layers, each tile's priority.
+extends RefCounted
+
+## The engine's cell, and Studio's tiles: 16 px pictures drawn doubled.
+const CELL := 16
+const STUDIO_CELL := 32
+## The special layers and their tileset; never drawn.
+const SPECIAL: Dictionary[String, String] = {
+	"passages": "passages.tsx",
+	"systemtags": "systemtags.tsx",
+	"systemtags_bridge1": "systemtags.tsx",
+	"systemtags_bridge2": "systemtags.tsx",
+	"terrain_tag": "terrain_tag.tsx",
+}
+## The scene nodes of the special layers, in tree order: the last is read
+## first, so a bridge's tags win over the ground's.
+const SPECIAL_NODES: Dictionary[String, String] = {
+	"passages": "Passages",
+	"terrain_tag": "TerrainTags",
+	"systemtags": "SystemTags",
+	"systemtags_bridge1": "SystemTagsBridge1",
+	"systemtags_bridge2": "SystemTagsBridge2",
+}
+## A system tag is this plus its tile in `systemtags.tsx`.
+const TAG_BASE := 384
+## The passage bits: each blocks a side, both ways.
+const BLOCKS: Dictionary[int, Vector2i] = {0x01: Vector2i.DOWN, 0x02: Vector2i.LEFT, 0x04: Vector2i.RIGHT, 0x08: Vector2i.UP}
+const BUSH := 0x40
+const COUNTER := 0x80
+## Width of an edge strip, in px: the engine probes 2 px each side.
+const EDGE := 3
+## Tiled's flip bits, in the top nibble of a gid.
+const FLIP_H := 8
+const FLIP_V := 4
+const FLIP_D := 2
+
+## System tags by number: their name, given as data `system_tag`.
+const TAG_NAMES: Dictionary[int, String] = {
+	384: "empty", 385: "ice", 386: "wet_sand", 387: "waterfall", 388: "headbutt", 389: "grass", 390: "tall_grass", 391: "cave",
+	392: "jump_right", 393: "rapids_left", 394: "rapids_down", 395: "rapids_up", 396: "rapids_right", 397: "mountain", 398: "sand", 399: "pond",
+	400: "jump_left", 401: "stop_slide", 402: "bridge_up_down", 403: "puddle", 404: "bridge_left_right", 405: "sea", 406: "under_water", 407: "snow",
+	408: "jump_down", 409: "cracked_soil", 410: "hole", 411: "acro_bike_up_down", 412: "acro_bike_left_right", 413: "mach_bike", 414: "acro_bike", 415: "slopes_left",
+	416: "jump_up", 417: "stairs_left", 418: "stairs_down", 419: "stairs_up", 420: "stairs_right", 421: "swamp_border", 422: "deep_swamp", 423: "slopes_right",
+	424: "height_0", 425: "height_1", 426: "height_2", 427: "height_3", 428: "height_4", 429: "height_5", 430: "height_6", 431: "road",
+	432: "rocket_left", 433: "rocket_down", 434: "rocket_up", 435: "rocket_right", 436: "rocket_rotating_left", 437: "rocket_rotating_down", 438: "rocket_rotating_up", 439: "rocket_rotating_right",
+	445: "whirlpool", 446: "rock_climb",
+}
+## The tags an encounter group names, as the Studio layer names them.
+const ENCOUNTERS: Dictionary[int, String] = {
+	385: "ice", 389: "grass", 390: "tall_grass", 391: "cave", 397: "mountain", 398: "sand", 399: "pond", 405: "ocean", 406: "under_water", 407: "snow",
+}
+const JUMPS: Dictionary[int, Vector2i] = {392: Vector2i.RIGHT, 400: Vector2i.LEFT, 408: Vector2i.DOWN, 416: Vector2i.UP}
+## The data layers the TileSet carries, and their type.
+const DATA: Dictionary[String, int] = {
+	"covers": TYPE_BOOL, "ice": TYPE_BOOL, "jump": TYPE_VECTOR2I, "encounter": TYPE_STRING, "system_tag": TYPE_STRING,
+	"terrain_tag": TYPE_INT, "bush": TYPE_BOOL, "counter": TYPE_BOOL,
+}
+
+## Problems met, each a line: a map or a tileset missing, a layer unread.
+var problems: Array[String] = []
+## The Studio project's `Data` folder.
+var data_folder := ""
+## Where maps go; the TileSet and the textures beside them.
+var target_folder := "res://maps"
+## Gives the texture of a picture written, by its path. Default: `load()`,
+## once Godot imported it.
+var texture_of := Callable()
+## The physics layers (1 to 32) of the solid tiles and of the edges.
+var solid_layer := 1
+var edge_layer := 4
+
+var _tile_set: TileSet
+## Source id of each Tiled tileset, by its file name.
+var _sources: Dictionary[String, int] = {}
+## Zone id of each map id.
+var _zones: Dictionary[int, StringName] = {}
+
+
+func _init(data: String, target := "res://maps") -> void:
+	data_folder = data
+	target_folder = target
+	texture_of = func(path: String) -> Texture2D: return load(path) as Texture2D
+
+
+## The dbSymbols of the project's maps, sorted.
+func map_symbols() -> Array[String]:
+	var found: Array[String] = []
+	for file in DirAccess.get_files_at(data_folder.path_join("Studio/maps")):
+		if file.ends_with(".json"):
+			found.append(file.get_basename())
+	found.sort()
+	return found
+
+
+## The Studio record of a map, or {} with a problem.
+func map_record(symbol: String) -> Dictionary:
+	var path := data_folder.path_join("Studio/maps/%s.json" % symbol)
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+	if not parsed is Dictionary:
+		problems.append("%s: no Studio map record" % symbol)
+		return {}
+	return parsed
+
+
+## The `.tmx` of a map record.
+func tmx_path(record: Dictionary) -> String:
+	return data_folder.path_join("Tiled/Maps/%s.tmx" % str(record.get("tiledFilename", "")))
+
+
+## Writes the textures the maps `symbols` need: each art tileset's picture,
+## its key colour made transparent, halved. Returns the pictures written.
+func write_textures(symbols: Array[String]) -> Array[String]:
+	var written: Array[String] = []
+	var done: Dictionary[String, bool] = {}
+	DirAccess.make_dir_recursive_absolute(_tiles_folder())
+	for symbol in symbols:
+		var record := map_record(symbol)
+		if record.is_empty():
+			continue
+		var map := read_tmx(tmx_path(record))
+		for tileset: Dictionary in map.get("tilesets", []):
+			var tsx_path: String = tileset["path"]
+			if done.has(tsx_path):
+				continue
+			done[tsx_path] = true
+			var tsx := read_tsx(tsx_path)
+			if tsx.is_empty():
+				continue
+			var png := _texture_path(tsx)
+			if FileAccess.file_exists(png) and FileAccess.get_modified_time(png) >= FileAccess.get_modified_time(tsx["image"]):
+				continue
+			var picture := halved(tsx["image"], tsx["trans"])
+			if picture != null and picture.save_png(png) == OK:
+				_keep_alpha(png)
+				written.append(png)
+	return written
+
+
+## Tells Godot to import `png` as it is: its alpha border left alone, as
+## the faint shadows of Studio's tiles are pixels of a colour all but clear.
+static func _keep_alpha(png: String) -> void:
+	var settings := ConfigFile.new()
+	settings.load(png + ".import")
+	if not settings.has_section_key("remap", "importer"):
+		settings.set_value("remap", "importer", "texture")
+		settings.set_value("remap", "type", "CompressedTexture2D")
+	settings.set_value("params", "process/fix_alpha_border", false)
+	settings.set_value("params", "compress/mode", 0)
+	settings.set_value("params", "mipmaps/generate", false)
+	settings.save(png + ".import")
+
+
+## The picture at `path`, `key` (a colour, or null) made transparent, then
+## halved, as Studio's doubled tiles are 16 px pictures.
+static func halved(path: String, key: Variant) -> Image:
+	var picture := Image.load_from_file(path)
+	if picture == null:
+		return null
+	picture.convert(Image.FORMAT_RGBA8)
+	picture.resize(maxi(1, picture.get_width() / 2), maxi(1, picture.get_height() / 2), Image.INTERPOLATE_NEAREST)
+	if key is Color:
+		var bytes := picture.get_data()
+		var r := (key as Color).r8
+		var g := (key as Color).g8
+		var b := (key as Color).b8
+		for at in range(0, bytes.size(), 4):
+			if bytes[at] == r and bytes[at + 1] == g and bytes[at + 2] == b:
+				bytes[at + 3] = 0
+		picture.set_data(picture.get_width(), picture.get_height(), false, Image.FORMAT_RGBA8, bytes)
+	return picture
+
+
+## Imports the map `symbol`: its scene, and its tiles into the TileSet.
+## Call `save_tile_set()` once the maps are imported.
+func import_map(symbol: String) -> bool:
+	var record := map_record(symbol)
+	if record.is_empty():
+		return false
+	var map := read_tmx(tmx_path(record))
+	if map.is_empty():
+		return false
+	var tile_set := tile_set()
+	var firsts: Array[Dictionary] = []
+	for tileset: Dictionary in map["tilesets"]:
+		var tsx := read_tsx(tileset["path"])
+		if tsx.is_empty():
+			continue
+		var name: String = tileset["path"].get_file()
+		if not _sources.has(name):
+			_sources[name] = _add_source(tile_set, name, tsx)
+		firsts.append({"first": tileset["first"], "source": _sources[name], "name": name, "columns": tsx["columns"]})
+	firsts.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["first"] > b["first"])
+	var width: int = map["width"]
+	var height: int = map["height"]
+	var regular: Array[Dictionary] = []
+	var special: Dictionary[String, PackedInt32Array] = {}
+	for layer: Dictionary in map["layers"]:
+		var name: String = layer["name"]
+		if SPECIAL.has(name):
+			if special.has(name):
+				problems.append("%s: a second layer '%s', left out" % [symbol, name])
+				continue
+			special[name] = _special_values(symbol, layer, firsts, SPECIAL[name])
+		else:
+			regular.append(layer)
+	var root := WgMap.new()
+	root.name = symbol
+	root.size = Vector2i(width, height)
+	root.zone = _zone_of(int(record.get("id", 0)))
+	var entities := Node2D.new()
+	entities.name = "Entities"
+	entities.y_sort_enabled = true
+	# Each tile of each layer, under the priority Studio gives it on its cell.
+	var cells_of: Array[Dictionary] = []
+	for layer in regular:
+		cells_of.append({})
+	for y in height:
+		for x in width:
+			var at := y * width + x
+			var drawn: Array[int] = []
+			for index in regular.size():
+				if (regular[index]["gids"] as PackedInt64Array)[at] != 0:
+					drawn.append(index)
+			if drawn.is_empty():
+				# A tag or a passage on a cell with no tile is dropped.
+				for name: String in special:
+					special[name][at] = 0
+				continue
+			var bridge := (special.has("systemtags_bridge1") and special["systemtags_bridge1"][at] != 0) \
+				or (special.has("systemtags_bridge2") and special["systemtags_bridge2"][at] != 0)
+			var highest := 0
+			for index in drawn:
+				highest = maxi(highest, regular[index]["z"])
+			for index in drawn:
+				var z: int = regular[index]["z"]
+				var priority := z
+				if bridge and z > 0:
+					priority = 3 if z <= 3 else 5
+				elif z >= 2:
+					priority = highest
+				var cells: Dictionary = cells_of[index]
+				if not cells.has(priority):
+					cells[priority] = []
+				(cells[priority] as Array).append(Vector2i(x, y))
+	for index in regular.size():
+		var layer := regular[index]
+		var natural: int = layer["z"]
+		var cells: Dictionary = cells_of[index]
+		var priorities: Array = cells.keys()
+		priorities.sort()
+		for priority: int in priorities:
+			var node := TileMapLayer.new()
+			node.name = layer["name"] if priority == natural else "%s p%d" % [layer["name"], priority]
+			node.tile_set = tile_set
+			for cell: Vector2i in cells[priority]:
+				_paint(node, cell, (layer["gids"] as PackedInt64Array)[cell.y * width + cell.x], firsts, symbol)
+			if priority == 0:
+				node.z_index = -1
+				root.add_child(node)
+			else:
+				node.y_sort_enabled = true
+				node.y_sort_origin = CELL * priority - 1
+				entities.add_child(node)
+	root.add_child(entities)
+	for name: String in SPECIAL_NODES:
+		if not special.has(name):
+			continue
+		var node := TileMapLayer.new()
+		node.name = SPECIAL_NODES[name]
+		node.tile_set = tile_set
+		node.visible = false
+		var source := _sources.get(SPECIAL[name], -1) as int
+		var columns := (tile_set.get_source(source) as TileSetAtlasSource).get_atlas_grid_size().x if source >= 0 else 1
+		var values := special[name]
+		for at in values.size():
+			# Values are tile indices plus one: 0 is no tile.
+			var index := values[at] - 1
+			# No passage bit, no terrain tag: nothing to paint.
+			if index < 0 or source < 0 or (index == 0 and not name.begins_with("systemtags")):
+				continue
+			node.set_cell(Vector2i(at % width, at / width), source, Vector2i(index % columns, index / columns))
+		root.add_child(node)
+	_own(root, root)
+	var scene := PackedScene.new()
+	if scene.pack(root) != OK:
+		problems.append("%s: the scene cannot be packed" % symbol)
+		root.free()
+		return false
+	root.free()
+	DirAccess.make_dir_recursive_absolute(target_folder)
+	return ResourceSaver.save(scene, target_folder.path_join("%s.tscn" % symbol)) == OK
+
+
+## The TileSet the maps share: the one saved, else a new one.
+func tile_set() -> TileSet:
+	if _tile_set != null:
+		return _tile_set
+	var path := tile_set_path()
+	if ResourceLoader.exists(path):
+		_tile_set = load(path) as TileSet
+	if _tile_set == null:
+		_tile_set = TileSet.new()
+		_tile_set.tile_size = Vector2i(CELL, CELL)
+		_tile_set.add_physics_layer()
+		_tile_set.set_physics_layer_collision_layer(0, 1 << (solid_layer - 1))
+		_tile_set.add_physics_layer()
+		_tile_set.set_physics_layer_collision_layer(1, 1 << (edge_layer - 1))
+		for data: String in DATA:
+			_tile_set.add_custom_data_layer()
+			var at := _tile_set.get_custom_data_layers_count() - 1
+			_tile_set.set_custom_data_layer_name(at, data)
+			_tile_set.set_custom_data_layer_type(at, DATA[data])
+		# Its path now, before any map is packed: maps refer to it, never
+		# hold a copy.
+		_tile_set.take_over_path(path)
+	var known: Variant = _tile_set.get_meta(&"studio_sources", {})
+	if known is Dictionary:
+		for name: String in known:
+			_sources[name] = int(known[name])
+	return _tile_set
+
+
+func tile_set_path() -> String:
+	return target_folder.path_join("studio_tiles.tres")
+
+
+## Saves the TileSet, with the sources' names.
+func save_tile_set() -> bool:
+	var tile_set := tile_set()
+	tile_set.set_meta(&"studio_sources", _sources.duplicate())
+	return ResourceSaver.save(tile_set, tile_set_path()) == OK
+
+
+## A `.tmx`: `width`, `height`, `tilesets` (`first`, `path`) and its layers
+## read (`name`, `z`, `gids`), in document order. {} with a problem if it
+## cannot be read.
+func read_tmx(path: String) -> Dictionary:
+	var parser := XMLParser.new()
+	if not FileAccess.file_exists(path) or parser.open(path) != OK:
+		problems.append("%s: no such map" % path.get_file())
+		return {}
+	var map := {"width": 0, "height": 0, "tilesets": [], "layers": []}
+	# The level of each group entered, and whether it is read.
+	var groups: Array[Dictionary] = [{"z": 0, "read": true}]
+	var layer := {}
+	var in_data := false
+	var encoding := ""
+	var compression := ""
+	while parser.read() == OK:
+		match parser.get_node_type():
+			XMLParser.NODE_ELEMENT:
+				var tag := parser.get_node_name()
+				match tag:
+					"map":
+						if parser.get_named_attribute_value_safe("infinite") == "1":
+							problems.append("%s: an infinite map is not read" % path.get_file())
+							return {}
+						map["width"] = parser.get_named_attribute_value_safe("width").to_int()
+						map["height"] = parser.get_named_attribute_value_safe("height").to_int()
+					"tileset":
+						var source := parser.get_named_attribute_value_safe("source")
+						if source.is_empty():
+							problems.append("%s: a tileset inside the map is not read" % path.get_file())
+							continue
+						(map["tilesets"] as Array).append({"first": parser.get_named_attribute_value_safe("firstgid").to_int(), "path": path.get_base_dir().path_join(source).simplify_path()})
+					"group":
+						var name := parser.get_named_attribute_value_safe("name")
+						var parent: Dictionary = groups.back()
+						var z: int = parent["z"]
+						if name.begins_with("z="):
+							z = name.split("=")[1].to_int() - 1
+						var read: bool = parent["read"] and (parser.get_named_attribute_value_safe("visible") != "0" or name.begins_with("system"))
+						groups.append({"z": z, "read": read})
+						if parser.is_empty():
+							groups.pop_back()
+					"layer":
+						var name := parser.get_named_attribute_value_safe("name")
+						var parent: Dictionary = groups.back()
+						var read: bool = parent["read"] and (parser.get_named_attribute_value_safe("visible") != "0" or SPECIAL.has(name))
+						layer = {"name": name, "z": level_of(name, parent["z"]), "read": read, "gids": PackedInt64Array()} if read else {}
+					"data":
+						in_data = not layer.is_empty()
+						encoding = parser.get_named_attribute_value_safe("encoding")
+						compression = parser.get_named_attribute_value_safe("compression")
+			XMLParser.NODE_TEXT:
+				if in_data:
+					layer["gids"] = _decode(parser.get_node_data(), encoding, compression, path)
+			XMLParser.NODE_ELEMENT_END:
+				match parser.get_node_name():
+					"data":
+						in_data = false
+					"layer":
+						if not layer.is_empty() and (layer["gids"] as PackedInt64Array).size() == int(map["width"]) * int(map["height"]):
+							(map["layers"] as Array).append(layer)
+						elif not layer.is_empty():
+							problems.append("%s: layer '%s' has not one tile per cell, left out" % [path.get_file(), layer["name"]])
+						layer = {}
+					"group":
+						if groups.size() > 1:
+							groups.pop_back()
+	return map
+
+
+## The level of a layer named `name` in a group of level `inherited`: its
+## last character, a digit from 1 to 6, minus one; else the group's.
+static func level_of(name: String, inherited: int) -> int:
+	var last := name.right(1)
+	return last.to_int() - 1 if last in ["1", "2", "3", "4", "5", "6"] else inherited
+
+
+## A `.tsx`: its `image` (a path), `trans` (a Color or null), `columns` of
+## 32 px tiles. {} with a problem if it cannot be read.
+func read_tsx(path: String) -> Dictionary:
+	var parser := XMLParser.new()
+	if not FileAccess.file_exists(path) or parser.open(path) != OK:
+		problems.append("%s: no such tileset" % path.get_file())
+		return {}
+	while parser.read() == OK:
+		if parser.get_node_type() == XMLParser.NODE_ELEMENT and parser.get_node_name() == "image":
+			var trans := parser.get_named_attribute_value_safe("trans")
+			var width := parser.get_named_attribute_value_safe("width").to_int()
+			var image := path.get_base_dir().path_join(parser.get_named_attribute_value_safe("source")).simplify_path()
+			if width <= 0:
+				var picture := Image.load_from_file(image)
+				width = picture.get_width() if picture != null else 0
+			return {"image": image, "trans": Color.html(trans) if trans.is_valid_html_color() else null, "columns": maxi(1, width / STUDIO_CELL)}
+	problems.append("%s: a tileset with no picture" % path.get_file())
+	return {}
+
+
+static func _decode(text: String, encoding: String, compression: String, path: String) -> PackedInt64Array:
+	var gids := PackedInt64Array()
+	if encoding == "csv":
+		for value in text.strip_edges().replace("\n", "").replace("\r", "").split(",", false):
+			gids.append(value.strip_edges().to_int())
+		return gids
+	var bytes := Marshalls.base64_to_raw(text.strip_edges())
+	if compression == "gzip":
+		bytes = bytes.decompress_dynamic(-1, FileAccess.COMPRESSION_GZIP)
+	elif compression == "zlib":
+		bytes = bytes.decompress_dynamic(-1, FileAccess.COMPRESSION_DEFLATE)
+	elif not compression.is_empty():
+		push_error("%s: layers compressed with %s are not read" % [path.get_file(), compression])
+		return gids
+	for at in range(0, bytes.size() - 3, 4):
+		gids.append(bytes.decode_u32(at))
+	return gids
+
+
+func _special_values(symbol: String, layer: Dictionary, firsts: Array[Dictionary], tileset: String) -> PackedInt32Array:
+	var values := PackedInt32Array()
+	var gids: PackedInt64Array = layer["gids"]
+	values.resize(gids.size())
+	var first := -1
+	for entry in firsts:
+		if entry["name"] == tileset:
+			first = entry["first"]
+	if first < 0:
+		problems.append("%s: layer '%s' without its tileset %s" % [symbol, layer["name"], tileset])
+		return values
+	# The tile index plus one, 0 for none: a system tag's first tile, "empty",
+	# is a value of its own.
+	for at in gids.size():
+		var gid := gids[at] & 0x0FFFFFFF
+		values[at] = gid - first + 1 if gid >= first else 0
+	return values
+
+
+## Paints the tile of `raw` (a gid, flips in its top nibble) on `cell`.
+func _paint(node: TileMapLayer, cell: Vector2i, raw: int, firsts: Array[Dictionary], symbol: String) -> void:
+	var gid := raw & 0x0FFFFFFF
+	var flips := (raw >> 28) & 15
+	for entry in firsts:
+		if gid < int(entry["first"]):
+			continue
+		var index := gid - int(entry["first"])
+		var source := _tile_set.get_source(entry["source"]) as TileSetAtlasSource
+		var coords := Vector2i(index % int(entry["columns"]), index / int(entry["columns"]))
+		if coords.x >= source.get_atlas_grid_size().x or coords.y >= source.get_atlas_grid_size().y:
+			problems.append("%s: tile %d is outside %s" % [symbol, index, entry["name"]])
+			return
+		if not source.has_tile(coords):
+			source.create_tile(coords)
+		var alternative := 0
+		if flips & FLIP_H:
+			alternative |= TileSetAtlasSource.TRANSFORM_FLIP_H
+		if flips & FLIP_V:
+			alternative |= TileSetAtlasSource.TRANSFORM_FLIP_V
+		if flips & FLIP_D:
+			alternative |= TileSetAtlasSource.TRANSFORM_TRANSPOSE
+		node.set_cell(cell, entry["source"], coords, alternative)
+		return
+
+
+## Adds the atlas source of a Tiled tileset; the special ones get their
+## tiles and data at once.
+func _add_source(tile_set: TileSet, name: String, tsx: Dictionary) -> int:
+	var source := TileSetAtlasSource.new()
+	source.resource_name = name.get_basename()
+	source.texture = texture_of.call(_texture_path(tsx))
+	source.texture_region_size = Vector2i(CELL, CELL)
+	var id := tile_set.add_source(source)
+	match name:
+		"passages.tsx":
+			_make_passages(source)
+		"systemtags.tsx":
+			_make_tags(source)
+		"terrain_tag.tsx":
+			for index in _tiles_in(source):
+				var data := _tile(source, index)
+				data.set_custom_data("terrain_tag", index)
+	return id
+
+
+func _tiles_in(source: TileSetAtlasSource) -> Array[int]:
+	var count := source.get_atlas_grid_size().x * source.get_atlas_grid_size().y
+	var indices: Array[int] = []
+	for index in range(1, count):
+		indices.append(index)
+	return indices
+
+
+func _tile(source: TileSetAtlasSource, index: int) -> TileData:
+	var columns := source.get_atlas_grid_size().x
+	var coords := Vector2i(index % columns, index / columns)
+	if not source.has_tile(coords):
+		source.create_tile(coords)
+	return source.get_tile_data(coords, 0)
+
+
+func _make_passages(source: TileSetAtlasSource) -> void:
+	var half := CELL / 2.0
+	for passage in _tiles_in(source):
+		var data := _tile(source, passage)
+		var sides := passage & 0x0F
+		if sides == 0x0F:
+			data.add_collision_polygon(0)
+			data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)]))
+		else:
+			for bit: int in BLOCKS:
+				if sides & bit == 0:
+					continue
+				var side := BLOCKS[bit]
+				var strip := PackedVector2Array()
+				match side:
+					Vector2i.DOWN:
+						strip = [Vector2(-half, half - EDGE), Vector2(half, half - EDGE), Vector2(half, half), Vector2(-half, half)]
+					Vector2i.UP:
+						strip = [Vector2(-half, -half), Vector2(half, -half), Vector2(half, -half + EDGE), Vector2(-half, -half + EDGE)]
+					Vector2i.LEFT:
+						strip = [Vector2(-half, -half), Vector2(-half + EDGE, -half), Vector2(-half + EDGE, half), Vector2(-half, half)]
+					Vector2i.RIGHT:
+						strip = [Vector2(half - EDGE, -half), Vector2(half, -half), Vector2(half, half), Vector2(half - EDGE, half)]
+				var at := data.get_collision_polygons_count(1)
+				data.add_collision_polygon(1)
+				data.set_collision_polygon_points(1, at, strip)
+		if passage & BUSH:
+			data.set_custom_data("bush", true)
+		if passage & COUNTER:
+			data.set_custom_data("counter", true)
+
+
+func _make_tags(source: TileSetAtlasSource) -> void:
+	for index: int in [0] + _tiles_in(source):
+		var tag := TAG_BASE + index
+		var data := _tile(source, index)
+		if tag == TAG_BASE:
+			data.set_custom_data("covers", true)
+		if TAG_NAMES.has(tag):
+			data.set_custom_data("system_tag", TAG_NAMES[tag])
+		if ENCOUNTERS.has(tag):
+			data.set_custom_data("encounter", ENCOUNTERS[tag])
+		if tag == 385:
+			data.set_custom_data("ice", true)
+		if JUMPS.has(tag):
+			data.set_custom_data("jump", JUMPS[tag])
+
+
+func _zone_of(map_id: int) -> StringName:
+	if _zones.is_empty():
+		var folder := data_folder.path_join("Studio/zones")
+		for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+			var zone: Variant = JSON.parse_string(FileAccess.get_file_as_string(folder.path_join(file)))
+			if zone is Dictionary:
+				for listed: Variant in zone.get("maps", []):
+					_zones[int(listed)] = StringName(str(zone.get("dbSymbol", "")))
+	return _zones.get(map_id, &"")
+
+
+func _tiles_folder() -> String:
+	return target_folder.path_join("tiles")
+
+
+func _texture_path(tsx: Dictionary) -> String:
+	return _tiles_folder().path_join((tsx["image"] as String).get_file().get_basename() + ".png")
+
+
+static func _own(node: Node, owner: Node) -> void:
+	for child in node.get_children():
+		child.owner = owner
+		_own(child, owner)

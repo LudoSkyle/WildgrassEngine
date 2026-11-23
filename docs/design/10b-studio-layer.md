@@ -127,7 +127,8 @@ found by id (feature 14). **Sound design** (`sound_design_config`,
 `scene_title_config`'s `bgmName`): the `audio` config and the title's music
 (feature 15).
 
-**Later**, with their features: maps (the importer), zones, the
+**Maps** are imported once into Godot scenes: feature 10 ter
+(`10c-studio-maps.md`). **Later**, with their features: zones, the
 introduction map, music.
 
 ## A Studio project and a game's own

@@ -101,7 +101,8 @@ an optional `walker`, handed to the hook.
 
 ## Imported maps
 
-Nothing here stops a future map importer. Studio projects draw their maps in
+The Studio map importer (feature 10 ter, `10c-studio-maps.md`) makes these
+from a Studio project's maps. Studio projects draw their maps in
 Tiled, and Studio turns them into RPG Maker XP map data; older projects were
 made in RPG Maker XP directly. Both end up as the same tile properties, and
 each has a place here.
