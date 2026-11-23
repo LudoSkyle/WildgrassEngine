@@ -37,8 +37,8 @@ names, and problems name them (`path_cells`, `letters_per_second`).
 - A plugin gives values for a config with `Wildgrass.config.add_source(name,
   callable)`: the callable returns a dictionary of fields, applied over the
   defaults; the project's own file is applied last, field by field.
-  `is_given(name)`: a file or a source gives values; the `display` config is
-  applied at start only then.
+  `is_given(name)`: a file or a source gives values; a given `display`
+  config is applied at start even over Godot's window settings.
 - The engine writes none of its words: each is a **key** (`wg.menu.bag`,
   `wg.options.text_speed`), shown through `Wildgrass.texts.label(text,
   values)`: Godot's translations, then placeholders. A game gives their text

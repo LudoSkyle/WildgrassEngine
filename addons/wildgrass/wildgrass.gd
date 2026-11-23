@@ -237,7 +237,9 @@ func _ready() -> void:
 	paths.asset_missing.connect(func(path: String, requester: String) -> void:
 		log.warn(&"paths", "%s, requested by %s" % [path, requester]))
 	log.configure(config.get_config(&"log") as WgLogConfig)
-	if config.is_given(&"display"):
+	# The display config's, given or by default; a project that chose its
+	# window in Godot's settings and gives none keeps that window.
+	if config.is_given(&"display") or not display.project_sets_window():
 		display.apply(config.get_config(&"display") as WgDisplayConfig, get_window())
 	texts.apply_default()
 	options.read()
