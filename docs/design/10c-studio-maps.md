@@ -1,6 +1,7 @@
 # Feature 10 ter — Studio maps
 
-Status: in progress (tiles, layers, passages and tags; see *Later*).
+Status: in progress (tiles, layers, passages, tags and animated tiles; see
+*Later*).
 
 A Studio project draws its maps in Tiled. The importer turns each into a
 plain Godot map, once: a `WgMap` scene, one `TileMapLayer` per Tiled layer,
@@ -16,7 +17,8 @@ godot --headless --path <game> -s res://addons/wildgrass/studio/import_maps.gd -
 
 Without map names, every map of `Data/Studio/maps` is imported. Each goes to
 `res://maps/<dbSymbol>.tscn` (the `maps` path), the TileSet to
-`res://maps/studio_tiles.tres`, the textures to `res://maps/tiles/`. A map
+`res://maps/studio_tiles.tres`, the textures to `res://maps/tiles/` (an
+animated tileset's frames beside its picture, `<picture>-animated.png`). A map
 imported again is written again; the TileSet keeps the tiles of every map.
 
 ## What a Studio map is
@@ -38,6 +40,10 @@ imported again is written again; the TileSet keeps the tiles of every map.
   its tile index in that tileset; a system tag is 384 plus it.
 - Every art tileset is drawn at 32 px but **is a 16 px picture doubled**, and
   keys out a colour (`<image trans="f05ba1">`) instead of alpha.
+- A tileset's animated tiles are Tiled animations: `<tile id>` and its
+  `<frame tileid duration>` (ms), any tiles of the tileset in any order.
+- `Data/configs/display_config.json`: `tilemapSettings.autotileIdleFrameCount`,
+  the game frames (at 60 a second) of a step of animated tiles; 6 if absent.
 
 ## What the importer makes
 
@@ -51,6 +57,27 @@ imported again is written again; the TileSet keeps the tiles of every map.
   alternative tile), plus three sources for the special tilesets.
 - Physics layers: the `map` config's first solid and edge layers (1 and 4).
   Data layers: those below.
+
+### Animated tiles
+
+Studio plays a frame for whole steps of its idle frames: `max(1, ms div
+(idle × 1000 div 60))` steps of `idle / 60` s. With the usual 6, a step is
+100 ms: 300 ms shows 300, 150 shows 100, 50 shows 100. Every tile of a same
+rhythm is in step with the others, whatever its map.
+
+| Studio | Godot |
+|---|---|
+| a tileset with animated tiles | one more source, `<tileset> animated`: its texture a row per animated tile, the frames side by side |
+| a cell drawing an animated tile | that row's tile, its frames and their durations; a flip is an alternative tile, as for any tile |
+| an animation showing a tile outside the picture | a problem; the tile stays still |
+
+Godot plays every tile animation on one clock, so tiles of a same rhythm keep
+in step, as Studio's.
+
+Studio draws the layers of a cell into one picture before animating it, so
+when two animated tiles of different lengths share a cell, its frames run
+out together; the importer keeps each layer its own animation, each tile
+playing as its tileset says.
 
 ### Passages
 
@@ -115,8 +142,6 @@ draws over it exactly from row R + p down.
 
 ## Later
 
-- **Animated tiles** (`TECH-Animations.tsx`): Godot animations built from
-  Tiled's frames, durations rounded down to 100 ms as Studio does.
 - **Bridges**: `systemtags_bridge1`, `ZTag` ends, a walker's height: the
   engine's `floor` and `ramp`, and drawing a walker on a deck among the
   y-sorted tiles instead of above them.
@@ -133,5 +158,9 @@ names and groups, hidden and special layers, csv and base64 data, flipped
 tiles, the key colour and the halving, passages (solid, edges, bush,
 counter), tags and their data, a tag on an empty cell dropped, the priority
 of each layer and the cells moved, the scene's tree, a second map sharing the
-TileSet. The whole sample project is checked outside the engine, cell by
-cell, against Studio's own converted data.
+TileSet; animated tiles: the strip of frames, the steps of each frame (and of
+another idle count), a flipped one, one among the entities, an animation
+outside its picture, a second map and a second import adding no source. The
+whole sample project is checked outside the engine, cell by cell, against
+Studio's own converted data: its pictures, each frame of its animated tiles
+and their rhythms.
