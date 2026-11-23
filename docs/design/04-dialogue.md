@@ -76,7 +76,10 @@ MessageBox (WgMessageBox)
 ```
 
 A game restyles it by inheriting the scene (font, `StyleBoxTexture`,
-margins) and pointing `wildgrass/screens/message_box` to it. Node paths are
+margins) and pointing `wildgrass/screens/message_box` to it. `choices` may be
+a frame holding the column of choices at any depth: the choices go beside
+the model Button, the frame shows and moves as one; `choice_cursor` (a
+`Control`, optional) is shown at the left of the selected choice. Node paths are
 exports of `WgMessageBox`; `arrange = false` keeps the scene's own layout
 instead of placing the nodes as below. Optional nodes stay hidden when unused.
 
