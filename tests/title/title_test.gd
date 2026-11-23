@@ -192,6 +192,20 @@ func test_play_with_no_game_starts_one_in_slot_1_on_the_start_map_behind_the_fad
 	assert_array(_open_names()).is_empty()
 
 
+func test_with_no_point_a_new_game_starts_on_the_start_cell_facing_its_way() -> void:
+	_settings({"start_map": "home", "start_cell": {"x": 2, "y": 3}, "start_direction": {"x": 0, "y": -1}})
+	_world.title.show_title()
+	assert_bool(await _world.title.new_game(1)).is_true()
+	assert_str(_world.maps.current_id).is_equal("home")
+	assert_that(_player.cell).is_equal(Vector2i(2, 3))
+	assert_that(_player.facing).is_equal(Vector2i.UP)
+	# A point wins over the cell.
+	_settings({"start_map": "home", "start_point": "Bed", "start_cell": {"x": 2, "y": 3}})
+	_world.title.show_title()
+	assert_bool(await _world.title.new_game(1)).is_true()
+	assert_that(_player.cell).is_equal(Vector2i(4, 2))
+
+
 func test_a_new_game_with_no_start_map_or_no_traveller_is_logged_and_the_title_stays() -> void:
 	_world.title.show_title()
 	_world.story.set_flag(&"kept")
