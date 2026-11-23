@@ -3,11 +3,11 @@
 ## types keep theirs in one.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 
-var _paths: Paths
-var _log: Log
+var _paths: _Paths
+var _log: _Log
 ## The paths kind of the folder.
 var _kind: StringName
 var _script: GDScript
@@ -20,7 +20,7 @@ var _unknown: Dictionary[StringName, bool] = {}
 var _sources: Array[Dictionary] = []
 
 
-func _init(paths: Paths, logger: Log, kind: StringName, script: GDScript, channel: StringName, what: String) -> void:
+func _init(paths: _Paths, logger: _Log, kind: StringName, script: GDScript, channel: StringName, what: String) -> void:
 	_paths = paths
 	_log = logger
 	_kind = kind

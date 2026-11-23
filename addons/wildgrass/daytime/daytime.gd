@@ -2,9 +2,9 @@
 ## moments of the day it falls in: their tint and light.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
 ## The shader globals it keeps up to date.
 const TINT_GLOBAL := &"day_tint"
@@ -14,7 +14,7 @@ const LIGHT_GLOBAL := &"night_light"
 signal moment_changed(old: StringName, new: StringName)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## An hour that wins over the others, 0 to 24; -1: none. Not saved.
 var forced_hour := -1.0
 ## Keeps `day_tint` and `night_light` up to date; set once they are declared.
@@ -22,14 +22,14 @@ var updates_shader_globals := false
 ## What tints the maps outside, under the maps' host.
 var canvas_modulate: CanvasModulate
 
-var _config: ConfigRegistry
+var _config: _ConfigRegistry
 ## The game's own time, in minutes since day 0 at midnight.
 var _minutes := -1.0
 var _moment: StringName = &""
 var _maps: Object
 
 
-func _init(logger: Log, config_registry: ConfigRegistry, hooks: Hooks) -> void:
+func _init(logger: _Log, config_registry: _ConfigRegistry, hooks: _Hooks) -> void:
 	log = logger
 	_config = config_registry
 	hooks.add(&"story_term", &"wildgrass_daytime", _story_term)

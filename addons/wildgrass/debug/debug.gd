@@ -4,9 +4,9 @@
 ## config allows.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 
 ## The first page: the lines leading to the engine's and the game's.
 const FIRST := &"first"
@@ -14,12 +14,12 @@ const ENGINE := &"engine"
 const GAME := &"game"
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## Given to the `debug` screen and to what it opens: the services, by name.
 var services := {}
 
-var _config: ConfigRegistry
-var _screens: ScreenRegistry
+var _config: _ConfigRegistry
+var _screens: _ScreenRegistry
 ## Each {"id", "page", "label", "action", "shown", "opens", "lines"}, in
 ## order; a page's line has `opens`, the page it leads to.
 var _entries: Array[Dictionary] = []
@@ -27,7 +27,7 @@ var _entries: Array[Dictionary] = []
 var _pending: Array[Callable] = []
 
 
-func _init(logger: Log, config_registry: ConfigRegistry, screen_registry: ScreenRegistry) -> void:
+func _init(logger: _Log, config_registry: _ConfigRegistry, screen_registry: _ScreenRegistry) -> void:
 	log = logger
 	_config = config_registry
 	_screens = screen_registry

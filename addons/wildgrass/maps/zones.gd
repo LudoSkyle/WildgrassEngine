@@ -4,27 +4,27 @@
 ## last one's, once no transition covers the map.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## The banner was shown with this name and style.
 signal banner_shown(zone_name: String, style: StringName)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The banner, made the first time it shows: the scene of the screen
 ## `location_banner`, put on the screens' layer but never on their stack, so
 ## it takes no key and stops no one.
 var banner: WgLocationBanner
 
-var _catalog: Catalog
-var _maps: Maps
-var _screens: ScreenRegistry
-var _texts: Texts
+var _catalog: _Catalog
+var _maps: _Maps
+var _screens: _ScreenRegistry
+var _texts: _Texts
 var _layer: Node
 ## The name last shown.
 var _last_name := ""
@@ -32,9 +32,9 @@ var _last_name := ""
 var _pending: WgZone
 
 
-func _init(paths: Paths, logger: Log, maps: Maps, screens: ScreenRegistry, texts: Texts, layer: Node) -> void:
+func _init(paths: _Paths, logger: _Log, maps: _Maps, screens: _ScreenRegistry, texts: _Texts, layer: Node) -> void:
 	log = logger
-	_catalog = Catalog.new(paths, logger, &"zones", WgZone, &"zones", "zone")
+	_catalog = _Catalog.new(paths, logger, &"zones", WgZone, &"zones", "zone")
 	_maps = maps
 	_screens = screens
 	_texts = texts

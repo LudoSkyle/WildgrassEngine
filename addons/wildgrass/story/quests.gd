@@ -3,9 +3,9 @@
 ## (`res://quests/*.tres`), then what sources give.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
 signal started(id: StringName)
 signal objective_done(id: StringName, index: int)
@@ -19,10 +19,10 @@ const FINISHED := "finished"
 const FAILED := "failed"
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
-var _hooks: Hooks
-var _paths: Paths
+var _hooks: _Hooks
+var _paths: _Paths
 var _read := false
 var _sources: Array[Callable] = []
 var _quests: Dictionary[StringName, WgQuest] = {}
@@ -32,7 +32,7 @@ var _checks: Dictionary[StringName, Callable] = {}
 var _progress: Dictionary[StringName, Dictionary] = {}
 
 
-func _init(logger: Log, hook_registry: Hooks, paths: Paths) -> void:
+func _init(logger: _Log, hook_registry: _Hooks, paths: _Paths) -> void:
 	log = logger
 	_hooks = hook_registry
 	_paths = paths

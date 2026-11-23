@@ -3,9 +3,9 @@
 ## Studio's `[VAR …]` tokens.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
 
 ## The text files, inside the data folder.
 const FOLDER := "Text/Dialogs/"
@@ -15,19 +15,19 @@ static var _untranslated := RegEx.create_from_string("^\\[~ ?\\d+\\]$")
 static var _token := RegEx.create_from_string("\\[VAR (\\w+)(?:\\(([^)]*)\\))?\\]")
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## Gives the language read now; set by the Studio layer to the engine
 ## texts' `reading_language`.
 var language_of := Callable()
 
-var _paths: Paths
-var _config: ConfigRegistry
+var _paths: _Paths
+var _config: _ConfigRegistry
 ## File -> `{"header": its language codes, "rows": its lines}`; empty if missing.
 var _files: Dictionary[int, Dictionary] = {}
 var _warned: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry

@@ -8,9 +8,9 @@
 class_name WgDebugScreen
 extends WgScreen
 
-const Debug := preload("res://addons/wildgrass/debug/debug.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Debug := preload("res://addons/wildgrass/debug/debug.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Nodes")
 ## The page's title.
@@ -22,9 +22,9 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## True once a tool closed the screen: what it asked runs over the game.
 var closed_by_tool := false
-var debug: Debug
-var dialogue: Dialogue
-var texts: Texts
+var debug: _Debug
+var dialogue: _Dialogue
+var texts: _Texts
 ## The pages open, the last shown: each {"title", "page"} or {"title",
 ## "lines"} (a callable).
 var pages: Array[Dictionary] = []
@@ -37,7 +37,7 @@ var _busy := false
 
 
 func _on_open(args: Dictionary) -> void:
-	debug = args.get(&"debug") as Debug
+	debug = args.get(&"debug") as _Debug
 	dialogue = _service(args, &"dialogue")
 	texts = _service(args, &"texts")
 	if debug == null or dialogue == null or texts == null:

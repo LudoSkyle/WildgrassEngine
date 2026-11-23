@@ -3,13 +3,13 @@
 ## message ended.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
-const MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
 
 ## The box was opened.
 signal opened
@@ -64,7 +64,7 @@ class Request:
 
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The box on screen, or null.
 var box: WgMessageBox
 ## The frame style of messages that give none: a frame the player picks.
@@ -79,11 +79,11 @@ var letters_per_second: float:
 	set(value):
 		_letters_per_second = maxf(value, 0.0)
 
-var _config: ConfigRegistry
-var _hooks: Hooks
-var _screens: ScreenRegistry
-var _maps: Maps
-var _texts: Texts
+var _config: _ConfigRegistry
+var _hooks: _Hooks
+var _screens: _ScreenRegistry
+var _maps: _Maps
+var _texts: _Texts
 var _letters_per_second := -1.0
 var _tags: Dictionary[String, Callable] = {}
 var _narrating: Dictionary[String, bool] = {}
@@ -93,7 +93,7 @@ var _held_open := false
 var _missing_actions: Array[String] = []
 
 
-func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, screen_registry: ScreenRegistry, maps_service: Maps, texts_service: Texts) -> void:
+func _init(logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks, screen_registry: _ScreenRegistry, maps_service: _Maps, texts_service: _Texts) -> void:
 	log = logger
 	_texts = texts_service
 	_config = config_registry
@@ -183,7 +183,7 @@ static func escape(text: String) -> String:
 ## of the engine's tags, or already taken.
 func add_tag(tag_name: StringName, callable: Callable, narrates := false) -> bool:
 	var key := str(tag_name)
-	if not key.is_valid_ascii_identifier() or key in MessageTags.ENGINE_TAGS or key in MessageTags.BBCODE_TAGS or _tags.has(key):
+	if not key.is_valid_ascii_identifier() or key in _MessageTags.ENGINE_TAGS or key in _MessageTags.BBCODE_TAGS or _tags.has(key):
 		log.error(&"dialogue", "cannot add the tag [%s]: taken" % key)
 		return false
 	_tags[key] = callable
@@ -325,10 +325,10 @@ func _open_box(screen_name: StringName) -> bool:
 ## that language only: logged.
 func _check_translation(source: String, translated: String) -> void:
 	var kept: Array[String] = []
-	for tag: Dictionary in MessageTags.split(translated, tag_names(), [])["tags"]:
+	for tag: Dictionary in _MessageTags.split(translated, tag_names(), [])["tags"]:
 		if _tags.has(tag["name"]):
 			kept.append("%s=%s" % [tag["name"], tag["value"]])
-	for tag: Dictionary in MessageTags.split(source, tag_names(), [])["tags"]:
+	for tag: Dictionary in _MessageTags.split(source, tag_names(), [])["tags"]:
 		var written := "%s=%s" % [tag["name"], tag["value"]]
 		if not _tags.has(tag["name"]):
 			continue
@@ -339,7 +339,7 @@ func _check_translation(source: String, translated: String) -> void:
 
 
 func _narrates(text: String) -> bool:
-	for tag: Dictionary in MessageTags.split(text, tag_names(), [])["tags"]:
+	for tag: Dictionary in _MessageTags.split(text, tag_names(), [])["tags"]:
 		if _narrating.has(tag["name"]):
 			return true
 	return false

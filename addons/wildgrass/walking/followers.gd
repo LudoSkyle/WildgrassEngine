@@ -3,11 +3,11 @@
 ## traveller. The line never goes with a map.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 
 ## A project setting naming the scene of the line's Pokémon.
 const POKEMON_SCENE_SETTING := "wildgrass/followers/pokemon_scene"
@@ -35,11 +35,11 @@ var enabled := true:
 		_put_back()
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
-var hooks: Hooks
-var maps: Maps
-var walkers: Walkers
-var species: SpeciesData
+var log: _Log
+var hooks: _Hooks
+var maps: _Maps
+var walkers: _Walkers
+var species: _SpeciesData
 ## The scene of the line's Pokémon, a WgFollower; empty: the engine's, made
 ## in code. The project setting `wildgrass/followers/pokemon_scene` sets it.
 var pokemon_scene := ""
@@ -53,7 +53,7 @@ var _people: Array[WgFollower] = []
 var _pokemon: Array[WgFollower] = []
 
 
-func _init(logger: Log, hook_registry: Hooks, maps_service: Maps, walkers_service: Walkers, species_data: SpeciesData) -> void:
+func _init(logger: _Log, hook_registry: _Hooks, maps_service: _Maps, walkers_service: _Walkers, species_data: _SpeciesData) -> void:
 	log = logger
 	hooks = hook_registry
 	maps = maps_service

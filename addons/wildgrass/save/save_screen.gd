@@ -9,9 +9,9 @@
 class_name WgSaveScreen
 extends WgScreen
 
-const Save := preload("res://addons/wildgrass/save/save.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Save := preload("res://addons/wildgrass/save/save.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## Emitted once, before the screen closes: true if the game was written.
 signal done(saved: bool)
@@ -37,9 +37,9 @@ signal done(saved: bool)
 ## Seconds the saved text stays, then the screen closes by itself.
 @export var saved_seconds := 1.0
 
-var save: Save
-var dialogue: Dialogue
-var texts: Texts
+var save: _Save
+var dialogue: _Dialogue
+var texts: _Texts
 
 
 func _on_open(args: Dictionary) -> void:

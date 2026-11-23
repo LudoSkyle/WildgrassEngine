@@ -5,7 +5,7 @@
 class_name WgTalk
 extends WgInteractable
 
-const StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
+const _StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
 
 ## What it says; `[page]` starts a page.
 @export_multiline var text := ""
@@ -23,7 +23,7 @@ const StoryLines := preload("res://addons/wildgrass/story/story_lines.gd")
 
 ## What it says now.
 func current_text(story: RefCounted) -> String:
-	return StoryLines.choose(story, self, text, states, ask)["text"]
+	return _StoryLines.choose(story, self, text, states, ask)["text"]
 
 
 func _interact(walker: WgWalker) -> void:
@@ -46,7 +46,7 @@ func _interact(walker: WgWalker) -> void:
 		options["speaker"] = speaker
 	if speaker_color.a > 0.0:
 		options["speaker_color"] = speaker_color
-	var chosen := StoryLines.choose(walkers.story, self, text, states, ask)
+	var chosen := _StoryLines.choose(walkers.story, self, text, states, ask)
 	if chosen["question"].is_empty() or await walkers.dialogue.confirm(chosen["question"], options):
 		await walkers.dialogue.say(chosen["text"], options)
 	if character == null or not is_instance_valid(character):

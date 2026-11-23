@@ -10,10 +10,10 @@
 class_name WgSpeciesViewScreen
 extends WgScreen
 
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const SheetView := preload("res://addons/wildgrass/debug/species_sheet_view.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _SheetView := preload("res://addons/wildgrass/debug/species_sheet_view.gd")
 const MISSING := "#e04040"
 
 @export_group("Nodes")
@@ -34,9 +34,9 @@ const MISSING := "#e04040"
 ## The list's lines' font size.
 @export var font_size := 8
 
-var species: SpeciesData
-var texts: Texts
-var dialogue: Dialogue
+var species: _SpeciesData
+var texts: _Texts
+var dialogue: _Dialogue
 ## Each {"id", "number", "missing": Array[String]}, by national number.
 var entries: Array[Dictionary] = []
 var selected := 0
@@ -52,7 +52,7 @@ func _on_open(args: Dictionary) -> void:
 		push_error("species view: no species, texts or dialogue service")
 		close()
 		return
-	sheet_view = SheetView.new()
+	sheet_view = _SheetView.new()
 	sheet_view.scale_by = sheet_scale
 	var holder := get_node_or_null(sheet_holder)
 	if holder != null:

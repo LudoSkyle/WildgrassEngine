@@ -3,17 +3,17 @@
 ## among the current map's tables.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Story := preload("res://addons/wildgrass/story/story.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Story := preload("res://addons/wildgrass/story/story.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## What the engine's `start` says.
 const ANNOUNCE := "A wild {name} appeared!"
@@ -22,7 +22,7 @@ const ANNOUNCE := "A wild {name} appeared!"
 signal encountered(pokemon: Dictionary)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## -1: the chance; 1: every step that can; 0: never.
 var forced := -1
 ## How many wild Pokémon came out.
@@ -33,20 +33,20 @@ var last := {}
 ## message box. Battles replace it.
 var start: Callable
 
-var _config: ConfigRegistry
-var _maps: Maps
-var _story: Story
-var _species: SpeciesData
-var _catalog: Catalog
-var _tiles: Tiles
-var _hooks: Hooks
-var _pokedex: Pokedex
-var _dialogue: Dialogue
+var _config: _ConfigRegistry
+var _maps: _Maps
+var _story: _Story
+var _species: _SpeciesData
+var _catalog: _Catalog
+var _tiles: _Tiles
+var _hooks: _Hooks
+var _pokedex: _Pokedex
+var _dialogue: _Dialogue
 var _rng := RandomNumberGenerator.new()
 var _warned: Dictionary[String, bool] = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, maps: Maps, story: Story, species: SpeciesData, tiles: Tiles, hooks: Hooks, pokedex: Pokedex, dialogue: Dialogue) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, maps: _Maps, story: _Story, species: _SpeciesData, tiles: _Tiles, hooks: _Hooks, pokedex: _Pokedex, dialogue: _Dialogue) -> void:
 	log = logger
 	_tiles = tiles
 	_hooks = hooks
@@ -57,7 +57,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, maps: Map
 	_maps = maps
 	_story = story
 	_species = species
-	_catalog = Catalog.new(paths, logger, &"encounters", WgEncounterTable, &"encounters", "encounter table")
+	_catalog = _Catalog.new(paths, logger, &"encounters", WgEncounterTable, &"encounters", "encounter table")
 	_rng.randomize()
 
 

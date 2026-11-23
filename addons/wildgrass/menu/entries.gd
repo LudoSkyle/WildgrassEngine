@@ -2,14 +2,14 @@
 ## condition: the pause menu's, the title's choices.
 extends RefCounted
 
-const Story := preload("res://addons/wildgrass/story/story.gd")
+const _Story := preload("res://addons/wildgrass/story/story.gd")
 
-var _story: Story
+var _story: _Story
 ## Each {"id", "text", "callable", "condition"}, in order.
 var _entries: Array[Dictionary] = []
 
 
-func _init(story: Story) -> void:
+func _init(story: _Story) -> void:
 	_story = story
 
 

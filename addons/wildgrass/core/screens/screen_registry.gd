@@ -3,7 +3,7 @@
 ## given to `register()`. Open screens stack; only the top one gets input.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 const SETTING_PREFIX := "wildgrass/screens/"
 
 signal screen_opened(screen_name: StringName, screen: WgScreen)
@@ -11,7 +11,7 @@ signal screen_closed(screen_name: StringName)
 ## The top screen took `event`.
 signal input_taken(event: InputEvent)
 
-var _log: Log
+var _log: _Log
 var _layer: Node
 var _defaults: Dictionary[StringName, String] = {}
 var _overrides: Dictionary[StringName, String] = {}
@@ -20,7 +20,7 @@ var _took_frame := -1
 
 
 ## Screens are added as children of `layer`.
-func _init(logger: Log, layer: Node) -> void:
+func _init(logger: _Log, layer: Node) -> void:
 	_log = logger
 	_layer = layer
 

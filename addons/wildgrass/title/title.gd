@@ -2,17 +2,17 @@
 ## screen and its choices, a new game or one continued, and back to the title.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
-const Story := preload("res://addons/wildgrass/story/story.gd")
-const Entries := preload("res://addons/wildgrass/menu/entries.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Save := preload("res://addons/wildgrass/save/save.gd")
-const Options := preload("res://addons/wildgrass/options/options.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Story := preload("res://addons/wildgrass/story/story.gd")
+const _Entries := preload("res://addons/wildgrass/menu/entries.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Save := preload("res://addons/wildgrass/save/save.gd")
+const _Options := preload("res://addons/wildgrass/options/options.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## The title screen shows; a game plays its music.
 signal title_shown
@@ -23,7 +23,7 @@ signal game_started(slot: int, new: bool)
 signal _game_chosen
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## What the screens the title opens are given: the services, by name.
 var services := {}
 ## The title screen while it shows.
@@ -33,18 +33,18 @@ var audio: RefCounted
 ## Called by the `quit` choice; the engine's quits the game.
 var quit_game := func() -> void: (Engine.get_main_loop() as SceneTree).quit()
 
-var _paths: Paths
-var _config: ConfigRegistry
-var _screens: ScreenRegistry
-var _maps: Maps
-var _save: Save
-var _options: Options
-var _texts: Texts
-var _choices: Entries
+var _paths: _Paths
+var _config: _ConfigRegistry
+var _screens: _ScreenRegistry
+var _maps: _Maps
+var _save: _Save
+var _options: _Options
+var _texts: _Texts
+var _choices: _Entries
 var _starting := false
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, screen_registry: ScreenRegistry, story: Story, maps: Maps, dialogue: Dialogue, save: Save, options: Options, texts: Texts) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, screen_registry: _ScreenRegistry, story: _Story, maps: _Maps, dialogue: _Dialogue, save: _Save, options: _Options, texts: _Texts) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry
@@ -53,7 +53,7 @@ func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, screen_re
 	_save = save
 	_options = options
 	_texts = texts
-	_choices = Entries.new(story)
+	_choices = _Entries.new(story)
 	services = {"dialogue": dialogue, "texts": texts, "save": save, "options": options}
 	add_choice(&"play", "Play", play, "", &"")
 	add_choice(&"options", "Options", open_options, "", &"")

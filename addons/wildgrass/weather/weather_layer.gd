@@ -4,7 +4,7 @@
 class_name WgWeatherLayer
 extends Node2D
 
-const Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
+const _Daytime := preload("res://addons/wildgrass/daytime/daytime.gd")
 const TONE_SHADER := preload("res://addons/wildgrass/weather/weather_tone.gdshader")
 
 ## How far the tone's rectangle goes past the view, in pixels.
@@ -16,7 +16,7 @@ const VARIETY: Array[int] = [2, 1, 1, 0, 0, -1]
 ## The weather drawn; none: nothing.
 var weather: WgWeather
 ## The day and night its sun fades with; none: never.
-var daytime: Daytime
+var daytime: _Daytime
 ## The view, in the layer's coordinates.
 var view := Rect2(0, 0, 320, 240)
 var sprites: Array[Sprite2D] = []

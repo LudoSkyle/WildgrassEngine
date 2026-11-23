@@ -1,10 +1,10 @@
 ## Games kept in slots: the state of every part, written as JSON, read back.
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
 
 ## The engine's layout of a game file.
 const FORMAT := 1
@@ -15,20 +15,20 @@ signal new_game_started(slot: int)
 signal erased(slot: int)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## The slot of the game played; 0: none yet.
 var slot := 0
 
-var _paths: Paths
-var _config: ConfigRegistry
-var _hooks: Hooks
+var _paths: _Paths
+var _config: _ConfigRegistry
+var _hooks: _Hooks
 ## Each {"name", "state", "restore", "reset", "check"}, in the order added.
 var _parts: Array[Dictionary] = []
 ## Parts of the game played that no one added: written back as they were.
 var _kept: Dictionary = {}
 
 
-func _init(paths: Paths, logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks) -> void:
+func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks) -> void:
 	_paths = paths
 	log = logger
 	_config = config_registry

@@ -2,37 +2,37 @@
 ## same cell, and what they need to walk.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
-const Maps := preload("res://addons/wildgrass/maps/maps.gd")
-const Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Story := preload("res://addons/wildgrass/story/story.gd")
-const Bag := preload("res://addons/wildgrass/bag/bag.gd")
-const Menu := preload("res://addons/wildgrass/menu/menu.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _ConfigRegistry := preload("res://addons/wildgrass/core/config/config_registry.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Maps := preload("res://addons/wildgrass/maps/maps.gd")
+const _Tiles := preload("res://addons/wildgrass/tiles/tiles.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Story := preload("res://addons/wildgrass/story/story.gd")
+const _Bag := preload("res://addons/wildgrass/bag/bag.gd")
+const _Menu := preload("res://addons/wildgrass/menu/menu.gd")
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 
 ## A walker's step starts, leaving `cell` toward `direction`.
 signal walker_left(walker: WgWalker, cell: Vector2i, direction: Vector2i, running: bool)
 ## A walker's step is halfway into `cell`: it is in it now.
 signal walker_entered(walker: WgWalker, cell: Vector2i)
-var config: ConfigRegistry
-var hooks: Hooks
-var screens: ScreenRegistry
-var maps: Maps
-var tiles: Tiles
+var config: _ConfigRegistry
+var hooks: _Hooks
+var screens: _ScreenRegistry
+var maps: _Maps
+var tiles: _Tiles
 ## Says the tile messages; set once the dialogue service exists.
-var dialogue: Dialogue
+var dialogue: _Dialogue
 ## What characters say follows it; set once the story service exists.
-var story: Story
+var story: _Story
 ## Item balls give through it; set once the bag service exists.
-var bag: Bag
+var bag: _Bag
 ## The pause menu, opened by the player's `menu` action.
-var menu: Menu
+var menu: _Menu
 ## The wild encounters, set by the engine: a step in grass may bring one.
 var encounters: RefCounted
 
@@ -74,7 +74,7 @@ class Walk:
 		finished.emit()
 
 
-func _init(logger: Log, config_registry: ConfigRegistry, hook_registry: Hooks, screen_registry: ScreenRegistry, maps_service: Maps, tiles_service: Tiles) -> void:
+func _init(logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks, screen_registry: _ScreenRegistry, maps_service: _Maps, tiles_service: _Tiles) -> void:
 	log = logger
 	config = config_registry
 	hooks = hook_registry

@@ -4,7 +4,7 @@
 class_name WgMessageBox
 extends WgScreen
 
-const MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
+const _MessageTags := preload("res://addons/wildgrass/dialogue/message_tags.gd")
 
 enum State { IDLE, WRITING, WAITING_KEY, PAGE_WRITTEN, SCROLLING, WRITTEN, HELD, CHOOSING, NUMBER }
 
@@ -149,7 +149,7 @@ func show_message(message: String, options: Dictionary, answers: Array[Dictionar
 	if _number != null:
 		_number.hide()
 	_dress()
-	var split := MessageTags.split(message, dialogue.tag_names(), _effect_tags())
+	var split := _MessageTags.split(message, dialogue.tag_names(), _effect_tags())
 	for tag_name: String in split["unknown"]:
 		dialogue.log.warn(&"dialogue", "unknown tag [%s] in \"%s\"" % [tag_name, message])
 	_tags.clear()

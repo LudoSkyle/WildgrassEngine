@@ -10,10 +10,10 @@
 class_name WgPokedexScreen
 extends WgScreen
 
-const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
-const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const Texts := preload("res://addons/wildgrass/texts/texts.gd")
+const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
+const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 ## True: the list stops at the last species seen; nothing seen, every row.
 @export var hide_after_last_seen := true
@@ -39,10 +39,10 @@ const Texts := preload("res://addons/wildgrass/texts/texts.gd")
 ## `{dex}`, `{seen}`, `{caught}`.
 @export var header_text := "{dex}   Seen {seen}   Caught {caught}"
 
-var pokedex: Pokedex
-var species: SpeciesData
-var dialogue: Dialogue
-var texts: Texts
+var pokedex: _Pokedex
+var species: _SpeciesData
+var dialogue: _Dialogue
+var texts: _Texts
 ## The index of the row under the cursor.
 var cursor := 0
 ## The services, given to the entry screen.

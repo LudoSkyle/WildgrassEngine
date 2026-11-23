@@ -3,15 +3,15 @@
 ## sources give; `none`, the engine's).
 extends RefCounted
 
-const Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
+const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Catalog := preload("res://addons/wildgrass/pokemon/catalog.gd")
 
 ## The weather on changed.
 signal changed(old: StringName, new: StringName)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 ## What draws the weather, under the maps' host, on maps outside.
 var layer: WgWeatherLayer
 ## The day and night the sun's tone fades with.
@@ -22,15 +22,15 @@ var current: StringName = &"none":
 		current = value
 		_tell()
 
-var _catalog: Catalog
+var _catalog: _Catalog
 var _none: WgWeather
 var _maps: Object
 var _shown: StringName = &"none"
 
 
-func _init(paths: Paths, logger: Log) -> void:
+func _init(paths: _Paths, logger: _Log) -> void:
 	log = logger
-	_catalog = Catalog.new(paths, logger, &"weather", WgWeather, &"weather", "weather")
+	_catalog = _Catalog.new(paths, logger, &"weather", WgWeather, &"weather", "weather")
 	_none = WgWeather.new()
 	_none.id = &"none"
 	_none.name = "Clear"

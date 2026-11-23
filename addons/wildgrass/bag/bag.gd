@@ -1,12 +1,12 @@
 ## What the player carries: items, in the order received, and money.
 extends RefCounted
 
-const Log := preload("res://addons/wildgrass/core/log/log.gd")
-const Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
-const Items := preload("res://addons/wildgrass/bag/items.gd")
-const Quests := preload("res://addons/wildgrass/story/quests.gd")
-const Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
-const ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
+const _Log := preload("res://addons/wildgrass/core/log/log.gd")
+const _Hooks := preload("res://addons/wildgrass/core/hooks/hooks.gd")
+const _Items := preload("res://addons/wildgrass/bag/items.gd")
+const _Quests := preload("res://addons/wildgrass/story/quests.gd")
+const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
+const _ScreenRegistry := preload("res://addons/wildgrass/core/screens/screen_registry.gd")
 
 ## The count of an item changed.
 signal changed(id: StringName, count: int)
@@ -15,24 +15,24 @@ signal money_changed(money: int)
 signal given(id: StringName, count: int)
 
 @warning_ignore("shadowed_global_identifier")
-var log: Log
+var log: _Log
 var money: int:
 	get:
 		return _money
 
-var _hooks: Hooks
-var _items: Items
-var _quests: Quests
+var _hooks: _Hooks
+var _items: _Items
+var _quests: _Quests
 var _counts: Dictionary[StringName, int] = {}
 ## Every item held, in the order received.
 var _order: Array[StringName] = []
 var _money := 0
-var _dialogue: Dialogue
-var _screens: ScreenRegistry
+var _dialogue: _Dialogue
+var _screens: _ScreenRegistry
 var _reveal: WgScreen
 
 
-func _init(logger: Log, hook_registry: Hooks, items_service: Items, quests: Quests) -> void:
+func _init(logger: _Log, hook_registry: _Hooks, items_service: _Items, quests: _Quests) -> void:
 	log = logger
 	_hooks = hook_registry
 	_items = items_service
@@ -44,7 +44,7 @@ func _init(logger: Log, hook_registry: Hooks, items_service: Items, quests: Ques
 
 ## Adds the message tags `[give=id]`, `[give=id*n]`, which narrates, and
 ## `[take=id]`, `[take=id*n]`.
-func add_tags(dialogue: Dialogue, screens: ScreenRegistry) -> void:
+func add_tags(dialogue: _Dialogue, screens: _ScreenRegistry) -> void:
 	_dialogue = dialogue
 	_screens = screens
 	# Methods, not lambdas: a lambda would keep this service alive.
