@@ -29,14 +29,14 @@ const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 
 @export_group("Texts")
 ## Asked with the choices; `{item}` is its name.
-@export_multiline var selected_text := "{item} is selected."
-@export var use_choice := "Use"
-@export var toss_choice := "Toss"
-@export var cancel_choice := "Cancel"
+@export_multiline var selected_text := "wg.bag.selected"
+@export var use_choice := "wg.bag.use"
+@export var toss_choice := "wg.bag.toss"
+@export var cancel_choice := "wg.cancel"
 ## `{item}` is its plural name.
-@export_multiline var toss_count_text := "Toss how many {item}?"
+@export_multiline var toss_count_text := "wg.bag.toss_count"
 ## `{count}`, and `{item}`, its name for that count.
-@export_multiline var toss_confirm_text := "Throw away {count} {item}?"
+@export_multiline var toss_confirm_text := "wg.bag.toss_confirm"
 
 var bag: _Bag
 var dialogue: _Dialogue

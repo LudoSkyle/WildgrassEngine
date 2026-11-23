@@ -87,7 +87,7 @@ func test_the_config_orders_the_options_shown_skipping_unknown_ids_and_lone_valu
 	_world.options.add_engine_options(_world.dialogue, _world.texts)
 	_auto_run(_world.options)
 	assert_array(_world.options.shown()).is_equal([&"volume", &"auto_run", &"message_speed"])
-	assert_str(_world.texts.format(_world.options.option(&"volume")["name"])).is_equal("Volume")
+	assert_str(_world.texts.label(_world.options.option(&"volume")["name"])).is_equal("Volume")
 
 
 func test_a_value_shows_its_text_else_its_format_else_itself() -> void:
@@ -98,7 +98,7 @@ func test_a_value_shows_its_text_else_its_format_else_itself() -> void:
 	_world.options.set_value(&"volume", 35)
 	assert_str(_world.options.text_of(&"volume")).is_equal("35%")
 	assert_str(_world.options.text_of(&"count")).is_equal("2")
-	assert_str(_world.texts.format(_world.options.text_of(&"message_speed"))).is_equal("Normal")
+	assert_str(_world.texts.label(_world.options.text_of(&"message_speed"))).is_equal("Normal")
 
 
 func test_the_engine_s_options_apply_to_the_dialogue_the_sound_and_the_language() -> void:

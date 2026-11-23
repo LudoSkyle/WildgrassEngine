@@ -224,7 +224,7 @@ func test_with_no_maximum_the_new_game_card_is_the_next_slot() -> void:
 func test_an_options_card_comes_last_and_writes_the_cards_again_once_back() -> void:
 	var translation := Translation.new()
 	translation.locale = "fr"
-	translation.add_message("Options", "Réglages")
+	translation.add_message("wg.slots.options", "Réglages")
 	TranslationServer.add_translation(translation)
 	_world.texts.language = "en"
 	var screen := _open()

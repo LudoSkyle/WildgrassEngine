@@ -30,7 +30,7 @@ const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 ## `{number}`, `{name}`.
 @export var title_text := "{number}  {name}"
 ## `{height}`, `{weight}`.
-@export var size_text := "Height {height} m   Weight {weight} kg"
+@export var size_text := "wg.pokedex.size"
 ## Shown in place of what is known once caught.
 @export var unknown_text := "?????"
 

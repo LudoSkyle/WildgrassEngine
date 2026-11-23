@@ -119,14 +119,15 @@ and set *wildgrass/screens/message_box* to your scene; a sign's frame is the
 `config/dialogue.json`.
 
 **Texts**: translate your game as any Godot project (`.po` or `.csv` in
-*Project Settings → Localization*). The engine's labels are English
-("Bag"), translated the same way. In a Studio project, the Studio layer reads
+*Project Settings → Localization*). The engine writes none of its own
+words: each is a key (`wg.menu.bag`) your translations give, the same way
+([the keys](docs/design/05b-text-keys.md)); the sample project gives them all. In a Studio project, the Studio layer reads
 `Data/Text/Dialogs/` as data (the plugin keeps Godot from importing them as
-translations) and shows the labels in Studio's words.
+translations) and shows most keys in Studio's words.
 
 ```gdscript
 Wildgrass.texts.language = "fr"
-var bag := Wildgrass.texts.label("Bag")
+var bag := Wildgrass.texts.label("wg.menu.bag")
 Wildgrass.texts.set_value(&"player", "Ludo")
 await Wildgrass.dialogue.say("Welcome, {player}! Press {key:ui_accept}.")
 ```

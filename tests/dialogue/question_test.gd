@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 
 const World := preload("res://tests/support/walking_world.gd")
+const EngineWords := preload("res://tests/support/engine_words.gd")
 
 var _world: World
 
@@ -10,7 +11,7 @@ func before_test() -> void:
 
 
 func after_test() -> void:
-	TranslationServer.clear()
+	EngineWords.reset()
 	_world.root.free()
 	_world.cleanup()
 

@@ -51,7 +51,7 @@ enum Stage {
 @export var list: NodePath = ^"Choices/Margin/List"
 
 @export_group("Texts")
-@export var prompt_text := "Press {key:ui_accept}"
+@export var prompt_text := "wg.title.prompt"
 
 var title: _Title
 var dialogue: _Dialogue

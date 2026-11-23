@@ -39,10 +39,10 @@ names, and problems name them (`path_cells`, `letters_per_second`).
   defaults; the project's own file is applied last, field by field.
   `is_given(name)`: a file or a source gives values; the `display` config is
   applied at start only then.
-- The engine's **labels** are English ("Bag", "Text speed"), shown through
-  `Wildgrass.texts.label(text, values)`: Godot's translations, then
-  placeholders. A game translates them as any Godot text; a message's own
-  `values` are labels too. `{text:…}`, and its fallback syntax, leave the
+- The engine writes none of its words: each is a **key** (`wg.menu.bag`,
+  `wg.options.text_speed`), shown through `Wildgrass.texts.label(text,
+  values)`: Godot's translations, then placeholders. A game gives their text
+  as any Godot text; a message's own `values` are labels too. `{text:…}`, and its fallback syntax, leave the
   core.
 - `Wildgrass.texts.add_placeholder(name, callable)`: a plugin adds a
   placeholder (`{name:argument}`); the filter hook `text_tokens(text)` lets
@@ -57,7 +57,7 @@ names, and problems name them (`path_cells`, `letters_per_second`).
   `Wildgrass.quests.add_source(callable)` gives others: the callable returns
   an array of quests.
 - The bag's default pockets are the engine's: Items, Medicine, Poké Balls,
-  TMs, Berries, Key Items (revealed), English labels, with no Studio number.
+  TMs, Berries, Key Items (revealed), named by keys, with no Studio number.
 - The engine's own default for saves: `user://saves/game-1.json`, a single
   game `saves/game.json`.
 
@@ -100,11 +100,12 @@ Pokémon settings with the party.
 - Studio's `[VAR …]` tokens, rewritten by the `text_tokens` hook into
   placeholders: `[VAR PKNICK(0001)]` → `{pknick_1}`, `[VAR NAME]` →
   `{name}`; a token of digits alone (a format code) shows nothing;
-- the engine's English labels shown with Studio's words: at install, the
-  layer makes a Godot translation per column from a table of the engine's
-  labels and their Studio lines ("Bag" → `100014:2`, "Text speed" →
+- the engine's keys shown with Studio's words: at install, the layer makes
+  a Godot translation per column from a table of the engine's keys and their
+  Studio lines (`wg.menu.bag` → `100014:2`, `wg.options.text_speed` →
   `100042:3`…), so a Studio project reads "Sac" without the core knowing
-  why.
+  why. A key Studio has no line for is the game's to give, as in a Godot
+  project ([the keys](05b-text-keys.md) say which).
 
 **Items** (`Data/Studio/items/<dbSymbol>.json`): a source of the items
 service, turned into `WgItem` as before (`klass` → `kind`, `isLimited` →
@@ -140,7 +141,7 @@ item in `res://items/` over Studio's, a screen of its own over the engine's.
 
 1. Configs: the `config` folder, resources and JSON, sources, the engine's
    names and fields.
-2. Texts: English labels, placeholders and the tokens hook added by plugins.
+2. Texts: keys of the engine's words, placeholders and the tokens hook added by plugins.
 3. Items and quests: folders of resources, sources; the engine's pockets.
 4. The layer: recognising a project, configs, texts and labels, items and
    pockets, quests; the editor keeping Studio's text files.

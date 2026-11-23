@@ -16,7 +16,7 @@ const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const _Dialogue := preload("res://addons/wildgrass/dialogue/dialogue.gd")
 
 ## What the engine's `start` says.
-const ANNOUNCE := "A wild {name} appeared!"
+const ANNOUNCE := "wg.wild.appeared"
 
 ## A wild Pokémon came out: `{species, form, level, shiny, table}`.
 signal encountered(pokemon: Dictionary)

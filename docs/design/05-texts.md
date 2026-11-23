@@ -14,15 +14,30 @@ Localization*, `tr()` and `tr_n()` in code, labels that translate themselves,
 images swapped per language by Godot's remaps. The engine translates what it
 shows the same way: messages, speakers, choices.
 
-The engine's own labels ("Bag", "Text speed") are plain English:
+The engine writes none of its own words. Each word it shows is a **key**
+(`wg.menu.bag`, `wg.yes`, `wg.save.question`), and the game gives its text
+in each language in its translations, as any other text:
 
 ```gdscript
-Wildgrass.texts.label("Bag")                 # translated, then placeholders filled
-Wildgrass.texts.label("{count} left", {"count": 3})
+Wildgrass.texts.label("wg.menu.bag")          # translated, then placeholders filled
+Wildgrass.texts.label("wg.item.found", {"item": "Potion"})
 ```
 
-Screens show their words through `label()`; a game translates them as any
-Godot text.
+```csv
+keys,en,fr
+wg.menu.bag,Bag,Sac
+wg.item.found,Found {item}!,Vous trouvez {item} !
+```
+
+- A key with no text in the game stays as written (`wg.menu.bag` on
+  screen), logged once: what is missing shows at once.
+- The keys begin with `wg.` (`Wildgrass.texts.KEY_PREFIX`); only they are
+  checked, a game's own labels are not.
+- A screen's words are exports holding keys (`save_text = "wg.save.question"`):
+  a game sets another key, or its own text, there.
+- The list of keys and their English: [the keys](05b-text-keys.md). The
+  sample project gives them all, in English and French; a Studio project has
+  most of them in its own text files (feature 10 bis).
 
 ## Studio's texts
 
@@ -37,8 +52,8 @@ and the engine's labels in Studio's words.
 Wildgrass.texts.language = "fr"          # TranslationServer.set_locale()
 Wildgrass.texts.languages()              # ["fr", "en"]: choosable, in order
 Wildgrass.texts.language_name("fr")      # "Français"
-Wildgrass.texts.label_in("fr", "Bag")    # "Sac": another language than the one shown
-Wildgrass.texts.is_given_in("fr", "Bag") # true if it has words of its own in French
+Wildgrass.texts.label_in("fr", "wg.menu.bag")    # "Sac": another language than the one shown
+Wildgrass.texts.is_given_in("fr", "wg.menu.bag") # true if it has words of its own in French
 ```
 
 - Signal `language_changed(code)`. Godot refreshes labels itself; what a game
@@ -106,6 +121,6 @@ back after each. Covered: setting the language and its signal, the default at
 start, choosable languages and Godot's, names and their fallback, config
 errors; values, callables, removing, truth of each kind, the value hook, keys,
 their first input and hook, placeholders a plugin adds and the tokens hook,
-labels translated then filled, what is missing and its log, escaping;
+labels translated then filled, what is missing and its log, keys with no text and their log, escaping;
 messages, speakers and choices formatted when shown. Studio's texts: feature
 10 bis.

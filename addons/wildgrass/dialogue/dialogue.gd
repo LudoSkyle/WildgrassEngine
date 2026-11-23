@@ -145,7 +145,7 @@ func ask_number(text: String, options := {}) -> Variant:
 func confirm(text: String, options := {}) -> bool:
 	var checked := options.duplicate()
 	checked["cancel"] = 1
-	return await ask(text, ["Yes", "No"], checked) == 0
+	return await ask(text, ["wg.yes", "wg.no"], checked) == 0
 
 
 ## Keeps the message shown from going on until `done` comes (a jingle).
@@ -345,8 +345,8 @@ func _narrates(text: String) -> bool:
 	return false
 
 
-static func _translated(text: String) -> String:
-	return str(TranslationServer.translate(text))
+func _translated(text: String) -> String:
+	return _texts.translate(text)
 
 
 func _close_if_idle() -> void:

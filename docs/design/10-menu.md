@@ -7,16 +7,16 @@ it, and the options: what can be set, kept on the player's machine apart from
 any saved game, and the screen that sets them. The title screen also opens
 the options (feature 11).
 
-## English labels
+## Words
 
-The engine's labels are plain English, shown through
-`Wildgrass.texts.label()` (feature 5): Godot's translations, then
-placeholders. A game translates them as any Godot text; a Studio project
-shows Studio's words, through translations the Studio layer builds (feature
-10 bis).
+The engine writes none of its words: entries, option names and values are
+keys (`wg.menu.bag`, `wg.options.text_speed`) shown through
+`Wildgrass.texts.label()` (feature 5). The game gives their text in its
+translations; a Studio project shows Studio's words, through translations the
+Studio layer builds (feature 10 bis).
 
 ```gdscript
-Wildgrass.texts.label("Bag")   # "Sac" in French, when translated
+Wildgrass.texts.label("wg.menu.bag")   # "Sac" in French
 ```
 
 ## The pause menu
@@ -28,13 +28,13 @@ enabled, it opens the `menu` screen.
 
 ```gdscript
 Wildgrass.menu.enabled = false                 # a scene keeps it shut
-Wildgrass.menu.add_entry(&"pokedex", "Pokédex", _open_dex, "has_dex", &"bag")
+Wildgrass.menu.add_entry(&"pokedex", "wg.menu.pokedex", _open_dex, "has_dex", &"bag")
 Wildgrass.menu.open()                          # as the key does
 await Wildgrass.menu.show_screen(&"pokedex")   # an entry's screen, the menu hidden beneath
 ```
 
 - `add_entry(id, text, callable, condition = "", before = &"exit")`: an
-  entry, its text a label, placed before another (before Exit by default; at the end if that
+  entry, its text a key or a label, placed before another (before Exit by default; at the end if that
   one is not there). `condition` is a story condition (feature 7), checked
   each time the menu shows: an entry whose condition fails is not shown. The
   callable is awaited; it returns true to close the menu, false or nothing to

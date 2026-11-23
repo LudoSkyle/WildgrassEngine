@@ -130,7 +130,7 @@ func national() -> WgDex:
 	if _national == null:
 		_national = WgDex.new()
 		_national.id = &"national"
-		_national.name = "National Pokédex"
+		_national.name = "wg.pokedex.national"
 		var every := _species.all()
 		for species in every:
 			_national.creatures.append({"species": species.id, "form": 0})

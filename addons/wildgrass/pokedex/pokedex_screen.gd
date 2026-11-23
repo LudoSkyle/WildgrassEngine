@@ -37,7 +37,7 @@ const _Texts := preload("res://addons/wildgrass/texts/texts.gd")
 @export var row_text := "{number}  {name}"
 @export var unknown_row_text := "{number}  -----"
 ## `{dex}`, `{seen}`, `{caught}`.
-@export var header_text := "{dex}   Seen {seen}   Caught {caught}"
+@export var header_text := "wg.pokedex.header"
 
 var pokedex: _Pokedex
 var species: _SpeciesData

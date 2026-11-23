@@ -1,5 +1,6 @@
 extends GdUnitTestSuite
 
+const EngineWords := preload("res://tests/support/engine_words.gd")
 const World := preload("res://tests/support/walking_world.gd")
 const StudioProject := preload("res://tests/support/studio_project.gd")
 
@@ -14,6 +15,7 @@ func before_test() -> void:
 func after_test() -> void:
 	if _studio != null:
 		_studio.uninstall()
+	EngineWords.reset()
 	TranslationServer.set_locale("en")
 	_world.root.free()
 	_world.cleanup()
@@ -110,15 +112,20 @@ func test_the_title_s_words_are_studio_s() -> void:
 	lines[1] = "New game,Nouvelle partie"
 	lines[23] = "Erase,Effacer"
 	lines[27] = "Exit,Quitter"
-	lines[127] = "Play,Jouer"
 	_world.sandbox.write("Data/Text/Dialogs/9000.csv", "\n".join(lines) + "\n")
 	_world.sandbox.write("Data/Text/Dialogs/100025.csv", "en,fr\nCONTINUE,Continuer\n")
+	var title_lines := PackedStringArray(["en,fr"])
+	for row in 114:
+		title_lines.append("x,x")
+	title_lines[78] = "PLAY,JOUER"
+	title_lines[114] = "PRESS START,APPUYEZ SUR START"
+	_world.sandbox.write("Data/Text/Dialogs/100032.csv", "\n".join(title_lines) + "\n")
 	_studio = StudioProject.install(_world)
 	_world.texts.language = "fr"
 	var words: Array[String] = []
-	for label: String in ["Play", "Quit", "New game", "Continue", "Erase"]:
-		words.append(_world.texts.label(label))
-	assert_array(words).is_equal(["Jouer", "Quitter", "Nouvelle partie", "Continuer", "Effacer"])
+	for key: String in ["wg.title.play", "wg.title.prompt", "wg.title.quit", "wg.slots.new_game", "wg.slots.continue", "wg.slots.erase"]:
+		words.append(_world.texts.label(key))
+	assert_array(words).is_equal(["JOUER", "APPUYEZ SUR START", "Quitter", "Nouvelle partie", "Continuer", "Effacer"])
 
 
 func test_studio_s_pockets_come_in_studio_s_order_with_its_names() -> void:
@@ -135,15 +142,19 @@ func test_studio_s_pockets_come_in_studio_s_order_with_its_names() -> void:
 func test_the_engine_s_labels_say_studio_s_words_until_uninstalled() -> void:
 	_world.sandbox.write("Data/Text/Dialogs/100014.csv", "en,fr,kana\nPOKÉMON,Pokémon,x\nPOKÉDEX,Pokédex,x\nBAG,Sac,バッグ\n")
 	_world.sandbox.write_json("config/studio.json", {"columns": {"ja": "kana"}})
+	# A game's own text for a key wins over Studio's line: none here.
+	TranslationServer.clear()
 	_studio = StudioProject.install(_world)
-	assert_str(_world.texts.label("Bag")).is_equal("BAG")
+	assert_str(_world.texts.label("wg.menu.bag")).is_equal("BAG")
 	_world.texts.language = "fr"
-	assert_str(_world.texts.label("Bag")).is_equal("Sac")
+	assert_str(_world.texts.label("wg.menu.bag")).is_equal("Sac")
+	assert_str(_world.texts.label("wg.menu.pokedex")).is_equal("Pokédex")
 	_world.texts.language = "ja"
-	assert_str(_world.texts.label("Bag")).is_equal("バッグ")
-	assert_str(_world.texts.label("Volume")).is_equal("Volume")
+	assert_str(_world.texts.label("wg.menu.bag")).is_equal("バッグ")
+	# No line in the project, no text in the game: the key.
+	assert_str(_world.texts.label("wg.options.volume")).is_equal("wg.options.volume")
 	_studio.uninstall()
-	assert_str(_world.texts.label("Bag")).is_equal("Bag")
+	assert_str(_world.texts.label("wg.menu.bag")).is_equal("wg.menu.bag")
 
 
 func test_installed_once_only() -> void:
@@ -159,7 +170,7 @@ func test_a_godot_project_never_meets_the_layer() -> void:
 	var engine := get_tree().root.get_node("Wildgrass")
 	assert_object(engine.studio).is_not_null()
 	assert_bool(engine.studio.installed).is_false()
-	assert_str(engine.texts.label("Bag")).is_equal("Bag")
+	assert_str(engine.texts.label("wg.menu.bag")).is_equal("Bag")
 
 
 func test_studio_s_sound_design_becomes_the_engine_s_named_sounds() -> void:
@@ -188,7 +199,7 @@ func test_a_label_in_another_language_reads_studio_s_texts_in_it() -> void:
 	_studio = StudioProject.install(_world)
 	_world.texts.language = "en"
 	assert_str(_world.texts.label_in("fr", "{text:100000:1}")).is_equal("Bulbizarre")
-	assert_str(_world.texts.label_in("fr", "Bag")).is_equal("Sac")
+	assert_str(_world.texts.label_in("fr", "wg.menu.bag")).is_equal("Sac")
 	assert_str(_world.texts.label("{text:100000:1}")).is_equal("Bulbasaur")
 
 

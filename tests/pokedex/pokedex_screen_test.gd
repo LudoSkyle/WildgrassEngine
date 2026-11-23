@@ -175,8 +175,8 @@ func test_the_switch_action_shows_the_next_pokedex() -> void:
 func test_the_rows_say_their_words_in_the_language() -> void:
 	var translation := Translation.new()
 	translation.locale = "fr"
-	translation.add_message("{dex}   Seen {seen}   Caught {caught}", "{dex}   Vus {seen}   Pris {caught}")
-	translation.add_message("National Pokédex", "Pokédex national")
+	translation.add_message("wg.pokedex.header", "{dex}   Vus {seen}   Pris {caught}")
+	translation.add_message("wg.pokedex.national", "Pokédex national")
 	TranslationServer.add_translation(translation)
 	_world.texts.language = "fr"
 	var screen := _open()

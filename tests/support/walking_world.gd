@@ -185,13 +185,13 @@ func _init(parent: Node, map_config := {}) -> void:
 	menu = Menu.new(logger, screens, story)
 	menu.services = {"bag": bag, "dialogue": dialogue, "texts": texts, "save": save}
 	walkers.menu = menu
-	menu.add_entry(&"exit", "Exit", menu.exit)
-	menu.add_entry(&"bag", "Bag", menu.open_bag)
-	menu.add_entry(&"save", "Save", menu.open_save, "!save_disabled")
+	menu.add_entry(&"exit", "wg.menu.exit", menu.exit)
+	menu.add_entry(&"bag", "wg.menu.bag", menu.open_bag)
+	menu.add_entry(&"save", "wg.menu.save", menu.open_save, "!save_disabled")
 	options = Options.new(paths, logger, config)
 	options.file_path = sandbox.root + "options.json"
 	menu.services["options"] = options
-	menu.add_entry(&"options", "Options", menu.open_options, "", &"save")
+	menu.add_entry(&"options", "wg.menu.options", menu.open_options, "", &"save")
 	title = Title.new(paths, logger, config, screens, story, maps, dialogue, save, options, texts)
 	title.audio = audio
 	audio.follow_game(screens, dialogue, save, bag, items)

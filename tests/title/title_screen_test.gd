@@ -239,8 +239,8 @@ func test_from_the_choice_of_a_game_cancel_comes_back_to_the_prompt() -> void:
 func test_the_choices_follow_the_language() -> void:
 	_translation = Translation.new()
 	_translation.locale = "fr"
-	_translation.add_message("Play", "Jouer")
-	_translation.add_message("Press {key:ui_accept}", "Appuyez sur {key:ui_accept}")
+	_translation.add_message("wg.title.play", "Jouer")
+	_translation.add_message("wg.title.prompt", "Appuyez sur {key:ui_accept}")
 	TranslationServer.add_translation(_translation)
 	var screen := _open()
 	_world.texts.language = "fr"

@@ -1,0 +1,202 @@
+# The engine's words in English, for its tests: the engine writes none.
+msgid ""
+msgstr ""
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+msgid "wg.yes"
+msgstr "Yes"
+
+msgid "wg.no"
+msgstr "No"
+
+msgid "wg.cancel"
+msgstr "Cancel"
+
+msgid "wg.menu.pokedex"
+msgstr "Pokédex"
+
+msgid "wg.menu.bag"
+msgstr "Bag"
+
+msgid "wg.menu.save"
+msgstr "Save"
+
+msgid "wg.menu.options"
+msgstr "Options"
+
+msgid "wg.menu.debug"
+msgstr "Debug"
+
+msgid "wg.menu.exit"
+msgstr "Exit"
+
+msgid "wg.title.play"
+msgstr "Play"
+
+msgid "wg.title.options"
+msgstr "Options"
+
+msgid "wg.title.quit"
+msgstr "Quit"
+
+msgid "wg.title.prompt"
+msgstr "Press {key:ui_accept}"
+
+msgid "wg.options.text_speed"
+msgstr "Text speed"
+
+msgid "wg.options.text_speed_help"
+msgstr "Choose how fast messages are written."
+
+msgid "wg.options.slow"
+msgstr "Slow"
+
+msgid "wg.options.normal"
+msgstr "Normal"
+
+msgid "wg.options.fast"
+msgstr "Fast"
+
+msgid "wg.options.message_frame"
+msgstr "Message frame"
+
+msgid "wg.options.message_frame_help"
+msgstr "Choose the frame of the message box."
+
+msgid "wg.options.frame_sample"
+msgstr "This is how messages look."
+
+msgid "wg.options.volume"
+msgstr "Volume"
+
+msgid "wg.options.volume_help"
+msgstr "Set the volume of the music and sound effects."
+
+msgid "wg.options.music"
+msgstr "Music"
+
+msgid "wg.options.music_help"
+msgstr "Set the volume of the music."
+
+msgid "wg.options.effects"
+msgstr "Sound effects"
+
+msgid "wg.options.effects_help"
+msgstr "Set the volume of the sound effects and jingles."
+
+msgid "wg.options.cries"
+msgstr "Cries"
+
+msgid "wg.options.cries_help"
+msgstr "Set the volume of the Pokémon's cries."
+
+msgid "wg.options.language"
+msgstr "Language"
+
+msgid "wg.options.language_help"
+msgstr "Choose the language of the game."
+
+msgid "wg.save.question"
+msgstr "Would you like to save the game?"
+
+msgid "wg.save.overwrite"
+msgstr "There is already a saved file. Is it OK to overwrite it?"
+
+msgid "wg.save.saved"
+msgstr "The game was saved."
+
+msgid "wg.save.failed"
+msgstr "The game could not be saved."
+
+msgid "wg.save.which_file"
+msgstr "Save in which file?"
+
+msgid "wg.save.file_choice"
+msgstr "File {slot}: {place}, {time}"
+
+msgid "wg.save.new_file_choice"
+msgstr "File {slot}: new"
+
+msgid "wg.slots.card"
+msgstr "File {slot}\n{place}   {time}"
+
+msgid "wg.slots.empty_card"
+msgstr "File {slot}\nNew game"
+
+msgid "wg.slots.damaged_card"
+msgstr "File {slot}\nThis file is damaged."
+
+msgid "wg.slots.options"
+msgstr "Options"
+
+msgid "wg.slots.continue"
+msgstr "Continue"
+
+msgid "wg.slots.new_game"
+msgstr "New game"
+
+msgid "wg.slots.erase"
+msgstr "Erase"
+
+msgid "wg.slots.erase_question"
+msgstr "Erase file {slot}?"
+
+msgid "wg.slots.load_failed"
+msgstr "This file could not be loaded."
+
+msgid "wg.bag.selected"
+msgstr "{item} is selected."
+
+msgid "wg.bag.use"
+msgstr "Use"
+
+msgid "wg.bag.toss"
+msgstr "Toss"
+
+msgid "wg.bag.toss_count"
+msgstr "Toss how many {item}?"
+
+msgid "wg.bag.toss_confirm"
+msgstr "Throw away {count} {item}?"
+
+msgid "wg.pocket.items"
+msgstr "Items"
+
+msgid "wg.pocket.medicine"
+msgstr "Medicine"
+
+msgid "wg.pocket.balls"
+msgstr "Poké Balls"
+
+msgid "wg.pocket.tms"
+msgstr "TMs"
+
+msgid "wg.pocket.berries"
+msgstr "Berries"
+
+msgid "wg.pocket.key_items"
+msgstr "Key Items"
+
+msgid "wg.item.found"
+msgstr "Found {item}!"
+
+msgid "wg.item.no_room"
+msgstr "No room for {item}."
+
+msgid "wg.pokedex.national"
+msgstr "National Pokédex"
+
+msgid "wg.pokedex.header"
+msgstr "{dex}   Seen {seen}   Caught {caught}"
+
+msgid "wg.pokedex.size"
+msgstr "Height {height} m   Weight {weight} kg"
+
+msgid "wg.wild.appeared"
+msgstr "A wild {name} appeared!"
+
+msgid "wg.weather.clear"
+msgstr "Clear"

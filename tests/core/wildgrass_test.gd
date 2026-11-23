@@ -178,7 +178,7 @@ func test_a_studio_project_is_read_through_the_layer_from_the_start() -> void:
 
 func test_the_default_language_is_set_at_start() -> void:
 	var locale := TranslationServer.get_locale()
-	_sandbox.write_json("config/language.json", {"default": "es"})
+	_sandbox.write_json("config/language.json", {"default": "es", "choosable": ["es", "en"]})
 	add_child(_start_engine())
 	assert_str(TranslationServer.get_locale()).is_equal("es")
 	TranslationServer.set_locale(locale)

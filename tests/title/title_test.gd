@@ -166,7 +166,7 @@ func test_the_engine_choices_and_a_game_s_go_before_quit_or_another() -> void:
 	title.add_choice(&"mystery", "Mystery", func() -> bool: return false, "met_ghost", &"play")
 	title.add_choice(&"credits", "Thanks", func() -> bool: return false)
 	assert_array(title.choices()).is_equal([&"mystery", &"play", &"options", &"credits", &"quit"])
-	assert_array(title.shown().map(func(choice: Dictionary) -> String: return choice["text"])).is_equal(["Play", "Options", "Thanks", "Quit"])
+	assert_array(title.shown().map(func(choice: Dictionary) -> String: return choice["text"])).is_equal(["wg.title.play", "wg.title.options", "Thanks", "wg.title.quit"])
 	_world.story.set_flag(&"met_ghost")
 	assert_str(title.shown()[0]["text"]).is_equal("Mystery")
 	assert_bool(title.remove_choice(&"mystery")).is_true()

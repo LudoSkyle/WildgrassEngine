@@ -46,17 +46,17 @@ signal chosen(slot: int, action: StringName)
 @export_group("Texts")
 ## A card holding a game: `{slot}`, `{place}`, `{time}`, and what the game
 ## added to the summary (`{name}`…).
-@export_multiline var card_text := "File {slot}\n{place}   {time}"
-@export_multiline var empty_card_text := "File {slot}\nNew game"
-@export_multiline var damaged_card_text := "File {slot}\nThis file is damaged."
-@export var options_card_text := "Options"
-@export var continue_choice := "Continue"
-@export var new_game_choice := "New game"
-@export var erase_choice := "Erase"
-@export var cancel_choice := "Cancel"
+@export_multiline var card_text := "wg.slots.card"
+@export_multiline var empty_card_text := "wg.slots.empty_card"
+@export_multiline var damaged_card_text := "wg.slots.damaged_card"
+@export var options_card_text := "wg.slots.options"
+@export var continue_choice := "wg.slots.continue"
+@export var new_game_choice := "wg.slots.new_game"
+@export var erase_choice := "wg.slots.erase"
+@export var cancel_choice := "wg.cancel"
 ## `{slot}`: the file's.
-@export_multiline var erase_text := "Erase file {slot}?"
-@export_multiline var failed_text := "This file could not be loaded."
+@export_multiline var erase_text := "wg.slots.erase_question"
+@export_multiline var failed_text := "wg.slots.load_failed"
 
 var save: _Save
 var dialogue: _Dialogue
