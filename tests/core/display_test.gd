@@ -23,6 +23,17 @@ func test_windowed_the_game_is_drawn_at_window_size_keeping_its_aspect() -> void
 	assert_int(window.canvas_item_default_texture_filter).is_equal(Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST)
 
 
+func test_on_a_screen_of_scale_2_the_window_is_twice_as_many_pixels() -> void:
+	var config := WgDisplayConfig.new()
+	config.load_data({"resolution": {"x": 320, "y": 240}, "window_scale": 2}, "display.json")
+	var window: Window = auto_free(Window.new())
+	var display := Display.new()
+	display.screen_scale = 2.0
+	display.apply(config, window)
+	assert_that(window.size).is_equal(Vector2i(1280, 960))
+	assert_that(window.content_scale_size).is_equal(Vector2i(320, 240))
+
+
 func test_fullscreen_sets_the_mode_and_keeps_the_game_resolution() -> void:
 	var config := WgDisplayConfig.new()
 	config.load_data({"fullscreen": true}, "display.json")

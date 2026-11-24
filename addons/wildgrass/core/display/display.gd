@@ -15,6 +15,11 @@ const WINDOW_SETTINGS: Array[String] = [
 ]
 
 
+## The screen's scale, the pixels of a point; 0: the screens' own (2 on a
+## Retina screen).
+var screen_scale := 0.0
+
+
 ## Whether the project set its window in Godot's own settings.
 static func project_sets_window() -> bool:
 	for setting in WINDOW_SETTINGS:
@@ -24,7 +29,9 @@ static func project_sets_window() -> bool:
 
 
 ## The game works in game pixels but is drawn at window size, keeping its
-## aspect ratio, with nearest filtering.
+## aspect ratio, with nearest filtering. The window's size counts the
+## screen's points, as the player sees them: on a screen of scale 2
+## (Retina) it is twice as many pixels.
 func apply(config: WgDisplayConfig, window: Window) -> void:
 	window.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
@@ -34,4 +41,7 @@ func apply(config: WgDisplayConfig, window: Window) -> void:
 		window.mode = Window.MODE_FULLSCREEN
 	else:
 		window.mode = Window.MODE_WINDOWED
-		window.size = config.resolution * config.window_scale
+		var scale := screen_scale if screen_scale > 0.0 else DisplayServer.screen_get_max_scale()
+		window.size = (Vector2(config.resolution * config.window_scale) * scale).round()
+		if window.is_inside_tree():
+			window.move_to_center()
