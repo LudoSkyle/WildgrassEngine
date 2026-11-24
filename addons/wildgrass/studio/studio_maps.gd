@@ -53,6 +53,14 @@ const ENCOUNTERS: Dictionary[int, String] = {
 	385: "ice", 389: "grass", 390: "tall_grass", 391: "cave", 397: "mountain", 398: "sand", 399: "pond", 405: "ocean", 406: "under_water", 407: "snow",
 }
 const JUMPS: Dictionary[int, Vector2i] = {392: Vector2i.RIGHT, 400: Vector2i.LEFT, 408: Vector2i.DOWN, 416: Vector2i.UP}
+## A bridge's deck: crossed up and down, or left and right.
+const BRIDGES: Array[int] = [402, 404]
+## The height tags; from height 2 up, a walker on them stands above the
+## ground, as at a bridge's end.
+const HEIGHT_0 := 424
+const HEIGHT_6 := 430
+## The engine's level of a bridge's deck.
+const DECK := 1
 ## Studio counts an animated tile's frames in steps of this many game
 ## frames (at 60 a second), unless its display config says otherwise.
 const IDLE_FRAMES := 6
@@ -61,7 +69,7 @@ const ANIMATED := "#animated"
 ## The data layers the TileSet carries, and their type.
 const DATA: Dictionary[String, int] = {
 	"covers": TYPE_BOOL, "ice": TYPE_BOOL, "jump": TYPE_VECTOR2I, "encounter": TYPE_STRING, "system_tag": TYPE_STRING,
-	"terrain_tag": TYPE_INT, "bush": TYPE_BOOL, "counter": TYPE_BOOL,
+	"terrain_tag": TYPE_INT, "bush": TYPE_BOOL, "counter": TYPE_BOOL, "floor": TYPE_INT, "ramp": TYPE_BOOL,
 }
 
 ## Problems met, each a line: a map or a tileset missing, a layer unread.
@@ -356,18 +364,23 @@ func tile_set() -> TileSet:
 		_tile_set.set_physics_layer_collision_layer(0, 1 << (solid_layer - 1))
 		_tile_set.add_physics_layer()
 		_tile_set.set_physics_layer_collision_layer(1, 1 << (edge_layer - 1))
-		for data: String in DATA:
+		# Its path now, before any map is packed: maps refer to it, never
+		# hold a copy.
+		_tile_set.take_over_path(path)
+	# The data layers, those a TileSet saved by an older importer lacks too.
+	for data: String in DATA:
+		if _tile_set.get_custom_data_layer_by_name(data) == -1:
 			_tile_set.add_custom_data_layer()
 			var at := _tile_set.get_custom_data_layers_count() - 1
 			_tile_set.set_custom_data_layer_name(at, data)
 			_tile_set.set_custom_data_layer_type(at, DATA[data])
-		# Its path now, before any map is packed: maps refer to it, never
-		# hold a copy.
-		_tile_set.take_over_path(path)
 	var known: Variant = _tile_set.get_meta(&"studio_sources", {})
 	if known is Dictionary:
 		for name: String in known:
 			_sources[name] = int(known[name])
+	# The tags' data again: setting it twice changes nothing.
+	if _sources.has("systemtags.tsx") and _tile_set.has_source(_sources["systemtags.tsx"]):
+		_make_tags(_tile_set.get_source(_sources["systemtags.tsx"]) as TileSetAtlasSource)
 	return _tile_set
 
 
@@ -718,6 +731,14 @@ func _make_tags(source: TileSetAtlasSource) -> void:
 			data.set_custom_data("ice", true)
 		if JUMPS.has(tag):
 			data.set_custom_data("jump", JUMPS[tag])
+		# A bridge's deck is a floor above the ground; a height from 2 up is
+		# the ramp to it: a walker steps onto the deck from there, and off it
+		# back there, as in Studio.
+		if tag in BRIDGES:
+			data.set_custom_data("floor", DECK)
+		if tag >= HEIGHT_0 + 2 and tag <= HEIGHT_6:
+			data.set_custom_data("floor", DECK)
+			data.set_custom_data("ramp", true)
 
 
 func _zone_of(map_id: int) -> StringName:

@@ -306,3 +306,87 @@ func test_maps_share_the_animated_source_and_importing_again_adds_none() -> void
 	again.texture_of = _importer.texture_of
 	assert_bool(again.import_map("map003")).is_true()
 	assert_int(again.tile_set().get_source_count()).is_equal(sources)
+
+
+## Tags of the systemtags tileset, by their number.
+const BRIDGE_UP_DOWN := TAGS + 402 - 384
+const HEIGHT_0_TAG := TAGS + 424 - 384
+const HEIGHT_4_TAG := TAGS + 428 - 384
+
+
+## A 4 × 4 map, all ground: a bridge over water on column 1, from the ramp
+## (1, 0) down to the ramp (1, 3), its deck over cells solid on the ground;
+## a bridge on column 2 over walkable ground; height 0 at (0, 0).
+func _write_bridge() -> void:
+	var ground := {}
+	for y in 4:
+		for x in 4:
+			ground[Vector2i(x, y)] = ART
+	var tmx := '<?xml version="1.0" encoding="UTF-8"?>\n<map version="1.10" orientation="orthogonal" renderorder="right-down" width="4" height="4" tilewidth="32" tileheight="32" infinite="0">\n'
+	tmx += ' <tileset firstgid="%d" source="../Tilesets/art.tsx"/>\n <tileset firstgid="%d" source="../Tilesets/passages.tsx"/>\n <tileset firstgid="%d" source="../Tilesets/systemtags.tsx"/>\n' % [ART, PASSAGES, TAGS]
+	tmx += _csv("Ground_1", ground)
+	tmx += _csv("Deck_3", {Vector2i(1, 1): ART, Vector2i(1, 2): ART, Vector2i(2, 1): ART, Vector2i(2, 2): ART})
+	tmx += _csv("passages", {Vector2i(1, 1): PASSAGES + 15, Vector2i(1, 2): PASSAGES + 15}, ' visible="0"')
+	tmx += _csv("systemtags", {Vector2i(1, 0): HEIGHT_4_TAG, Vector2i(1, 3): HEIGHT_4_TAG, Vector2i(0, 0): HEIGHT_0_TAG}, ' visible="0"')
+	var deck := {}
+	for y: int in [1, 2]:
+		for x: int in [1, 2]:
+			deck[Vector2i(x, y)] = BRIDGE_UP_DOWN
+	tmx += _csv("systemtags_bridge1", deck, ' visible="0"')
+	_world.sandbox.write("Data/Tiled/Maps/005 Bridge.tmx", tmx + "</map>\n")
+	_world.sandbox.write_json("Data/Studio/maps/map005.json", {"klass": "Map", "id": 5, "dbSymbol": "map005", "tiledFilename": "005 Bridge"})
+
+
+func test_a_bridge_s_deck_is_a_floor_its_ends_ramps_up_to_it() -> void:
+	_write_bridge()
+	_import("map005")
+	var tiles := _world.tiles
+	assert_array([tiles.data(Vector2i(1, 1), &"floor"), tiles.data(Vector2i(1, 1), &"ramp")]).is_equal([1, false])
+	assert_array([tiles.data(Vector2i(1, 0), &"floor"), tiles.data(Vector2i(1, 0), &"ramp")]).is_equal([1, true])
+	# Height 0 and 1 are the ground: nothing to climb.
+	assert_array([tiles.data(Vector2i(0, 0), &"floor"), tiles.data(Vector2i(0, 0), &"ramp")]).is_equal([0, false])
+
+
+func test_a_walker_climbs_the_ramp_crosses_the_deck_over_the_water_and_comes_down() -> void:
+	_write_bridge()
+	_import("map005")
+	var tiles := _world.tiles
+	# Onto the ramp from the ground: up on the deck's level.
+	assert_bool(tiles.can_step(Vector2i(0, 0), Vector2i.RIGHT, 0)).is_true()
+	assert_int(tiles.level_after(Vector2i(0, 0), Vector2i.RIGHT, 0)).is_equal(1)
+	# Along the deck, over cells the ground's passages block.
+	for y: int in [0, 1, 2]:
+		assert_bool(tiles.can_step(Vector2i(1, y), Vector2i.DOWN, 1)).override_failure_message("deck row %d" % y).is_true()
+		assert_int(tiles.level_after(Vector2i(1, y), Vector2i.DOWN, 1)).is_equal(1)
+	# Across the deck to its other column, but not off its side.
+	assert_bool(tiles.can_step(Vector2i(1, 1), Vector2i.RIGHT, 1)).is_true()
+	assert_bool(tiles.can_step(Vector2i(1, 1), Vector2i.LEFT, 1)).is_false()
+	# Off the far ramp: back on the ground.
+	assert_bool(tiles.can_step(Vector2i(1, 3), Vector2i.LEFT, 1)).is_true()
+	assert_int(tiles.level_after(Vector2i(1, 3), Vector2i.LEFT, 1)).is_equal(0)
+
+
+func test_on_the_ground_a_walker_goes_under_the_deck_where_the_ground_lets_it() -> void:
+	_write_bridge()
+	_import("map005")
+	var tiles := _world.tiles
+	assert_bool(tiles.can_step(Vector2i(3, 1), Vector2i.LEFT, 0)).is_true()
+	assert_int(tiles.level_after(Vector2i(3, 1), Vector2i.LEFT, 0)).is_equal(0)
+	assert_bool(tiles.can_step(Vector2i(2, 0), Vector2i.DOWN, 0)).is_true()
+	# Under the deck over the water, the ground's passages hold.
+	assert_bool(tiles.can_step(Vector2i(0, 1), Vector2i.RIGHT, 0)).is_false()
+	assert_bool(tiles.can_step(Vector2i(2, 1), Vector2i.LEFT, 0)).is_false()
+
+
+func test_a_tile_set_from_an_older_import_gets_the_new_data_layers_and_tags() -> void:
+	_import()
+	var tile_set := _importer.tile_set()
+	tile_set.remove_custom_data_layer(tile_set.get_custom_data_layer_by_name("ramp"))
+	tile_set.remove_custom_data_layer(tile_set.get_custom_data_layer_by_name("floor"))
+	_importer.save_tile_set()
+	var again := StudioMaps.new(_data, _world.sandbox.root + "maps")
+	var reloaded := again.tile_set()
+	assert_int(reloaded.get_custom_data_layer_by_name("floor")).is_not_equal(-1)
+	var tags := reloaded.get_source(again.tile_set().get_meta(&"studio_sources")["systemtags.tsx"]) as TileSetAtlasSource
+	var height_4 := 428 - 384
+	assert_bool(tags.get_tile_data(Vector2i(height_4 % 8, height_4 / 8), 0).get_custom_data("ramp")).is_true()
