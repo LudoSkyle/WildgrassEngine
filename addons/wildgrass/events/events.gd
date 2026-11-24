@@ -13,6 +13,7 @@ const _Story := preload("res://addons/wildgrass/story/story.gd")
 const _Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const _Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const _Run := preload("res://addons/wildgrass/events/event_run.gd")
+const _Mover := preload("res://addons/wildgrass/events/mover.gd")
 
 ## The group every event of the maps shown is in.
 const GROUP := &"wildgrass_events"
@@ -26,6 +27,8 @@ var walkers: _Walkers
 var tiles: Object
 ## Set once the bag exists: money and items for conditions and variables.
 var bag: Object
+## Set once the audio exists: a route's sounds.
+var audio: Object
 ## Set once the dialogue exists: messages and choices.
 var dialogue: Object:
 	set(value):
@@ -42,6 +45,8 @@ var _paths: _Paths
 var _hooks: _Hooks
 var _refresh_wanted := false
 var _parallel: Dictionary[WgEvent, _Run] = {}
+## Who moves each walker moving by itself or along a route imposed.
+var _movers: Dictionary[WgWalker, _Mover] = {}
 var _common_parallel: Dictionary[int, _Run] = {}
 var _commons: Dictionary[int, WgCommonEvent] = {}
 var _commons_listed := false
@@ -76,6 +81,7 @@ func advance(delta: float) -> void:
 		_refresh_wanted = false
 		for event in shown():
 			refresh(event)
+	_prune_movers()
 	var current := events_of(maps.current)
 	for event in current:
 		_check_auto(event)
@@ -121,6 +127,7 @@ func refresh(event: WgEvent) -> void:
 		return
 	event.apply_page(chosen)
 	_parallel.erase(event)
+	_set_moves(event)
 
 
 ## Removes `event` until its map is built again.
@@ -179,6 +186,46 @@ func touch_there(walker: WgWalker, direction: Vector2i) -> bool:
 			start(event)
 			return true
 	return false
+
+
+## Has `walker` (the player or an event) follow `route` now; its own way of
+## moving waits until the route ends.
+func force_route(walker: WgWalker, route: WgMoveRoute) -> void:
+	var mover := _movers.get(walker) as _Mover
+	if mover == null:
+		mover = _Mover.new(self, walker)
+		_movers[walker] = mover
+	mover.force(route)
+	walkers.drive(walker, mover.drive)
+
+
+## True while a walker follows a route a command imposed.
+func any_forced_route() -> bool:
+	_prune_movers()
+	for mover: _Mover in _movers.values():
+		if mover.forced != null:
+			return true
+	return false
+
+
+## Called by a mover as the route imposed on `walker` ends.
+func route_ended(walker: WgWalker) -> void:
+	var mover := _movers.get(walker) as _Mover
+	if mover != null and not mover.is_needed():
+		_movers.erase(walker)
+		walkers.undrive(walker)
+
+
+## Called by a mover as `walker` could not step toward `direction`: an
+## event touch event walking into the player starts.
+func bumped(walker: WgWalker, direction: Vector2i) -> void:
+	if not walker is WgEvent or main.is_running():
+		return
+	var event := walker as WgEvent
+	var player := maps.traveller as WgWalker
+	if event.page != null and event.page.trigger == WgEventPage.Trigger.EVENT_TOUCH and player != null and player.cell == event.cell + direction \
+			and not (event.is_jumping and event.is_stepped_on()):
+		start(event)
 
 
 ## Called by a run as it ends.
@@ -272,6 +319,31 @@ func game_value(which: int) -> int:
 			return int(clock.seconds) if clock != null else 0
 	report_unsupported("game value %s" % WgEventSetVariables.Game.keys()[which])
 	return 0
+
+
+## Moves `event` as its page says: a mover while it moves by itself,
+## else its page's pace; a route imposed on it ends.
+func _set_moves(event: WgEvent) -> void:
+	var moved: WgWalker = event
+	var mover := _movers.get(moved) as _Mover
+	if event.page != null and event.page.move_type != WgEventPage.MoveType.FIXED:
+		if mover == null:
+			mover = _Mover.new(self, event)
+			_movers[moved] = mover
+		mover.set_page(event.page)
+		walkers.drive(event, mover.drive)
+		return
+	if mover != null:
+		_movers.erase(moved)
+		walkers.undrive(event)
+	event.pace = _Mover.pace_of(event.page.move_speed) if event.page != null else 0.0
+
+
+## Forgets the movers of walkers freed with their map.
+func _prune_movers() -> void:
+	for walker: Variant in _movers.keys():
+		if not is_instance_valid(walker):
+			_movers.erase(walker)
 
 
 func _on_map_built(map: Node, _map_id: StringName = &"") -> void:

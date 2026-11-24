@@ -21,6 +21,7 @@ func _initialize() -> void:
 	var written := importer.write_textures(wanted)
 	written.append_array(importer.write_sounds(wanted))
 	written.append_array(importer.write_sheets(wanted))
+	written.append_array(importer.write_effects(wanted))
 	if not written.is_empty():
 		print("%d textures and sounds written; Godot imports them" % written.size())
 		var output: Array = []

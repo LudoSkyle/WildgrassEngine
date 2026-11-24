@@ -148,6 +148,7 @@ func _init() -> void:
 	audio_host.name = "Audio"
 	add_child(audio_host)
 	audio = _service(&"audio", _Audio, [paths, log, config, species, audio_host])
+	events.audio = audio
 	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)

@@ -4,6 +4,8 @@ class_name WgWalker
 extends Node2D
 
 const _Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
+## The z index of a walker drawn on top.
+const ON_TOP_Z := 100
 const DIRECTION_NAMES: Dictionary[Vector2i, String] = {
 	Vector2i.DOWN: "down", Vector2i.UP: "up", Vector2i.LEFT: "left", Vector2i.RIGHT: "right",
 }
@@ -52,6 +54,11 @@ signal bumped(direction: Vector2i)
 @export var fixed_direction := false
 ## Moves its legs when it walks; else it glides.
 @export var walk_animation := true
+## Drawn over the map's tiles and walkers.
+@export var on_top := false:
+	set(value):
+		on_top = value
+		z_index = ON_TOP_Z if value else level * 2
 
 ## The walkers service: the engine's, unless set before entering the tree.
 var walkers: _Walkers
@@ -300,7 +307,7 @@ func _move(delta: float) -> float:
 func _finish_step() -> void:
 	_cell = _to_cell
 	level = _to_level
-	z_index = level * 2
+	z_index = ON_TOP_Z if on_top else level * 2
 	global_position = _to
 	is_moving = false
 	is_jumping = false
@@ -342,7 +349,7 @@ func _settle() -> void:
 	_lift()
 	_cell = walkers.tiles.cell_of(global_position)
 	global_position = walkers.tiles.center_of(_cell)
-	z_index = level * 2
+	z_index = ON_TOP_Z if on_top else level * 2
 	walkers.settle(self, _cell, level)
 
 

@@ -4,6 +4,9 @@
 class_name WgEventPage
 extends Resource
 
+## How the event moves by itself.
+enum MoveType { FIXED, RANDOM, APPROACH, ROUTE }
+
 enum Trigger {
 	## The action key, facing it (or standing on it, when it can be stepped on).
 	ACTION,
@@ -35,4 +38,10 @@ enum Trigger {
 @export var walk_animation := true
 ## Steps in place, even at rest.
 @export var step_animation := false
+## How it moves by itself: standing, at random, toward the player, along
+## `move_route`; at RPG Maker's speed and frequency (1 to 6).
+@export var move_type := MoveType.FIXED
+@export var move_route: WgMoveRoute
+@export_range(1, 6) var move_speed := 3
+@export_range(1, 6) var move_frequency := 3
 @export var commands: Array[WgEventCommand] = []

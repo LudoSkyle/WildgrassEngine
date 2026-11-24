@@ -2,7 +2,8 @@
 
 Status: in progress. Done: events, pages and their conditions, how events
 start, the lists and their flow and story commands, common events, messages,
-choices and numbers. Next: moving (step 1), then the rest (see *In steps*).
+choices and numbers, moving by oneself and routes imposed. Next: transfers
+and placing events (step 1), then the rest (see *In steps*).
 
 What a map does as the player goes: characters that talk, doors that open,
 scenes that play. An event stands on a cell with pages; the page shown is the
@@ -32,7 +33,9 @@ named `Sprite`:
 | `sheet`, `direction`, `pattern` | how it looks: a character sheet, the direction it faces, the column it shows at rest; no sheet: nothing shows |
 | `trigger` | `ACTION`, `TOUCH` (the player steps onto it, or into it), `EVENT_TOUCH` (as `TOUCH`; it walks into the player too), `AUTORUN`, `PARALLEL` |
 | `through`, `always_on_top`, `fixed_direction`, `walk_animation`, `step_animation` | as RPG Maker's |
-| `moves` | `fixed`, `random`, `approach`, `route` (a `WgMoveRoute`), its speed and frequency (with moving) |
+| `opacity` | from 0 to 1 |
+| `move_type`, `move_route` | how it moves by itself: `FIXED`, `RANDOM`, `APPROACH` (toward the player), `ROUTE` (its `WgMoveRoute`) |
+| `move_speed`, `move_frequency` | RPG Maker's 1 to 6: its pace, and how long it stands between moves |
 | `commands` | the list it runs |
 
 - The page is chosen again at the next frame after the story changes
@@ -55,6 +58,33 @@ named `Sprite`:
   turns back, unless `fixed_direction`.
 - Local switches `A` to `D` are its local flags (`local:A`), kept by the
   save.
+
+## Moving
+
+Moves keep RPG Maker's time: 60 ticks a second, counted from the frame's
+time, whatever the frame rate.
+
+- **Speed** `s` is `60 × 2^s / 128` cells a second (3: 3.75, the player's
+  walk; 4: 7.5). **Frequency** `f` is how many ticks it stands between two
+  moves by itself: `(40 − 2f) × (6 − f)` (3: 102; 6: none).
+- A `WgMoveRoute` is a list of `WgMoveStep`, numbered as RPG Maker's 45:
+  steps the four ways and the diagonals, at random, toward or away from the
+  player, forward, backward; jumps; waits; turns; switches; speed,
+  frequency, animations, fixed direction, through, on top, graphic,
+  opacity, a sound effect. A step, a turn, a jump and a wait take their tick;
+  the others run at once with the next. Its end starts it again if
+  `repeat`. A step blocked is tried again until it passes, unless the route
+  is `skippable`. A jump of `d` cells lasts `(10 + d − speed) × 2` ticks.
+  Blending and calls are logged.
+- **By itself**, as its page says, between its frequency's stops; not while
+  it is starting or its list holds it, nor during a warp or a screen other
+  than a message.
+- **A route imposed** (`WgEventMoveRoute`) replaces the moves of its
+  character, the player too, until its end; then it moves as its page says.
+  A new page of the event ends the route imposed on it.
+  `WgEventWaitForMoves` waits until no route imposed is under way.
+  `Wildgrass.events.force_route(walker, route)` does the same from code.
+- An `EVENT_TOUCH` event whose step into the player fails starts.
 
 ## Commands
 
@@ -107,6 +137,8 @@ each with its own services. Done:
 | `WgEventChoices`, `WgEventWhen`, `WgEventWhenCancel` | a choice and the block of each answer; `cancel` as RPG Maker's: 0 nothing, `n` the answer `n - 1` (a choice, or 4: the cancel's own block) |
 | `WgEventInputNumber` | a number of `digits` digits from 0 into a variable; cancel does nothing |
 | `WgEventTextOptions` | where the next messages show, with or without their frame (style `transparent`) |
+| `WgEventMoveRoute` | a `route` imposed on a `character`; the list goes on |
+| `WgEventWaitForMoves` | waits until every route imposed has ended |
 | `WgEventComment`, `WgEventBlockEnd` | nothing |
 | `WgEventRaw` | a command with no class yet: its code and parameters, logged once |
 
@@ -171,4 +203,10 @@ warp frees its map; branches and else, variables compared to variables;
 loops, nested, a break leaving only its own, labels; a loop never waiting
 giving the frame back; each variable operation, floored, bounded; local
 switches, erasing; common events called, missing, running by themselves; a
-command with no class.
+command with no class. Moving: a route imposed, then let go; a list waiting
+for it; a blocked step tried again or skipped; RPG Maker's ticks at 60 and
+120 frames a second; a page route repeated or run once; moving by itself at
+its frequency, still while its list runs; speed, switches, through, fixed
+direction, on top, opacity and graphic changed by a route; a jump's ticks; a
+route imposed on the player while a list holds it; a new page ending a route;
+an `EVENT_TOUCH` event walking into the player.

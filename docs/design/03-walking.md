@@ -39,12 +39,18 @@ enters the game, and when a warp or a reload places it.
 | `prints` | `true` | leaves prints in sand (feature 18) |
 | `rustles` | `true` | rustles the tall grass it walks into (feature 18) |
 | `always_stepping` | `false` | its walk plays all the time, standing too, at one cadence whatever its pace (a Pokémon); still while it slides |
+| `passes_walls` | `false` | goes through any tile, edge or ledge while there is a map (RPG Maker's `through`, with `through` for walkers) |
+| `fixed_direction` | `false` | keeps its facing when it steps or turns |
+| `walk_animation` | `true` | moves its legs as it walks; else it glides |
+| `on_top` | `false` | drawn over the map and the walkers (`z_index` `ON_TOP_Z`, 100) |
 
 ```gdscript
 walker.turn(Vector2i.LEFT)
 walker.step(Vector2i.LEFT)                 # false if refused (bumped)
 walker.step(Vector2i.LEFT, true)           # running
 walker.step(Vector2i.UP, false, false)     # backing away: keeps its facing
+walker.step(Vector2i(1, 1))                # a diagonal
+walker.jump_by(Vector2i(2, 0), 0.3)        # 2 cells right, 0.3 s in the air
 await walker.step_finished
 walker.cell                                # Vector2i
 walker.is_moving
@@ -86,6 +92,12 @@ all (`all()`).
   `z_index` is twice the level: 0 on the ground, 2 on a level 1 deck. Draw a
   deck of level L at `z_index` 2L − 1, and what covers every walker (roofs,
   treetops) above twice the highest level.
+- **A diagonal** goes if one way round its corner is free, the vertical
+  first (RPG Maker's rule). It turns the walker only if it faced the opposite
+  side of one of its two ways: toward the other one.
+- **`jump_by(offset, seconds, height)`** jumps any number of cells, none for
+  a hop in place, as RPG Maker's jump: facing the way it goes furthest, onto
+  a cell it may stand on, else not at all.
 - A warp or a reload during a step abandons it, gives the cell back and puts
   the walker on its new cell. Freed, a walker gives its cells back.
 
@@ -191,4 +203,7 @@ while a screen is open or a warp runs, missing actions, the way back after a
 door, doors of both kinds, crossing a seam and what survives it, steps cut by
 a warp or a reload, settling on arrival, facing after a warp, every
 animation, its fallback, feet carrying on between steps, the animation hook,
-camera limits and centring, config errors.
+camera limits and centring, config errors; diagonals round either side of
+their corner and how they turn, jumps by any offset (landing, facing,
+refused), passing walls on the map and not off it, a fixed direction, a walk
+without animation.
