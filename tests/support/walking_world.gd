@@ -34,6 +34,7 @@ const Footprints := preload("res://addons/wildgrass/life/footprints.gd")
 const Reflections := preload("res://addons/wildgrass/life/reflections.gd")
 const Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const Debug := preload("res://addons/wildgrass/debug/debug.gd")
+const Events := preload("res://addons/wildgrass/events/events.gd")
 const EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
 const Sandbox := preload("res://tests/support/sandbox.gd")
 const T := preload("res://tests/support/tile_builder.gd")
@@ -67,6 +68,7 @@ var types: Types
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
 var encounters: Encounters
+var events: Events
 ## Its players are added under the world's root.
 var audio: Audio
 ## Its save part is added by the tests that need it.
@@ -160,6 +162,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.bag = bag
 	encounters = Encounters.new(paths, logger, config, maps, story, species, tiles, hooks, pokedex, dialogue)
 	walkers.encounters = encounters
+	events = Events.new(paths, logger, hooks, maps, story, walkers, clock)
+	events.bag = bag
 	followers = Followers.new(logger, hooks, maps, walkers, species)
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
@@ -174,6 +178,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)
 	clock = Clock.new()
+	events.clock = clock
 	save = Save.new(paths, logger, config, hooks)
 	save.add_part(&"story", story.state, story.restore, story.reset)
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)

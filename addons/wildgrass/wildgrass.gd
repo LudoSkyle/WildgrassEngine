@@ -40,6 +40,7 @@ const _ReflectionsDriver := preload("res://addons/wildgrass/life/reflections_dri
 const _Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const _Debug := preload("res://addons/wildgrass/debug/debug.gd")
 const _EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
+const _Events := preload("res://addons/wildgrass/events/events.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -57,6 +58,7 @@ var screens: _ScreenRegistry
 var maps: _Maps
 var tiles: _Tiles
 var walkers: _Walkers
+var events: _Events
 var followers: _Followers
 var story: _Story
 var quests: _Quests
@@ -129,6 +131,8 @@ func _init() -> void:
 	walkers.bag = bag
 	encounters = _service(&"encounters", _Encounters, [paths, log, config, maps, story, species, tiles, hooks, pokedex, dialogue])
 	walkers.encounters = encounters
+	events = _service(&"events", _Events, [paths, log, hooks, maps, story, walkers, clock])
+	events.bag = bag
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", _Footprints, [paths, config, maps, walkers, tiles])
@@ -269,6 +273,7 @@ func _notification(what: int) -> void:
 
 func _process(delta: float) -> void:
 	clock.advance(delta)
+	events.advance(delta)
 	daytime.advance(delta)
 	grass.advance(delta)
 	footprints.advance(delta)
