@@ -1,7 +1,7 @@
 # Feature 10 ter — Studio maps
 
-Status: in progress (tiles, layers, passages, tags, animated tiles, bridges
-and links; see *Later*).
+Status: in progress (tiles, layers, passages, tags, animated tiles, bridges,
+links and music; see *Later*).
 
 A Studio project draws its maps in Tiled. The importer turns each into a
 plain Godot map, once: a `WgMap` scene, one `TileMapLayer` per Tiled layer,
@@ -24,8 +24,8 @@ imported again is written again; the TileSet keeps the tiles of every map.
 ## What a Studio map is
 
 - `Data/Studio/maps/<dbSymbol>.json`: `id`, `tiledFilename` (the `.tmx`
-  under `Data/Tiled/Maps`, without its extension), `bgm`, `bgs`,
-  `stepsAverage`.
+  under `Data/Tiled/Maps`, without its extension), `bgm` and `bgs` (`name`,
+  a file of `audio/bgm`, `audio/bgs`; `volume`, `pitch`), `stepsAverage`.
 - The `.tmx`: 32 px tiles, external tilesets (`.tsx`) only, layers in csv or
   base64 (gzip, zlib).
 - Its layers, in document order, groups entered:
@@ -203,12 +203,38 @@ Checked on the sample project's linked maps: along each linked edge, the
 neighbour shown and every step across agree with Studio's rules, and a
 walker crosses and comes back.
 
+### Music
+
+Studio plays a map's music and ambience when it shows, only if it names
+one: a map naming none lets the one playing go on. It finds the file in
+`audio/bgm` (`audio/bgs`) by its name as given or in lower case, then with
+each extension it knows (`.ogg`, `.mp3`, `.wav`, `.mid`…); a file it cannot
+find is silence.
+
+| Studio | Engine |
+|---|---|
+| `bgm`, `bgs` naming a file | the file copied into `res://audio/music`, `ambience` (the importer's `audio_folder`); the map's `music`, `ambience`: its file name |
+| no name | `keep_music`, `keep_ambience`: the one playing goes on |
+| a name no file has | a problem; silence |
+| a file Godot does not play (MIDI…) | a problem; silence |
+| a volume or a pitch other than 100 | a problem; played at 100 |
+
+Files are copied once, again only when Studio's is newer, and imported by
+Godot with the textures. A save brings back the music playing when it was
+written in Studio; in the engine, the map's own, or with none what plays
+then.
+
+Checked on the sample project: each map's music and ambience against its
+record, each file loaded by the engine's audio, the music changing,
+going on and kept as the player walks and warps.
+
 ## Later
 
 - **Events** (doors, characters, signs, items): from the map's events.
 - Studio's switch turning every link off, and its older overlapping links
   (neighbours sharing a three-tile strip), a display setting.
-- **Music** (`bgm`, `bgs`) and the encounter step count.
+- The encounter step count (`stepsAverage`).
+- A map's music at its own volume and pitch.
 - The editor's menu to import from Godot, and importing again only what
   changed (the `.tmx`'s `sha1` Studio keeps).
 
@@ -224,7 +250,9 @@ water and going under, a TileSet from an older import given the new data;
 links: the first map link by id, the sides in order with their offsets,
 several on a side, a link to no map, to itself or twice told and left out,
 the neighbours placed as Studio places them and stepped into across the
-seam, the map becoming current;
+seam, the map becoming current; music: the files Studio finds (lower case,
+an extension added) copied once, the names written, a map naming none
+keeping the one playing, a missing file, MIDI, a volume other than 100;
 animated tiles: the strip of frames, the steps of each frame (and of
 another idle count), a flipped one, one among the entities, an animation
 outside its picture, a second map and a second import adding no source. The

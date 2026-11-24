@@ -67,6 +67,13 @@ const SIDES: Dictionary[String, WgMapLink.Side] = {
 	"northMaps": WgMapLink.Side.NORTH, "eastMaps": WgMapLink.Side.EAST,
 	"southMaps": WgMapLink.Side.SOUTH, "westMaps": WgMapLink.Side.WEST,
 }
+## A map's sounds in its Studio record: the engine's folder (the `audio`
+## config's defaults) and Studio's, inside its `audio` folder.
+const SOUNDS: Dictionary[String, Array] = {"bgm": ["music", "bgm"], "bgs": ["ambience", "bgs"]}
+## The extensions Studio tries, in order, for a sound named without one.
+const STUDIO_SOUND_FORMATS: Array[String] = ["ogg", "mp3", "wav", "mid", "aac", "wma", "it", "xm", "mod", "s3m", "midi", "flac"]
+## Those Godot plays.
+const PLAYED_FORMATS: Array[String] = ["ogg", "mp3", "wav"]
 ## Studio counts an animated tile's frames in steps of this many game
 ## frames (at 60 a second), unless its display config says otherwise.
 const IDLE_FRAMES := 6
@@ -84,6 +91,8 @@ var problems: Array[String] = []
 var data_folder := ""
 ## Where maps go; the TileSet and the textures beside them.
 var target_folder := "res://maps"
+## Where the maps' music and ambiences go, each in its kind's folder.
+var audio_folder := "res://audio"
 ## Gives the texture of a picture written, by its path. Default: `load()`,
 ## once Godot imported it.
 var texture_of := Callable()
@@ -172,6 +181,56 @@ func write_textures(symbols: Array[String]) -> Array[String]:
 				_keep_alpha(strip)
 				written.append(strip)
 	return written
+
+
+## Copies the music and ambiences the maps `symbols` name into the game's
+## audio folder, once each. Returns the files written.
+func write_sounds(symbols: Array[String]) -> Array[String]:
+	var written: Array[String] = []
+	for symbol in symbols:
+		var record := map_record(symbol)
+		for key: String in SOUNDS:
+			var found := find_sound(key, record)
+			var source: String = found.get("source", "")
+			if source.is_empty() or not found.get("problem", "").is_empty():
+				continue
+			var target := sound_path(key, source)
+			if _is_fresh(target, FileAccess.get_modified_time(source)):
+				continue
+			DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+			if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(target)) == OK:
+				written.append(target)
+	return written
+
+
+## The sound `key` ("bgm", "bgs") of a map record, found as Studio finds it
+## in its folder: the name as given or in lower case, then with each of its
+## extensions. {name, source, problem}: no name, no source.
+func find_sound(key: String, record: Dictionary) -> Dictionary:
+	var sound: Variant = record.get(key, {})
+	var name := str((sound as Dictionary).get("name", "")) if sound is Dictionary else ""
+	if name.is_empty():
+		return {}
+	var folder := data_folder.path_join("../audio").simplify_path().path_join(SOUNDS[key][1])
+	var files: Dictionary[String, String] = {}
+	for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+		files[file.to_lower()] = file
+	var found := ""
+	for candidate: String in [name] + STUDIO_SOUND_FORMATS.map(func(format: String) -> String: return name + "." + format):
+		if files.has(candidate.to_lower()):
+			found = files[candidate.to_lower()]
+			break
+	if found.is_empty():
+		return {"name": name, "problem": "its %s '%s' is in no file of audio/%s: silent" % [SOUNDS[key][0], name, SOUNDS[key][1]]}
+	var source := folder.path_join(found)
+	if found.get_extension().to_lower() not in PLAYED_FORMATS:
+		return {"name": name, "source": source, "problem": "its %s '%s' is %s, which Godot does not play: silent" % [SOUNDS[key][0], found, found.get_extension().to_upper()]}
+	return {"name": name, "source": source}
+
+
+## Where the sound copied from `source` goes in the game.
+func sound_path(key: String, source: String) -> String:
+	return audio_folder.path_join(SOUNDS[key][0]).path_join(source.get_file())
 
 
 static func _is_fresh(path: String, source_time: int) -> bool:
@@ -276,6 +335,7 @@ func import_map(symbol: String) -> bool:
 	root.size = Vector2i(width, height)
 	root.zone = _zone_of(int(record.get("id", 0)))
 	root.links = links_of(symbol, int(record.get("id", 0)))
+	_set_sounds(root, symbol, record)
 	# The entities of neighbouring maps sort together, as Studio draws its
 	# linked maps as one.
 	root.y_sort_enabled = true
@@ -752,6 +812,25 @@ func _make_tags(source: TileSetAtlasSource) -> void:
 		if tag >= HEIGHT_0 + 2 and tag <= HEIGHT_6:
 			data.set_custom_data("floor", DECK)
 			data.set_custom_data("ramp", true)
+
+
+## A map's music and ambience, by the name of the file copied; with none,
+## the one playing goes on, as Studio plays a map's sound only if it names
+## one. A sound not found or not played by Godot: silence, as in Studio.
+func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
+	for key: String in SOUNDS:
+		var found := find_sound(key, record)
+		var kind: String = SOUNDS[key][0]
+		var sound_name := &""
+		if found.has("problem"):
+			problems.append("%s: %s" % [symbol, found["problem"]])
+		elif found.has("source"):
+			sound_name = StringName((found["source"] as String).get_file())
+			var settings: Dictionary = record[key]
+			if int(settings.get("volume", 100)) != 100 or int(settings.get("pitch", 100)) != 100:
+				problems.append("%s: its %s '%s' at volume %d and pitch %d: played at 100" % [symbol, kind, found["name"], int(settings.get("volume", 100)), int(settings.get("pitch", 100))])
+		root.set(kind, sound_name)
+		root.set("keep_" + kind, found.is_empty())
 
 
 ## The maps shown against the sides of map `map_id`: those of the first

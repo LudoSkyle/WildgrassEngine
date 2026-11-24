@@ -482,3 +482,48 @@ func test_linked_maps_are_shown_against_the_map_and_walked_into_across_the_seam(
 	assert_object(maps.current).is_same(east)
 	if maps.is_loading_neighbours:
 		await maps.neighbours_loaded
+
+
+## A map record's sounds; `bgm` and `bgs`: [name, volume, pitch].
+func _write_sounds(id: int, bgm: Array, bgs: Array) -> void:
+	_world.sandbox.write_json("Data/Studio/maps/map%03d.json" % id, {"klass": "Map", "id": id, "dbSymbol": "map%03d" % id, "tiledFilename": "00%d %s" % [id, "Test" if id == 1 else "Twin"],
+		"bgm": {"name": bgm[0], "volume": bgm[1], "pitch": bgm[2]}, "bgs": {"name": bgs[0], "volume": bgs[1], "pitch": bgs[2]}})
+
+
+func _write_studio_sound(path: String) -> void:
+	_world.sandbox.write(path, "not a real sound")
+
+
+func test_a_map_s_music_and_ambience_are_the_files_studio_finds_copied_into_the_game() -> void:
+	_write_studio_sound("audio/bgm/Town Theme.ogg")
+	_write_studio_sound("audio/bgs/wind.ogg")
+	# Studio finds "Wind" in lower case, with its extension.
+	_write_sounds(1, ["Town Theme.ogg", 100, 100], ["Wind", 100, 100])
+	_importer.audio_folder = _world.sandbox.root + "audio"
+	var written := _importer.write_sounds(["map001"])
+	assert_array(written).contains_exactly_in_any_order([_world.sandbox.root + "audio/music/Town Theme.ogg", _world.sandbox.root + "audio/ambience/wind.ogg"])
+	assert_array(_importer.write_sounds(["map001"])).is_empty()
+	var map := _import()
+	assert_array([map.music, map.keep_music, map.ambience, map.keep_ambience]).is_equal([&"Town Theme.ogg", false, &"wind.ogg", false])
+	# The engine finds them there by those names.
+	assert_str(_world.audio.path_of(&"music", map.music)).is_equal(_world.sandbox.root + "audio/music/Town Theme.ogg")
+	assert_str(_world.audio.path_of(&"ambience", map.ambience)).is_equal(_world.sandbox.root + "audio/ambience/wind.ogg")
+	assert_array(_importer.problems).is_empty()
+
+
+func test_a_map_naming_no_sound_keeps_the_one_playing_one_missing_or_unplayed_is_silent() -> void:
+	_write_studio_sound("audio/bgm/Old.mid")
+	_write_studio_sound("audio/bgs/rain.ogg")
+	_write_sounds(1, ["", 100, 100], ["Storm", 100, 100])
+	_write_sounds(2, ["Old", 100, 100], ["rain.ogg", 80, 150])
+	_importer.audio_folder = _world.sandbox.root + "audio"
+	assert_array(_importer.write_sounds(["map001", "map002"])).is_equal([_world.sandbox.root + "audio/ambience/rain.ogg"])
+	var first := _import()
+	assert_array([first.music, first.keep_music, first.ambience, first.keep_ambience]).is_equal([&"", true, &"", false])
+	var second := _import("map002")
+	assert_array([second.music, second.keep_music, second.ambience, second.keep_ambience]).is_equal([&"", false, &"rain.ogg", false])
+	assert_array(_importer.problems).is_equal([
+		"map001: its ambience 'Storm' is in no file of audio/bgs: silent",
+		"map002: its music 'Old.mid' is MID, which Godot does not play: silent",
+		"map002: its ambience 'rain.ogg' at volume 80 and pitch 150: played at 100",
+	])

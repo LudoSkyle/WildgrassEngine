@@ -11,10 +11,16 @@ extends Node2D
 @export var size := Vector2i.ZERO
 ## Maps shown against its sides.
 @export var links: Array[WgMapLink] = []
-## The music played on it (feature 15); empty: silence.
+## The music played on it (feature 15); empty: silence, or the music
+## playing goes on if `keep_music`.
 @export var music: StringName = &""
-## The ambience under the music; empty: none.
+## With no `music`: the music playing goes on, as it came from the last map.
+@export var keep_music := false
+## The ambience under the music; empty: none, or the one playing goes on if
+## `keep_ambience`.
 @export var ambience: StringName = &""
+## With no `ambience`: the ambience playing goes on.
+@export var keep_ambience := false
 ## Outside: tinted by the moment of the day (feature 16).
 @export var outside := false
 ## Multiplies the moment's tint outside: a wood in half-light.

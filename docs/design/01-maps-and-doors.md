@@ -97,7 +97,8 @@ A warp, in order:
 - `reload()` loads the current map and its neighbours again, in place: the
   maps and the traveller keep their position, the traveller its facing. It
   runs the map hooks, but neither `traveller_arrived` nor `zone_changed`.
-- A map's `music` and `ambience` play when it shows (feature 15); one
+- A map's `music` and `ambience` play when it shows, or with none the ones
+  playing go on if it keeps them (feature 15); one
   `outside` is tinted by the moment of the day, times its `shade` (feature
   16), and shows the weather, its own `weather` if it has one (feature 17). Signal
   `door_used(door)` before a door's warp.

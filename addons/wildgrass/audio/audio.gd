@@ -102,8 +102,10 @@ func _on_map_changed(map: WgMap) -> void:
 	_watch_traveller()
 	if map == null:
 		return
-	play_music(map.music)
-	play_ambience(map.ambience)
+	if not (map.music.is_empty() and map.keep_music):
+		play_music(map.music)
+	if not (map.ambience.is_empty() and map.keep_ambience):
+		play_ambience(map.ambience)
 
 
 func _on_traveller_arrived(_direction: Vector2i, _point: Node2D) -> void:
