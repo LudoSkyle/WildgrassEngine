@@ -207,6 +207,8 @@ func step(direction: Vector2i, run := false, face := true) -> bool:
 	var step_pace := float(walkers.hooks.filter(&"step_pace", base, [self, direction, run]))
 	if _start_step(direction, step_pace, run):
 		return true
+	if _is_traveller() and walkers.events != null:
+		walkers.events.call(&"touch_there", self, direction)
 	if not _pushing and not _pushed:
 		bumped.emit(direction)
 	_pushed = true
@@ -295,6 +297,8 @@ func _finish_step() -> void:
 		if door != null and door.kind == WgDoor.Kind.CONTACT:
 			is_sliding = false
 			walkers.maps.use(door)
+		elif walkers.events != null and walkers.events.call(&"touch_here", self):
+			is_sliding = false
 		else:
 			walkers.trigger_at(self)
 			walkers.encounter_at(self)

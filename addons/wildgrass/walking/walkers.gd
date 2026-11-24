@@ -29,6 +29,14 @@ var tiles: _Tiles
 var dialogue: _Dialogue
 ## What characters say follows it; set once the story service exists.
 var story: _Story
+## Events start through it (feature 21); set once the events service exists.
+## Held weakly: the events service holds the walkers.
+var events: Object:
+	get:
+		return _events.get_ref() if _events != null else null
+	set(value):
+		_events = weakref(value) if value != null else null
+var _events: WeakRef
 ## Item balls give through it; set once the bag service exists.
 var bag: _Bag
 ## The pause menu, opened by the player's `menu` action.
@@ -169,6 +177,8 @@ func interact(walker: WgWalker) -> void:
 	var handled := false
 	if target != null:
 		await target.interact(walker)
+		handled = true
+	elif events != null and events.call(&"start_by_action", walker):
 		handled = true
 	else:
 		var message: Variant = tiles.data(cell, &"message")
@@ -366,6 +376,20 @@ func _moves_from(walker: WgWalker, here: Vector3i) -> Array[Array]:
 
 
 ## Keeps `walker`'s controller from acting, while it talks say.
+## Holds `walker`, the traveller, for `owner` until `release()` with the
+## number returned: it reads no input meanwhile. A later hold takes over.
+func occupy(walker: WgWalker, owner: Object) -> int:
+	_interactions += 1
+	_busy[walker] = [owner, _interactions]
+	return _interactions
+
+
+## Ends the hold numbered `number`, if it is still the one.
+func release(walker: WgWalker, number: int) -> void:
+	if _busy.has(walker) and _busy[walker][1] == number:
+		_busy.erase(walker)
+
+
 func set_still(walker: WgWalker, still: bool) -> void:
 	if still:
 		_still[walker] = true

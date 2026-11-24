@@ -85,6 +85,8 @@ const DATA: Dictionary[String, int] = {
 	"terrain_tag": TYPE_INT, "bush": TYPE_BOOL, "counter": TYPE_BOOL, "floor": TYPE_INT, "ramp": TYPE_BOOL,
 }
 
+const _StudioEvents := preload("res://addons/wildgrass/studio/studio_events.gd")
+
 ## Problems met, each a line: a map or a tileset missing, a layer unread.
 var problems: Array[String] = []
 ## The Studio project's `Data` folder.
@@ -93,6 +95,8 @@ var data_folder := ""
 var target_folder := "res://maps"
 ## Where the maps' music and ambiences go, each in its kind's folder.
 var audio_folder := "res://audio"
+## Where common events go.
+var common_events_folder := "res://common_events"
 ## Gives the texture of a picture written, by its path. Default: `load()`,
 ## once Godot imported it.
 var texture_of := Callable()
@@ -110,6 +114,7 @@ var _tilesets: Dictionary[String, Dictionary] = {}
 var _idle_frames := 0
 ## The dbSymbol of each map id; the project's map links, by id.
 var _symbols: Dictionary[int, String] = {}
+var _events: _StudioEvents
 var _map_links: Array[Dictionary] = []
 
 
@@ -393,6 +398,8 @@ func import_map(symbol: String) -> bool:
 				node.y_sort_enabled = true
 				node.y_sort_origin = CELL * priority - 1
 				entities.add_child(node)
+	for event in _events_reader().events_of(int(record.get("id", 0))):
+		entities.add_child(_events_reader().build_event(event, CELL))
 	root.add_child(entities)
 	for name: String in SPECIAL_NODES:
 		if not special.has(name):
@@ -831,6 +838,98 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 				problems.append("%s: its %s '%s' at volume %d and pitch %d: played at 100" % [symbol, kind, found["name"], int(settings.get("volume", 100)), int(settings.get("pitch", 100))])
 		root.set(kind, sound_name)
 		root.set("keep_" + kind, found.is_empty())
+
+
+## The events of the maps `symbols`, written into their scenes by
+## `import_map`; here the report, `events.txt` beside the maps: how many events
+## and commands, and each command the engine has no class for yet, with its
+## count. Returns {events, commands, raw}.
+func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
+	var events := _events_reader()
+	var counts: Dictionary[String, int] = {"events": 0, "commands": 0, "raw": 0}
+	var raw: Dictionary[String, int] = {}
+	for symbol in symbols:
+		var record := map_record(symbol)
+		if record.is_empty():
+			continue
+		var before := events.raw_counts.duplicate()
+		events.raw_counts.clear()
+		for event in events.events_of(int(record.get("id", 0))):
+			counts["events"] += 1
+			for page: Dictionary in event.get("pages", []):
+				var built := events.build_commands(page.get("list", []))
+				counts["commands"] += built.size()
+		for what: String in events.raw_counts:
+			raw[what] = raw.get(what, 0) + events.raw_counts[what]
+		events.raw_counts = before
+	var ordered := raw.keys()
+	ordered.sort_custom(func(a: String, b: String) -> bool: return raw[a] > raw[b] or (raw[a] == raw[b] and a < b))
+	var lines: Array[String] = ["Studio events, as the importer writes them.",
+		"%d events on %d maps, %d commands." % [counts["events"], symbols.size(), counts["commands"]],
+		"What the engine does not run yet, by count:"]
+	for what: String in ordered:
+		counts["raw"] += raw[what]
+		lines.append("  %d %s" % [raw[what], what])
+	DirAccess.make_dir_recursive_absolute(target_folder)
+	var file := FileAccess.open(target_folder.path_join("events.txt"), FileAccess.WRITE)
+	if file == null:
+		problems.append("events.txt cannot be written in %s" % target_folder)
+	else:
+		file.store_string("\n".join(lines) + "\n")
+		file.close()
+	return counts
+
+
+## Copies the character sheets the events of the maps `symbols` show into the
+## game, once each. Returns the files written.
+func write_sheets(symbols: Array[String]) -> Array[String]:
+	var events := _events_reader()
+	var written: Array[String] = []
+	var names: Array[String] = []
+	for symbol in symbols:
+		var record := map_record(symbol)
+		if not record.is_empty():
+			for name in events.sheets_of(events.events_of(int(record.get("id", 0)))):
+				if not name in names:
+					names.append(name)
+	var folder := data_folder.path_join("../graphics/characters").simplify_path()
+	for name in names:
+		var source := folder.path_join(name + ".png")
+		var target := events.sheet_path(name)
+		if not FileAccess.file_exists(source):
+			problems.append("no character sheet graphics/characters/%s.png" % name)
+			continue
+		if _is_fresh(target, FileAccess.get_modified_time(source)):
+			continue
+		DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+		if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(target)) == OK:
+			written.append(target)
+	return written
+
+
+## Writes Studio's common events as the engine's, `<number>.tres` in
+## `common_events_folder`. Returns how many.
+func write_common_events() -> int:
+	var events := _events_reader()
+	var count := 0
+	DirAccess.make_dir_recursive_absolute(common_events_folder)
+	var commons := events.common_events()
+	for number: int in commons:
+		var entry: Dictionary = commons[number]
+		var common := WgCommonEvent.new()
+		common.trigger = clampi(int(entry.get("trigger", 0)), 0, 2) as WgCommonEvent.Trigger
+		common.switch = StringName("switch_%d" % int(entry.get("switch_id", 0)))
+		common.commands = events.build_commands(entry.get("list", []))
+		if ResourceSaver.save(common, common_events_folder.path_join("%d.tres" % number)) == OK:
+			count += 1
+	return count
+
+
+func _events_reader() -> _StudioEvents:
+	if _events == null:
+		_events = _StudioEvents.new(data_folder)
+		_events.texture_of = texture_of
+	return _events
 
 
 ## The maps shown against the sides of map `map_id`: those of the first
