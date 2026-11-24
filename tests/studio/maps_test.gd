@@ -535,7 +535,7 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 	_picture(_world.sandbox.root + "graphics/characters/npc.png", 4, 4, func(_x: int, _y: int) -> Color: return Color.GREEN)
 	_world.sandbox.write_json("Data/Studio/items/potion.json", {"klass": "Item", "id": 17, "dbSymbol": "potion"})
 	var has_potion := Events.command(111, [8, 17])
-	var talker := Events.event([Events.page([Events.command(101, ["1, 0 Hi"]), Events.command(401, ["there"]), has_potion], {"graphic": "npc"})], "Talker")
+	var talker := Events.event([Events.page([Events.command(101, ["Hi"]), Events.command(401, ["there"]), has_potion], {"graphic": "npc"})], "Talker")
 	talker["x"] = 2
 	talker["y"] = 1
 	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2)], {"trigger": 1})], "Door")
@@ -556,18 +556,18 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 	var first: WgEvent = events[0]
 	assert_that(first.position).is_equal(Vector2(40, 24))
 	assert_object(first.pages[0].sheet).is_not_null()
-	assert_array(first.pages[0].commands.map(func(made: WgEventCommand) -> String: return made.get_script().get_global_name())).is_equal(["WgEventRaw", "WgEventRaw", "WgEventIf", "WgEventBlockEnd"])
-	assert_str((first.pages[0].commands[2] as WgEventIf).item).is_equal("potion")
+	assert_array(first.pages[0].commands.map(func(made: WgEventCommand) -> String: return made.get_script().get_global_name())).is_equal(["WgEventSay", "WgEventIf", "WgEventBlockEnd"])
+	assert_str((first.pages[0].commands[0] as WgEventSay).text).is_equal("Hi\nthere")
+	assert_str((first.pages[0].commands[1] as WgEventIf).item).is_equal("potion")
 	assert_int(_importer.write_common_events()).is_equal(1)
 	var written := load(_world.sandbox.root + "common_events/3.tres") as WgCommonEvent
 	assert_array([written.trigger, written.switch, written.commands.size()]).is_equal([WgCommonEvent.Trigger.PARALLEL, &"switch_9", 2])
 	var counts := _importer.write_event_report(["map001", "map002"])
-	assert_array([counts["events"], counts["commands"], counts["raw"]]).is_equal([2, 6, 2])
+	assert_array([counts["events"], counts["commands"], counts["raw"]]).is_equal([2, 5, 1])
 	assert_array(FileAccess.get_file_as_string(_world.sandbox.root + "maps/events.txt").split("\n")).is_equal([
 		"Studio events, as the importer writes them.",
-		"2 events on 2 maps, 6 commands.",
+		"2 events on 2 maps, 5 commands.",
 		"What the engine does not run yet, by count:",
-		"  1 Show Text",
 		"  1 Transfer Player",
 		"",
 	])

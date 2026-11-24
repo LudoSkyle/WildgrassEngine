@@ -233,6 +233,16 @@ func _text_value(found: Variant, value_name: StringName) -> Variant:
 	return found
 
 
+## `{flag:name?yes|no}` in a text: whether the flag is set.
+func flag_text(argument: String) -> bool:
+	return has(StringName(argument))
+
+
+## `{value:name}` in a text: the value, 0 when unset.
+func value_text(argument: String) -> Variant:
+	return value(StringName(argument))
+
+
 static func _map_of(node: Node) -> WgMap:
 	var parent := node
 	while parent != null and not parent is WgMap:

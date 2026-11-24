@@ -51,6 +51,15 @@ if await Wildgrass.dialogue.confirm("Save the game?"):   # Yes / No, cancel = No
 | `values` | none | placeholders of this message alone, `{"item": "Potion"}`, read before the texts' own; each is a label, translated, and may hold placeholders (an item's name) |
 | `walk_away` | `false` | a direction other than the one faced ends the message, and the player walks on that way (signs) |
 | `screen` | `message_box` | another screen extending `WgMessageBox` (a battle's box) |
+| `align` | `left` | `center`, `right`: the text's alignment |
+
+**In the message's own words**, each language its own, a message may set
+`[speaker=Name]`, `[speaker_color=#ff8000]` and `[align=center]`: taken out
+of the text once its placeholders are filled, the last of each winning, before
+the `message_text` hook. A colour or an alignment that is none is logged.
+
+`is_busy()`: true while a message or a question is under way or waits its
+turn (`is_open()`: while the box shows).
 
 Signals: `opened`, `page_shown`, `advanced` (the key took the text on),
 `message_finished`, `choice_moved(index)`, `choice_made(index)`,
@@ -144,7 +153,8 @@ message shows the speaker again. `[give]` (feature 8) is one.
 ## Questions
 
 `ask(text, choices, options)`. Options: `default` (0), `cancel` (the last
-choice; `-1`: cancel does nothing).
+choice; `-1`: cancel does nothing). `cancel` may be the number of choices: an answer of its own, no choice
+taken (an event's cancel branch).
 
 - The choices appear once the question's last page is written, against the
   box's right edge: above it, below when the box is at the top.
@@ -162,7 +172,7 @@ choice; `-1`: cancel does nothing).
 is written, where the choices would; up and down move it by one, left and
 right by ten, wrapping round the range; confirm returns it. Cancel, `close()`,
 a warp or a reload return `null`. A `max` below `min` is logged and becomes
-`min`.
+`min`. `can_cancel` false: the cancel action does nothing.
 
 ## Talking to what you face
 

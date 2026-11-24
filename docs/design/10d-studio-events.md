@@ -1,8 +1,8 @@
 # Feature 10 quater — Studio events
 
 Status: in progress. Every event and common event is written; the commands
-the engine has a class for run (feature 21), the others are kept raw until
-it has one.
+the engine has a class for run (feature 21), messages and choices with their
+words in each language, the others are kept raw until it has one.
 
 A Studio map's events are RPG Maker XP events, in `Data/MapXXX.rxdata` (Ruby
 Marshal): pages, each with a condition, a graphic, a trigger and a list of
@@ -42,8 +42,44 @@ to one, nothing left out.
 | 111 Conditional Branch: switch, variable, self switch, timer, a character facing, money, item (Studio's id read as its dbSymbol), button | `WgEventIf`; an actor, an enemy, a weapon, an armor, a script: `UNSUPPORTED`, false |
 | 411 Else, 112 Loop, 413 Repeat, 113 Break, 115 Exit, 116 Erase, 117 Common Event, 118 Label, 119 Jump | `WgEventElse`, `WgEventLoop`, `WgEventRepeat`, `WgEventBreak`, `WgEventExit`, `WgEventErase`, `WgEventCallCommon`, `WgEventLabel`, `WgEventJump` |
 | 121 Switches, 123 Self Switch | `WgEventSetSwitches`, `WgEventSetLocalSwitch` |
+| 101 Show Text and its 401 lines | `WgEventSay`: its words (see *Messages*) |
+| 102 Show Choices, 402 When, 403 When Cancel | `WgEventChoices` (each choice's words, its cancel), `WgEventWhen`, `WgEventWhenCancel` |
+| 103 Input Number, 104 Text Options | `WgEventInputNumber`, `WgEventTextOptions` |
 | 122 Variables: a number, a variable, random, an item's count, a character's x, y, direction, screen place, terrain tag, the map, the party, the money, the steps, the play time, the timer, the saves | `WgEventSetVariables`; an actor's or an enemy's: `UNSUPPORTED`, 0 |
 | any other | `WgEventRaw`: its code and parameters, as they are |
+
+## Messages
+
+A message `3, 30 …` (Studio's dialog file `Data/Text/Dialogs/3.csv`, line
+30) or a choice `\t[11, 27]` (file `100011.csv`, line 27) is the key
+`dialogs.3.30`, `dialogs.100011.27`; words written in the event itself are
+converted and kept in it. Each key's words, in each language of Studio's
+files that Godot knows (an untranslated cell: the fallback language's, else
+the first), are written into `<maps>/dialogs.csv`, a translation file the
+game lists in *Project Settings → Localization* (the importer says so); its
+import takes the words as written (`unescape_translations` off), as Studio's
+own words may hold a backslash.
+
+Studio's codes, in the order Studio reads them:
+
+| Studio | Engine |
+|---|---|
+| `\\` | a backslash |
+| `\v[n]` | `{value:variable_n}` |
+| `\N[1]`, `\n[1]` | `{player}`; another actor `{actor_n}`, counted |
+| `\p[n]` | `{party_n}`, counted |
+| `\k[a]` | `{key:ui_accept}` (Studio's key names as Godot's actions) |
+| `\E`, `\f[girl§boy]` | `{flag:switch_1?e|}`, `{flag:switch_1?girl|boy}` (switch 1: the player is a girl) |
+| `\t[f, l]` | that line's words, in the same language, their codes read after |
+| `...`, ` $` | `…`, a space that does not break |
+| a text variable a script sets (`[POKE]`) | `{poke}` |
+| `[VAR NAME(000n)]` | `{name_n}`, as the Studio layer reads it |
+| `:[name=Ann,2]:`, `align`, `lookto` | `[speaker=Ann][speaker_color=#…]`, `[align=…]`, `[look_to=…]` |
+| `\c[n]` | `[color=#…]` (the fill row of `graphics/windowskins/_colors.png`), `\c[0]` back to the default |
+| `[WAIT n]` | `[pause=n/60]` |
+| `\s[b]`, `\s[i]`, `\s[r]` | `[b]`, `[i]`, back to plain |
+| `\G` (money window), `face`, `city`, `\^` (big text), `\spd`, `\img`, `\d` | not shown yet: counted in the report, taken out |
+| any other `[` | written as text (`[lb]`) |
 
 ## The report
 
@@ -59,6 +95,12 @@ run yet (messages 1 624, move routes 515, and the screen's and sounds'
 commands first); 100 common events.
 
 ## Checked
+
+- Every message and choice of the sample project (1 839 keys), in English
+  and French, shown through the engine's dialogue headless: the text on
+  every page and the speaker agree with Studio's own steps, ported apart;
+  no unknown tag. The Hub's welcome plays to its end, the question answered
+  either way.
 
 - The reader gives the same events, cells, names, pages, triggers and
   commands as Studio's own readable copies of the sample project's 21 maps

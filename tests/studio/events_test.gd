@@ -117,16 +117,16 @@ func test_variables_take_their_operand_as_rpg_maker_says() -> void:
 
 func test_a_command_with_no_class_is_kept_raw_and_counted_by_what_it_is() -> void:
 	var list := [
-		command(101, ["1, 0 Hello"]), command(401, ["again"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
+		command(231, [1, "picture"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
 		command(201, [0, 2, 3, 1, 2, 1]), command(111, [12, "gv[3] > 2"]), command(111, [4, 1, 0]),
 	]
 	var built := _events.build_commands(list)
-	assert_array(built.slice(0, 5).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([101, 401, 355, 655, 201])
-	assert_array((built[4] as WgEventRaw).parameters).is_equal([0, 2, 3, 1, 2, 1])
-	assert_array([(built[5] as WgEventIf).kind, (built[5] as WgEventIf).about, (built[6] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script gv", "actor condition"])
+	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 201])
+	assert_array((built[3] as WgEventRaw).parameters).is_equal([0, 2, 3, 1, 2, 1])
+	assert_array([(built[4] as WgEventIf).kind, (built[4] as WgEventIf).about, (built[5] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script gv", "actor condition"])
 	var counts := {}
 	counts.merge(_events.raw_counts)
-	assert_dict(counts).is_equal({"Show Text": 1, "script smart_disable": 1, "Transfer Player": 1, "condition: script gv": 1, "condition: actor condition": 1})
+	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Transfer Player": 1, "condition: script gv": 1, "condition: actor condition": 1})
 
 
 func test_a_script_s_method_drops_its_modules_and_receivers() -> void:

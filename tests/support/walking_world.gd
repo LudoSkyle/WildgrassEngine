@@ -148,6 +148,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers = Walkers.new(logger, config, hooks, screens, maps, tiles)
 	texts = Texts.new(Paths.new(false), logger, config, hooks)
 	story = Story.new(logger, hooks, maps)
+	texts.add_placeholder("flag", story.flag_text)
+	texts.add_placeholder("value", story.value_text)
 	quests = Quests.new(logger, hooks, Paths.new(false))
 	paths = Paths.new(false)
 	zones = Zones.new(paths, logger, maps, screens, texts, screen_layer)
@@ -164,6 +166,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	walkers.encounters = encounters
 	events = Events.new(paths, logger, hooks, maps, story, walkers, clock)
 	events.bag = bag
+	events.dialogue = dialogue
 	followers = Followers.new(logger, hooks, maps, walkers, species)
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)

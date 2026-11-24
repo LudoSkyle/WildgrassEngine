@@ -32,6 +32,9 @@ func _initialize() -> void:
 			print("%s: imported" % symbol)
 	importer.save_tile_set()
 	print("%d common events written" % importer.write_common_events())
+	var translations := importer.write_translations()
+	if not translations.is_empty():
+		print("the words of messages and choices: %s; list its translations in Project Settings > Localization" % translations)
 	var counts := importer.write_event_report(wanted)
 	print("%d events, %d commands, %d not run yet (maps/events.txt)" % [counts["events"], counts["commands"], counts["raw"]])
 	for problem in importer.problems:

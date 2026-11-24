@@ -30,8 +30,12 @@ signal closed
 
 const OPTIONS: Array[String] = [
 	"speaker", "speaker_color", "portrait", "style", "place", "auto", "hold", "walk_away", "screen",
-	"default", "cancel", "locked", "values", "min", "max",
+	"default", "cancel", "locked", "values", "min", "max", "can_cancel", "align",
 ]
+## Properties a message may set in its own words, each language its own:
+## `[speaker=Name]`, `[speaker_color=#ff8000]`, `[align=center]`.
+const PROPERTIES: Array[String] = ["speaker", "speaker_color", "align"]
+const ALIGNS: Array[String] = ["left", "center", "right"]
 const PLACES: Array[String] = ["bottom", "top", "middle"]
 const DIRECTIONS: Dictionary[String, Vector2i] = {
 	"up": Vector2i.UP, "down": Vector2i.DOWN, "left": Vector2i.LEFT, "right": Vector2i.RIGHT,
@@ -118,7 +122,8 @@ func say(text: String, options := {}) -> void:
 ## Asks `text`, then shows `choices`; returns the index of the choice taken.
 ## A choice is a String, or `{"text": …, "disabled": true}`: shown, never
 ## taken. Options as `say()`, and `default` (0), the choice selected first;
-## `cancel` (the last), what the cancel action answers, `-1` for nothing.
+## `cancel` (the last), what the cancel action answers, `-1` for nothing, the
+## number of choices for an answer of its own (no choice is taken).
 func ask(text: String, choices: Array, options := {}) -> int:
 	if choices.is_empty():
 		log.error(&"dialogue", "a question needs choices: \"%s\"" % text)
@@ -132,6 +137,7 @@ func ask(text: String, choices: Array, options := {}) -> int:
 ## Asks `text`, then a number between options `min` (0) and `max` (99),
 ## starting at `default` (`min`): up and down by one, left and right by ten,
 ## wrapping. Returns it, or null when cancelled, closed or cut by a warp.
+## `can_cancel` false: the cancel action does nothing.
 func ask_number(text: String, options := {}) -> Variant:
 	var low := int(options.get("min", 0))
 	var high := int(options.get("max", 99))
@@ -167,6 +173,11 @@ func close() -> void:
 	else:
 		box = null
 		_drop_all()
+
+
+## True while a message or a question is under way or waiting its turn.
+func is_busy() -> bool:
+	return _current != null or not _queue.is_empty()
 
 
 ## True while the box is open.
@@ -334,7 +345,7 @@ func _next() -> void:
 		var values := {}
 		for value_name: Variant in request.options.get("values", {}):
 			values[str(value_name)] = _texts.label(str(request.options["values"][value_name]))
-		var text := _texts.format(translated, true, values)
+		var text := _take_properties(_texts.format(translated, true, values), request.options)
 		if request.options.has("speaker"):
 			request.options["speaker"] = _texts.format(_translated(str(request.options["speaker"])), false, values)
 		for answer: Dictionary in request.answers:
@@ -425,6 +436,40 @@ func _on_map_changed(_map: WgMap) -> void:
 		close()
 
 
+## `text` without the properties it sets in its own words, which go into
+## `options`; the last of each wins.
+func _take_properties(text: String, options: Dictionary) -> String:
+	var result := ""
+	var from := 0
+	for found: RegExMatch in _property_pattern().search_all(text):
+		result += text.substr(from, found.get_start() - from)
+		from = found.get_end()
+		var value := found.get_string(2)
+		match found.get_string(1):
+			"speaker":
+				options["speaker"] = value
+			"speaker_color":
+				if Color.html_is_valid(value):
+					options["speaker_color"] = Color.html(value)
+				else:
+					log.warn(&"dialogue", "speaker_color %s is not a colour" % value)
+			"align":
+				if value in ALIGNS:
+					options["align"] = value
+				else:
+					log.warn(&"dialogue", "align %s is not left, center or right" % value)
+	return result + text.substr(from)
+
+
+static var _properties: RegEx
+
+
+static func _property_pattern() -> RegEx:
+	if _properties == null:
+		_properties = RegEx.create_from_string("\\[(%s)=([^\\]]*)\\]" % "|".join(PROPERTIES))
+	return _properties
+
+
 ## The choices as `{"text", "disabled"}`; checks `default` and `cancel`.
 func _answers(choices: Array, options: Dictionary) -> Array[Dictionary]:
 	var answers: Array[Dictionary] = []
@@ -440,7 +485,7 @@ func _answers(choices: Array, options: Dictionary) -> Array[Dictionary]:
 		default = 0
 	options["default"] = default
 	var cancel := int(options.get("cancel", last))
-	if cancel < -1 or cancel > last:
+	if cancel < -1 or cancel > last + 1:
 		log.warn(&"dialogue", "cancel %d is not a choice; using %d" % [cancel, last])
 		cancel = last
 	options["cancel"] = cancel

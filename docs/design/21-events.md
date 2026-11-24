@@ -1,8 +1,8 @@
 # Feature 21 — Events
 
 Status: in progress. Done: events, pages and their conditions, how events
-start, the lists and their flow and story commands, common events. Next:
-messages and moving (step 1), then the rest (see *In steps*).
+start, the lists and their flow and story commands, common events, messages,
+choices and numbers. Next: moving (step 1), then the rest (see *In steps*).
 
 What a map does as the player goes: characters that talk, doors that open,
 scenes that play. An event stands on a cell with pages; the page shown is the
@@ -103,11 +103,20 @@ each with its own services. Done:
 | `WgEventCallCommon` | a common event's list, then on |
 | `WgEventSetSwitches`, `WgEventSetLocalSwitch` | switches `first` to `last` on or off; a local switch of the event |
 | `WgEventSetVariables` | set, add, subtract, multiply, divide, modulo, by a number, a variable, a random number, an item's count, a character's place or facing or terrain tag, the map, the money, the play time; floored and within ±99 999 999 as RPG Maker's |
+| `WgEventSay` | a message (a text, or a key the game's translations give); the list waits until it is read. Followed at once by `WgEventChoices` or `WgEventInputNumber`, it is their question |
+| `WgEventChoices`, `WgEventWhen`, `WgEventWhenCancel` | a choice and the block of each answer; `cancel` as RPG Maker's: 0 nothing, `n` the answer `n - 1` (a choice, or 4: the cancel's own block) |
+| `WgEventInputNumber` | a number of `digits` digits from 0 into a variable; cancel does nothing |
+| `WgEventTextOptions` | where the next messages show, with or without their frame (style `transparent`) |
 | `WgEventComment`, `WgEventBlockEnd` | nothing |
 | `WgEventRaw` | a command with no class yet: its code and parameters, logged once |
 
 Characters are named as RPG Maker does: -1 the player, 0 the event running
 the list, a number an event of its map.
+
+**Messages.** One at a time: while another list's message or question is
+under way, a list's own waits its turn (it is not queued, so a list dropped
+meanwhile shows nothing). `[look_to=3]` in a message turns the player toward
+event 3 of the list's map (0: nothing).
 
 ## Common events
 

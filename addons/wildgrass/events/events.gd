@@ -26,6 +26,16 @@ var walkers: _Walkers
 var tiles: Object
 ## Set once the bag exists: money and items for conditions and variables.
 var bag: Object
+## Set once the dialogue exists: messages and choices.
+var dialogue: Object:
+	set(value):
+		dialogue = value
+		if value != null:
+			value.call(&"add_tag", &"look_to", _look_to_tag)
+## Where messages show (`top`, `middle`, `bottom`) and whether with their
+## frame, as a list's text options set them.
+var message_place := "bottom"
+var message_frame := true
 var clock: _Clock
 
 var _paths: _Paths
@@ -206,6 +216,14 @@ func common_event(number: int) -> WgCommonEvent:
 	return _commons[number]
 
 
+## The options of a message a list shows.
+func message_options() -> Dictionary:
+	var options := {"place": message_place}
+	if not message_frame:
+		options["style"] = "transparent"
+	return options
+
+
 ## What a command cannot do yet: logged once.
 func report_unsupported(what: String) -> void:
 	if _reported.has(what):
@@ -263,6 +281,18 @@ func _on_map_built(map: Node, _map_id: StringName = &"") -> void:
 		event.erased = false
 		event.page = null
 		refresh(event)
+
+
+## `[look_to=3]` in a message: the player turns toward event 3 of the map
+## of the list holding it (0 does nothing, as Studio's).
+func _look_to_tag(value: String) -> void:
+	var number := value.to_int()
+	var player := maps.traveller as WgWalker
+	if number <= 0 or player == null:
+		return
+	var target := character(number, main.event)
+	if target != null:
+		player.turn_toward(target)
 
 
 func _on_story_changed(_name: StringName) -> void:

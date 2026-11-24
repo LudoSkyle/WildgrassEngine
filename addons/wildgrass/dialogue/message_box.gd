@@ -254,7 +254,8 @@ func _on_input(event: InputEvent) -> bool:
 		if dialogue.is_action(event, "confirm"):
 			_answer_number(_value)
 		elif dialogue.is_action(event, "cancel"):
-			_answer_number(null)
+			if _options.get("can_cancel", true):
+				_answer_number(null)
 		elif dialogue.is_action(event, "up"):
 			_set_value(_value + 1)
 		elif dialogue.is_action(event, "down"):
@@ -630,6 +631,8 @@ func _dress() -> void:
 	if _portrait != null:
 		_portrait.texture = _options.get("portrait") as Texture2D
 		_portrait.visible = _portrait.texture != null
+	if _text != null:
+		_text.horizontal_alignment = {"center": HORIZONTAL_ALIGNMENT_CENTER, "right": HORIZONTAL_ALIGNMENT_RIGHT}.get(str(_options.get("align", "left")), HORIZONTAL_ALIGNMENT_LEFT)
 	var style := str(_options.get("style", ""))
 	_frame.theme_type_variation = StringName("MessageFrame_" + style) if not style.is_empty() else &""
 	if arrange:
