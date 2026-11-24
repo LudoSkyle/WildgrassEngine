@@ -527,3 +527,34 @@ func test_a_map_naming_no_sound_keeps_the_one_playing_one_missing_or_unplayed_is
 		"map002: its music 'Old.mid' is MID, which Godot does not play: silent",
 		"map002: its ambience 'rain.ogg' at volume 80 and pitch 150: played at 100",
 	])
+
+
+func test_the_event_report_sorts_each_map_s_events_and_counts_them() -> void:
+	const Events := preload("res://tests/studio/events_test.gd")
+	const Writer := preload("res://tests/support/marshal_writer.gd")
+	# Map 1: a door on (1, 0), whose passages block every side; a character;
+	# an event with choices. Map 2 has no events file: nothing to say.
+	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2)], {"trigger": 1})], "§ door")
+	door["x"] = 1
+	door["y"] = 0
+	var talker := Events.event([Events.page(Events.words(), {"graphic": "npc"})], "Talker")
+	talker["id"] = 2
+	var asker := Events.event([Events.page(Events.words() + [Events.command(102, [["Yes", "No"], 2])], {"graphic": "npc"})], "Asker")
+	asker["id"] = 3
+	var bytes := Writer.bytes_of({"class": "RPG::Map", "events": {1: door, 2: talker, 3: asker}})
+	var file := FileAccess.open(_data + "Map001.rxdata", FileAccess.WRITE)
+	file.store_buffer(bytes)
+	file.close()
+	var counts := _importer.write_event_report(["map001", "map002"])
+	assert_dict(counts).is_equal({"door": 1, "character": 1, "": 1})
+	assert_array(FileAccess.get_file_as_string(_world.sandbox.root + "maps/events.txt").split("\n")).is_equal(("\n".join([
+		"Studio events, as the importer sorts them.",
+		"3 events on 2 maps: 1 doors, 1 characters, 1 to rewrite by hand.",
+		"1 of the doors leave nothing out.",
+		"Nothing is written into the maps yet: each form comes with its own step.",
+		"",
+		"map001 (001 Test)",
+		"  #1 (1, 0) § door: door, bumped, to map002 (3, 1)",
+		"  #2 (1, 1) Talker: character",
+		"  #3 (1, 1) Asker: by hand: a command 102 (Show Choices)",
+	]) + "\n").split("\n"))

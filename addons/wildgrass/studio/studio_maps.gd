@@ -85,6 +85,8 @@ const DATA: Dictionary[String, int] = {
 	"terrain_tag": TYPE_INT, "bush": TYPE_BOOL, "counter": TYPE_BOOL, "floor": TYPE_INT, "ramp": TYPE_BOOL,
 }
 
+const _StudioEvents := preload("res://addons/wildgrass/studio/studio_events.gd")
+
 ## Problems met, each a line: a map or a tileset missing, a layer unread.
 var problems: Array[String] = []
 ## The Studio project's `Data` folder.
@@ -831,6 +833,96 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 				problems.append("%s: its %s '%s' at volume %d and pitch %d: played at 100" % [symbol, kind, found["name"], int(settings.get("volume", 100)), int(settings.get("pitch", 100))])
 		root.set(kind, sound_name)
 		root.set("keep_" + kind, found.is_empty())
+
+
+## The cells of map record `record` whose passages block every side, as
+## Studio reads them for an event; a cell with no tile blocks nothing.
+func blocked_cells(record: Dictionary) -> Dictionary[Vector2i, bool]:
+	var blocked: Dictionary[Vector2i, bool] = {}
+	var map := read_tmx(tmx_path(record))
+	if map.is_empty():
+		return blocked
+	var first := -1
+	for tileset: Dictionary in map["tilesets"]:
+		if (tileset["path"] as String).get_file() == SPECIAL["passages"]:
+			first = tileset["first"]
+	var width: int = map["width"]
+	var drawn := PackedByteArray()
+	drawn.resize(width * int(map["height"]))
+	var passages := PackedInt64Array()
+	for layer: Dictionary in map["layers"]:
+		var gids: PackedInt64Array = layer["gids"]
+		if layer["name"] == "passages":
+			passages = gids
+		elif not SPECIAL.has(layer["name"]):
+			for at in gids.size():
+				if gids[at] != 0:
+					drawn[at] = 1
+	if first < 0:
+		return blocked
+	for at in passages.size():
+		var gid := passages[at] & 0x0FFFFFFF
+		if gid >= first and drawn[at] == 1 and ((gid - first) & 0x0F) == 0x0F:
+			blocked[Vector2i(at % width, at / width)] = true
+	return blocked
+
+
+## Sorts the events of the maps `symbols` and writes the report,
+## `events.txt` beside the maps: what each event becomes, or why it is left
+## to be rewritten by hand. Returns the counts by form ("" for by hand).
+func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
+	var events := _StudioEvents.new(data_folder)
+	var counts: Dictionary[String, int] = {}
+	var whole_doors := 0
+	var lines: Array[String] = []
+	var total := 0
+	for symbol in symbols:
+		var record := map_record(symbol)
+		if record.is_empty():
+			continue
+		var map_id := int(record.get("id", 0))
+		var blocked := blocked_cells(record)
+		var listed := events.events_of(map_id)
+		if listed.is_empty():
+			continue
+		lines.append("")
+		lines.append("%s (%s)" % [symbol, record.get("tiledFilename", "")])
+		for event in listed:
+			var cell := Vector2i(int(event.get("x", 0)), int(event.get("y", 0)))
+			var sorted_as := events.classify(event, blocked.has(cell))
+			var form: String = sorted_as["form"]
+			counts[form] = counts.get(form, 0) + 1
+			total += 1
+			var what := "by hand: %s" % sorted_as["reason"] if form.is_empty() else form
+			if form == "door":
+				what = "door, %s, to %s %s" % ["bumped" if sorted_as["bumped"] else "stepped on", _symbol_of(sorted_as["map"]) if not _symbol_of(sorted_as["map"]).is_empty() else "map %d" % sorted_as["map"], sorted_as["cell"]]
+			var notes: Array = sorted_as["notes"]
+			if form == "door" and notes.is_empty():
+				whole_doors += 1
+			if not notes.is_empty():
+				what += "; leaves out: " + ", ".join(notes)
+			lines.append("  #%d %s %s: %s" % [int(event.get("id", 0)), cell, str(event.get("name", "")).strip_edges(), what])
+	problems.append_array(events.problems)
+	var head: Array[String] = ["Studio events, as the importer sorts them.", "%d events on %d maps: %s." % [total, symbols.size(), counts_text(counts)],
+		"%d of the doors leave nothing out." % whole_doors,
+		"Nothing is written into the maps yet: each form comes with its own step."]
+	DirAccess.make_dir_recursive_absolute(target_folder)
+	var file := FileAccess.open(target_folder.path_join("events.txt"), FileAccess.WRITE)
+	if file == null:
+		problems.append("events.txt cannot be written in %s" % target_folder)
+	else:
+		file.store_string("\n".join(head + lines) + "\n")
+		file.close()
+	return counts
+
+
+## The counts by form, in words.
+static func counts_text(counts: Dictionary[String, int]) -> String:
+	var parts: Array[String] = []
+	for form: String in ["door", "character", "sign", "item", "still", "nothing", ""]:
+		if counts.get(form, 0) > 0:
+			parts.append("%d %s" % [counts[form], {"door": "doors", "character": "characters", "sign": "signs", "item": "items found", "still": "still sprites", "nothing": "with nothing to write", "": "to rewrite by hand"}[form]])
+	return ", ".join(parts)
 
 
 ## The maps shown against the sides of map `map_id`: those of the first

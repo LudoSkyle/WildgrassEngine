@@ -30,6 +30,8 @@ func _initialize() -> void:
 			imported += 1
 			print("%s: imported" % symbol)
 	importer.save_tile_set()
+	var counts := importer.write_event_report(wanted)
+	print("events: %s (maps/events.txt)" % importer.counts_text(counts))
 	for problem in importer.problems:
 		printerr(problem)
 	print("%d of %d maps imported" % [imported, wanted.size()])
