@@ -65,7 +65,11 @@ A game adds its own roles and plays them with `play(role)`.
 
 `WgMap` gains `music` and `ambience` (names; empty: silence). A warp, a
 reload or crossing into a linked map plays them; two maps with the same
-music keep it going. The title plays the `title` config's `music` (feature
+music keep it going. With no music of its own, a map with `keep_music`
+lets the music playing go on, not restarted, as it came from the last map;
+`keep_ambience` the same for the ambience, apart. A map shown first, or
+loaded from a save, keeping a sound plays what was playing then: nothing at
+start, the title's music after it. The title plays the `title` config's `music` (feature
 11), crossfaded into the first map's.
 
 ## In messages
@@ -107,7 +111,8 @@ config's default order becomes `message_speed`, `message_frame`,
 | the `volume` option | `volume` (Master) |
 | `.mid` files | not played by Godot: reported once, silence |
 
-A map's music, in Studio's RPG Maker data: with the map importer.
+A map's music and ambience (`bgm`, `bgs` of its record): with the map
+importer (feature 10 ter), each file copied into the game.
 
 ## Pokémon Mirage, step by step
 
@@ -130,7 +135,6 @@ A map's music, in Studio's RPG Maker data: with the map importer.
   loops; Godot's loop settings on the files meanwhile.
 - Battle music and the bike's, surfing's: with their features, from the
   roles.
-- A map's music from Studio's maps: with the map importer.
 
 ## Tests
 
@@ -146,7 +150,9 @@ by another; effects on free voices;
 a cry one at a time unless forced, none without one; named sounds by kind
 with their volume and pitch, silent roles; the config keeping the engine's
 roles; the three volumes on their buses and the default order. Each map's
-music and ambience, two maps keeping one, silence; the title's music into
+music and ambience, two maps keeping one, silence; a map keeping the music
+playing, the ambience kept apart, its own music winning, nothing to keep;
+the title's music into
 the first map's; crossing into a linked map. The screens' keys, the menu,
 a door, a save, an item given and the message waiting for its jingle, the
 tags, bumping again while it goes on and not after, a jump. Studio's sound

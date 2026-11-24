@@ -19,8 +19,9 @@ func _initialize() -> void:
 	if wanted.is_empty():
 		wanted = importer.map_symbols()
 	var written := importer.write_textures(wanted)
+	written.append_array(importer.write_sounds(wanted))
 	if not written.is_empty():
-		print("%d textures written; Godot imports them" % written.size())
+		print("%d textures and sounds written; Godot imports them" % written.size())
 		var output: Array = []
 		OS.execute(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--import"], output, true)
 	var imported := 0

@@ -49,7 +49,7 @@ The Studio layer (`Wildgrass.studio`) reads its configs, texts, items, pockets
 and quests from `Data/` and gives them to the engine; a file of your own in
 `res://config/` wins field by field. Setting *wildgrass/studio/enabled*:
 `auto`, `on`, `off`. Its maps are imported once into Godot scenes, tiles,
-passages and tags as Studio reads them
+passages and tags as Studio reads them, with their links and music
 ([feature 10 ter](docs/design/10c-studio-maps.md)):
 
 ```bash
@@ -254,8 +254,8 @@ Wildgrass.encounters.start = _start_battle       # what follows a wild Pokémon
 Wildgrass.hooks.add(&"wild_encounter", &"repel", _repel)
 ```
 
-**Sound**: music and ambience crossfaded (a map's `music`, `ambience`; the
-title's `music`), jingles that pause the music, effects, cries; files in
+**Sound**: music and ambience crossfaded (a map's `music`, `ambience`, or
+the ones playing kept; the title's `music`), jingles that pause the music, effects, cries; files in
 `res://audio/music`, `jingles`, `effects`, `ambience`. `config/audio.json`
 names the sounds the engine plays (`confirm`, `bump`, `door`, `save`…),
 silent by default. Messages play `[jingle=…]` and `[sound=…]`. Three
