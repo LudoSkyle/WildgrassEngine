@@ -39,6 +39,7 @@ func apply_page(shown: WgEventPage) -> void:
 		(sprite_node as WgCharacterSprite).sheet = shown.sheet if shown != null else null
 	if sprite_node is CanvasItem:
 		(sprite_node as CanvasItem).visible = shown != null and shown.sheet != null
+		(sprite_node as CanvasItem).modulate.a = shown.opacity if shown != null else 1.0
 	through = shown == null or shown.through or (shown.sheet == null and not invisible_blocker)
 	always_stepping = shown != null and shown.step_animation
 	if shown != null and shown.direction != _page_direction:

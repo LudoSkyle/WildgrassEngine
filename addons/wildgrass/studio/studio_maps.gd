@@ -95,6 +95,8 @@ var data_folder := ""
 var target_folder := "res://maps"
 ## Where the maps' music and ambiences go, each in its kind's folder.
 var audio_folder := "res://audio"
+## Where common events go.
+var common_events_folder := "res://common_events"
 ## Gives the texture of a picture written, by its path. Default: `load()`,
 ## once Godot imported it.
 var texture_of := Callable()
@@ -112,6 +114,7 @@ var _tilesets: Dictionary[String, Dictionary] = {}
 var _idle_frames := 0
 ## The dbSymbol of each map id; the project's map links, by id.
 var _symbols: Dictionary[int, String] = {}
+var _events: _StudioEvents
 var _map_links: Array[Dictionary] = []
 
 
@@ -395,6 +398,8 @@ func import_map(symbol: String) -> bool:
 				node.y_sort_enabled = true
 				node.y_sort_origin = CELL * priority - 1
 				entities.add_child(node)
+	for event in _events_reader().events_of(int(record.get("id", 0))):
+		entities.add_child(_events_reader().build_event(event, CELL))
 	root.add_child(entities)
 	for name: String in SPECIAL_NODES:
 		if not special.has(name):
@@ -835,94 +840,96 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 		root.set("keep_" + kind, found.is_empty())
 
 
-## The cells of map record `record` whose passages block every side, as
-## Studio reads them for an event; a cell with no tile blocks nothing.
-func blocked_cells(record: Dictionary) -> Dictionary[Vector2i, bool]:
-	var blocked: Dictionary[Vector2i, bool] = {}
-	var map := read_tmx(tmx_path(record))
-	if map.is_empty():
-		return blocked
-	var first := -1
-	for tileset: Dictionary in map["tilesets"]:
-		if (tileset["path"] as String).get_file() == SPECIAL["passages"]:
-			first = tileset["first"]
-	var width: int = map["width"]
-	var drawn := PackedByteArray()
-	drawn.resize(width * int(map["height"]))
-	var passages := PackedInt64Array()
-	for layer: Dictionary in map["layers"]:
-		var gids: PackedInt64Array = layer["gids"]
-		if layer["name"] == "passages":
-			passages = gids
-		elif not SPECIAL.has(layer["name"]):
-			for at in gids.size():
-				if gids[at] != 0:
-					drawn[at] = 1
-	if first < 0:
-		return blocked
-	for at in passages.size():
-		var gid := passages[at] & 0x0FFFFFFF
-		if gid >= first and drawn[at] == 1 and ((gid - first) & 0x0F) == 0x0F:
-			blocked[Vector2i(at % width, at / width)] = true
-	return blocked
-
-
-## Sorts the events of the maps `symbols` and writes the report,
-## `events.txt` beside the maps: what each event becomes, or why it is left
-## to be rewritten by hand. Returns the counts by form ("" for by hand).
+## The events of the maps `symbols`, written into their scenes by
+## `import_map`; here the report, `events.txt` beside the maps: how many events
+## and commands, and each command the engine has no class for yet, with its
+## count. Returns {events, commands, raw}.
 func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
-	var events := _StudioEvents.new(data_folder)
-	var counts: Dictionary[String, int] = {}
-	var whole_doors := 0
-	var lines: Array[String] = []
-	var total := 0
+	var events := _events_reader()
+	var counts: Dictionary[String, int] = {"events": 0, "commands": 0, "raw": 0}
+	var raw: Dictionary[String, int] = {}
 	for symbol in symbols:
 		var record := map_record(symbol)
 		if record.is_empty():
 			continue
-		var map_id := int(record.get("id", 0))
-		var blocked := blocked_cells(record)
-		var listed := events.events_of(map_id)
-		if listed.is_empty():
-			continue
-		lines.append("")
-		lines.append("%s (%s)" % [symbol, record.get("tiledFilename", "")])
-		for event in listed:
-			var cell := Vector2i(int(event.get("x", 0)), int(event.get("y", 0)))
-			var sorted_as := events.classify(event, blocked.has(cell))
-			var form: String = sorted_as["form"]
-			counts[form] = counts.get(form, 0) + 1
-			total += 1
-			var what := "by hand: %s" % sorted_as["reason"] if form.is_empty() else form
-			if form == "door":
-				what = "door, %s, to %s %s" % ["bumped" if sorted_as["bumped"] else "stepped on", _symbol_of(sorted_as["map"]) if not _symbol_of(sorted_as["map"]).is_empty() else "map %d" % sorted_as["map"], sorted_as["cell"]]
-			var notes: Array = sorted_as["notes"]
-			if form == "door" and notes.is_empty():
-				whole_doors += 1
-			if not notes.is_empty():
-				what += "; leaves out: " + ", ".join(notes)
-			lines.append("  #%d %s %s: %s" % [int(event.get("id", 0)), cell, str(event.get("name", "")).strip_edges(), what])
-	problems.append_array(events.problems)
-	var head: Array[String] = ["Studio events, as the importer sorts them.", "%d events on %d maps: %s." % [total, symbols.size(), counts_text(counts)],
-		"%d of the doors leave nothing out." % whole_doors,
-		"Nothing is written into the maps yet: each form comes with its own step."]
+		var before := events.raw_counts.duplicate()
+		events.raw_counts.clear()
+		for event in events.events_of(int(record.get("id", 0))):
+			counts["events"] += 1
+			for page: Dictionary in event.get("pages", []):
+				var built := events.build_commands(page.get("list", []))
+				counts["commands"] += built.size()
+		for what: String in events.raw_counts:
+			raw[what] = raw.get(what, 0) + events.raw_counts[what]
+		events.raw_counts = before
+	var ordered := raw.keys()
+	ordered.sort_custom(func(a: String, b: String) -> bool: return raw[a] > raw[b] or (raw[a] == raw[b] and a < b))
+	var lines: Array[String] = ["Studio events, as the importer writes them.",
+		"%d events on %d maps, %d commands." % [counts["events"], symbols.size(), counts["commands"]],
+		"What the engine does not run yet, by count:"]
+	for what: String in ordered:
+		counts["raw"] += raw[what]
+		lines.append("  %d %s" % [raw[what], what])
 	DirAccess.make_dir_recursive_absolute(target_folder)
 	var file := FileAccess.open(target_folder.path_join("events.txt"), FileAccess.WRITE)
 	if file == null:
 		problems.append("events.txt cannot be written in %s" % target_folder)
 	else:
-		file.store_string("\n".join(head + lines) + "\n")
+		file.store_string("\n".join(lines) + "\n")
 		file.close()
 	return counts
 
 
-## The counts by form, in words.
-static func counts_text(counts: Dictionary[String, int]) -> String:
-	var parts: Array[String] = []
-	for form: String in ["door", "character", "sign", "item", "still", "nothing", ""]:
-		if counts.get(form, 0) > 0:
-			parts.append("%d %s" % [counts[form], {"door": "doors", "character": "characters", "sign": "signs", "item": "items found", "still": "still sprites", "nothing": "with nothing to write", "": "to rewrite by hand"}[form]])
-	return ", ".join(parts)
+## Copies the character sheets the events of the maps `symbols` show into the
+## game, once each. Returns the files written.
+func write_sheets(symbols: Array[String]) -> Array[String]:
+	var events := _events_reader()
+	var written: Array[String] = []
+	var names: Array[String] = []
+	for symbol in symbols:
+		var record := map_record(symbol)
+		if not record.is_empty():
+			for name in events.sheets_of(events.events_of(int(record.get("id", 0)))):
+				if not name in names:
+					names.append(name)
+	var folder := data_folder.path_join("../graphics/characters").simplify_path()
+	for name in names:
+		var source := folder.path_join(name + ".png")
+		var target := events.sheet_path(name)
+		if not FileAccess.file_exists(source):
+			problems.append("no character sheet graphics/characters/%s.png" % name)
+			continue
+		if _is_fresh(target, FileAccess.get_modified_time(source)):
+			continue
+		DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+		if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(target)) == OK:
+			written.append(target)
+	return written
+
+
+## Writes Studio's common events as the engine's, `<number>.tres` in
+## `common_events_folder`. Returns how many.
+func write_common_events() -> int:
+	var events := _events_reader()
+	var count := 0
+	DirAccess.make_dir_recursive_absolute(common_events_folder)
+	var commons := events.common_events()
+	for number: int in commons:
+		var entry: Dictionary = commons[number]
+		var common := WgCommonEvent.new()
+		common.trigger = clampi(int(entry.get("trigger", 0)), 0, 2) as WgCommonEvent.Trigger
+		common.switch = StringName("switch_%d" % int(entry.get("switch_id", 0)))
+		common.commands = events.build_commands(entry.get("list", []))
+		if ResourceSaver.save(common, common_events_folder.path_join("%d.tres" % number)) == OK:
+			count += 1
+	return count
+
+
+func _events_reader() -> _StudioEvents:
+	if _events == null:
+		_events = _StudioEvents.new(data_folder)
+		_events.texture_of = texture_of
+	return _events
 
 
 ## The maps shown against the sides of map `map_id`: those of the first

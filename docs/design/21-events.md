@@ -131,7 +131,8 @@ handle yet, with its count: it is the list of what to add.
 
 Each event of a map, written as a `WgEvent` in its scene: every page, its
 condition, look, trigger, moves and commands, translated one to one; common
-events into resources. Messages become text keys (feature 5), the words of
+events into resources (feature 10 quater, done for what the engine runs; the
+rest kept raw). Messages become text keys (feature 5), the words of
 Studio's dialog files written into the game's translations. Switches and
 variables are named `switch_N`, `variable_N` (feature 7).
 

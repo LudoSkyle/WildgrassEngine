@@ -20,6 +20,7 @@ func _initialize() -> void:
 		wanted = importer.map_symbols()
 	var written := importer.write_textures(wanted)
 	written.append_array(importer.write_sounds(wanted))
+	written.append_array(importer.write_sheets(wanted))
 	if not written.is_empty():
 		print("%d textures and sounds written; Godot imports them" % written.size())
 		var output: Array = []
@@ -30,8 +31,9 @@ func _initialize() -> void:
 			imported += 1
 			print("%s: imported" % symbol)
 	importer.save_tile_set()
+	print("%d common events written" % importer.write_common_events())
 	var counts := importer.write_event_report(wanted)
-	print("events: %s (maps/events.txt)" % importer.counts_text(counts))
+	print("%d events, %d commands, %d not run yet (maps/events.txt)" % [counts["events"], counts["commands"], counts["raw"]])
 	for problem in importer.problems:
 		printerr(problem)
 	print("%d of %d maps imported" % [imported, wanted.size()])

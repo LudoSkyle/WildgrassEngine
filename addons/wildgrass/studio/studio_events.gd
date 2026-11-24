@@ -1,7 +1,7 @@
 ## A Studio map's events (feature 10 quater): read from its RPG Maker map
-## file, sorted into the forms the engine's own nodes say (a door, a
-## character, a sign, an item found, a still sprite), and every other one
-## told with why, to be rewritten by hand.
+## file and written as the engine's events (feature 21), one to one: every
+## page, its condition, look and trigger, and every command, as the class
+## the engine has for it, or kept raw until it has one.
 extends RefCounted
 
 const _Reader := preload("res://addons/wildgrass/studio/marshal_reader.gd")
@@ -27,43 +27,35 @@ const COMMANDS: Dictionary[int, String] = {
 	322: "Change Actor Graphic", 340: "Abort Battle", 351: "Call Menu Screen", 352: "Call Save Screen",
 	353: "Game Over", 354: "Return to Title Screen", 355: "Script",
 }
-## Commands that only show or sound something, or wait: a door keeps going
-## without them. Comments, a list's end and the lines that continue a
-## command (401, 408, 509, 655) go with them.
-const COSMETIC: Array[int] = [0, 106, 108, 408, 209, 509, 210, 221, 222, 223, 224, 225, 241, 242, 245, 246, 249, 250, 251]
-## Commands that change the game's state: noted when a door drops them.
-const STATE: Array[int] = [117, 121, 122, 123]
-## Studio's scripts that only show something, by their method's name.
-const COSMETIC_SCRIPTS: Array[String] = ["smart_disable", "smart_enable", "leave_cycling_state", "enter_in_walking_state", "animate_from_charset"]
-## Scripts that change the game's state, noted when a door drops them.
-const STATE_SCRIPTS: Array[String] = ["set_self_switch"]
-## Scripts that give an item found.
-const ITEM_SCRIPTS: Array[String] = ["pick_item", "give_item"]
-const WORDS: Array[int] = [0, 101, 401, 108, 408]
-## RPG Maker's triggers.
-const ACTION := 0
-const AUTORUN := 3
+## The lines that go on a command before them: text, choices' and branches'
+## ends, comments, move routes, scripts.
+const CONTINUATIONS: Array[int] = [401, 402, 403, 408, 509, 601, 602, 603, 655]
+## RPG Maker's directions.
+const DIRECTIONS: Dictionary[int, Vector2i] = {2: Vector2i.DOWN, 4: Vector2i.LEFT, 6: Vector2i.RIGHT, 8: Vector2i.UP}
+## RPG Maker's buttons, as Godot's input actions.
+const BUTTONS: Dictionary[int, StringName] = {2: &"ui_down", 4: &"ui_left", 6: &"ui_right", 8: &"ui_up", 11: &"ui_accept", 12: &"ui_cancel", 13: &"ui_accept"}
 ## Event name tags.
-const NO_SPRITE := "[sprite=off]"
 const INVISIBLE := "invisible_"
-
-## The forms, and the step of the importer that writes each.
-const FORMS: Dictionary[String, String] = {
-	"door": "doors", "character": "characters and signs", "sign": "characters and signs",
-	"still": "characters and signs", "item": "items found", "nothing": "",
-}
 
 ## Problems met: a map file unread.
 var problems: Array[String] = []
 ## The Studio project's `Data` folder.
 var data_folder := ""
+## Gives the texture of a character sheet, by its Godot path. Default: load().
+var texture_of := Callable()
+## Where character sheets go in the game.
+var sheets_folder := "res://graphics/characters"
+## The commands kept raw, by what they are: "Show Text", "script give_item".
+var raw_counts: Dictionary[String, int] = {}
 
 var _reader := _Reader.new()
 var _script_method := RegEx.create_from_string("^\\s*(?:[A-Za-z_][\\w]*::)*(?:[$@]?[A-Za-z_]\\w*(?:\\([^()]*\\))?\\.)*([A-Za-z_]\\w*[?!]?)")
+var _items: Dictionary[int, StringName] = {}
 
 
 func _init(data: String) -> void:
 	data_folder = data
+	texture_of = func(path: String) -> Texture2D: return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
 ## The events of map `map_id` (Studio's map id, the number of its RPG Maker
@@ -86,6 +78,163 @@ func events_of(map_id: int) -> Array[Dictionary]:
 	return found
 
 
+## The common events, by number; {} if the file cannot be read.
+func common_events() -> Dictionary[int, Dictionary]:
+	var found: Dictionary[int, Dictionary] = {}
+	var path := data_folder.path_join("CommonEvents.rxdata")
+	if not FileAccess.file_exists(path):
+		return found
+	var list: Variant = _reader.read_file(path)
+	if not list is Array:
+		problems.append("common events cannot be read (%s)" % _reader.error)
+		return found
+	for entry: Variant in list:
+		if entry is Dictionary and int((entry as Dictionary).get("id", 0)) > 0:
+			found[int(entry["id"])] = entry
+	return found
+
+
+## The names of the character sheets the events of `events` show.
+static func sheets_of(events: Array[Dictionary]) -> Array[String]:
+	var found: Array[String] = []
+	for event in events:
+		for page: Dictionary in event.get("pages", []):
+			var name := str((page.get("graphic", {}) as Dictionary).get("character_name", ""))
+			if not name.is_empty() and not name in found:
+				found.append(name)
+	return found
+
+
+## Where the sheet `name` goes in the game.
+func sheet_path(name: String) -> String:
+	return sheets_folder.path_join(name + ".png")
+
+
+## `event` as the engine's event, on the cell it stands on.
+func build_event(event: Dictionary, cell_size: int) -> WgEvent:
+	var node := WgEvent.new()
+	var id := int(event.get("id", 0))
+	node.name = "Event%d" % id
+	node.event_id = id
+	node.position = Vector2(int(event.get("x", 0)) * cell_size + cell_size / 2.0, int(event.get("y", 0)) * cell_size + cell_size / 2.0)
+	node.invisible_blocker = str(event.get("name", "")).contains(INVISIBLE)
+	var pages: Array[WgEventPage] = []
+	for page: Dictionary in event.get("pages", []):
+		pages.append(build_page(page))
+	node.pages = pages
+	var sprite := WgCharacterSprite.new()
+	sprite.name = "Sprite"
+	node.add_child(sprite)
+	return node
+
+
+func build_page(page: Dictionary) -> WgEventPage:
+	var made := WgEventPage.new()
+	made.condition = condition_of(page.get("condition", {}))
+	var graphic: Dictionary = page.get("graphic", {})
+	var sheet := str(graphic.get("character_name", ""))
+	if not sheet.is_empty():
+		made.sheet = texture_of.call(sheet_path(sheet))
+		if made.sheet == null:
+			problems.append("no character sheet %s" % sheet_path(sheet))
+	made.direction = DIRECTIONS.get(int(graphic.get("direction", 2)), Vector2i.DOWN)
+	made.pattern = int(graphic.get("pattern", 0))
+	made.opacity = int(graphic.get("opacity", 255)) / 255.0
+	made.trigger = clampi(int(page.get("trigger", 0)), 0, 4) as WgEventPage.Trigger
+	made.through = bool(page.get("through", false))
+	made.always_on_top = bool(page.get("always_on_top", false))
+	made.fixed_direction = bool(page.get("direction_fix", false))
+	made.walk_animation = bool(page.get("walk_anime", true))
+	made.step_animation = bool(page.get("step_anime", false))
+	made.commands = build_commands(page.get("list", []))
+	return made
+
+
+## A page's condition as a story condition.
+static func condition_of(condition: Dictionary) -> String:
+	var terms: Array[String] = []
+	for key: String in ["switch1", "switch2"]:
+		if condition.get(key + "_valid", false):
+			terms.append("switch_%d" % int(condition.get(key + "_id", 0)))
+	if condition.get("variable_valid", false):
+		terms.append("variable_%d >= %d" % [int(condition.get("variable_id", 0)), int(condition.get("variable_value", 0))])
+	if condition.get("self_switch_valid", false):
+		terms.append("local:%s" % str(condition.get("self_switch_ch", "A")))
+	return ", ".join(terms)
+
+
+## RPG Maker's list as the engine's commands, one to one.
+func build_commands(list: Array) -> Array[WgEventCommand]:
+	var built: Array[WgEventCommand] = []
+	for command: Variant in list:
+		if not command is Dictionary:
+			continue
+		var made := build_command(command)
+		made.indent = int((command as Dictionary).get("indent", 0))
+		built.append(made)
+	return built
+
+
+func build_command(command: Dictionary) -> WgEventCommand:
+	var code := int(command.get("code", 0))
+	var p: Array = command.get("parameters", [])
+	match code:
+		0, 404, 412, 604:
+			return WgEventBlockEnd.new()
+		106:
+			var wait := WgEventWait.new()
+			wait.seconds = int(p[0]) / 30.0
+			return wait
+		108, 408:
+			var comment := WgEventComment.new()
+			comment.text = str(p[0]) if not p.is_empty() else ""
+			return comment
+		111:
+			var made := _condition(p)
+			if made != null:
+				return made
+		411:
+			return WgEventElse.new()
+		112:
+			return WgEventLoop.new()
+		413:
+			return WgEventRepeat.new()
+		113:
+			return WgEventBreak.new()
+		115:
+			return WgEventExit.new()
+		116:
+			return WgEventErase.new()
+		117:
+			var call := WgEventCallCommon.new()
+			call.common_event = int(p[0])
+			return call
+		118, 119:
+			var named: WgEventCommand = WgEventLabel.new() if code == 118 else WgEventJump.new()
+			named.set(&"label", str(p[0]))
+			return named
+		121:
+			var switches := WgEventSetSwitches.new()
+			switches.first = int(p[0])
+			switches.last = int(p[1])
+			switches.on = int(p[2]) == 0
+			return switches
+		122:
+			var made := _variables(p)
+			if made != null:
+				return made
+		123:
+			var local := WgEventSetLocalSwitch.new()
+			local.letter = str(p[0])
+			local.on = int(p[1]) == 0
+			return local
+	var raw := WgEventRaw.new()
+	raw.code = code
+	raw.parameters = p
+	_count_raw(code, p)
+	return raw
+
+
 ## The method a Studio script line calls, its receiver and modules dropped:
 ## `ge(2).animate_from_charset([0,1],20)` is `animate_from_charset`.
 func script_method(line: String) -> String:
@@ -93,144 +242,98 @@ func script_method(line: String) -> String:
 	return found.get_string(1) if found != null else ""
 
 
-## What an event is: {form, notes, reason}. `form` is one of FORMS, or "" when
-## it is left to be rewritten by hand, `reason` saying why; `notes` what the
-## form leaves out. `blocked`: whether its cell's passages block every side.
-func classify(event: Dictionary, blocked: bool) -> Dictionary:
-	var pages: Array = event.get("pages", [])
-	if pages.is_empty():
-		return {"form": "nothing", "notes": [], "reason": ""}
-	var name := str(event.get("name", ""))
-	var first: Dictionary = pages[0]
-	var door := _door(event, blocked)
-	if not door.is_empty():
-		return door
-	if pages.size() > 1:
-		return _by_hand("%d pages" % pages.size())
-	if _has_condition(first):
-		return _by_hand("a page condition")
-	var codes := _codes(first)
-	var graphic := _has_graphic(first) and not name.contains(NO_SPRITE)
-	if codes.all(func(code: int) -> bool: return code in [0, 108, 408]):
-		return {"form": "still" if graphic else "nothing", "notes": [], "reason": ""}
-	if int(first.get("trigger", ACTION)) != ACTION:
-		return _by_hand("its trigger (%s)" % _trigger_name(int(first.get("trigger", ACTION))))
-	if codes.all(func(code: int) -> bool: return code in WORDS):
-		return {"form": "character" if graphic else "sign", "notes": [], "reason": ""}
-	var methods := _scripts(first)
-	if not methods.is_empty() and methods.all(func(method: String) -> bool: return method in ITEM_SCRIPTS) \
-			and codes.all(func(code: int) -> bool: return code in WORDS or code == 355 or code == 655):
-		return {"form": "item", "notes": [], "reason": ""}
-	return _by_hand(_first_unknown(first, WORDS, []))
+func _condition(p: Array) -> WgEventIf:
+	var made := WgEventIf.new()
+	match int(p[0]):
+		0:
+			made.kind = WgEventIf.Kind.SWITCH
+			made.number = int(p[1])
+			made.on = int(p[2]) == 0
+		1:
+			made.kind = WgEventIf.Kind.VARIABLE
+			made.number = int(p[1])
+			made.against_variable = int(p[2]) != 0
+			made.value = int(p[3])
+			made.comparison = clampi(int(p[4]), 0, 5) as WgEventIf.Comparison
+		2:
+			made.kind = WgEventIf.Kind.LOCAL_SWITCH
+			made.letter = str(p[1])
+			made.on = int(p[2]) == 0
+		3:
+			made.kind = WgEventIf.Kind.TIMER
+			made.value = int(p[1])
+			made.on = int(p[2]) == 0
+		6:
+			made.kind = WgEventIf.Kind.FACING
+			made.number = int(p[1])
+			made.direction = DIRECTIONS.get(int(p[2]), Vector2i.DOWN)
+		7:
+			made.kind = WgEventIf.Kind.MONEY
+			made.value = int(p[1])
+			made.on = int(p[2]) == 0
+		8:
+			made.kind = WgEventIf.Kind.ITEM
+			made.item = _item(int(p[1]))
+		11:
+			made.kind = WgEventIf.Kind.KEY
+			made.action = BUTTONS.get(int(p[1]), &"ui_accept")
+		_:
+			var what: String = "script %s" % script_method(str(p[1])) if int(p[0]) == 12 else ["actor", "enemy", "", "", "", "", "weapon", "armor"][clampi(int(p[0]) - 4, 0, 7)] + " condition"
+			made.kind = WgEventIf.Kind.UNSUPPORTED
+			made.about = what
+			raw_counts["condition: " + what] = raw_counts.get("condition: " + what, 0) + 1
+	return made
 
 
-## The event as a door, or {}: one page that moves the player to a map (its
-## other pages only playing its arrival), and nothing else than showing,
-## sounding, waiting and moving; what changes the game's state is noted.
-func _door(event: Dictionary, blocked: bool) -> Dictionary:
-	var pages: Array = event.get("pages", [])
-	var first: Dictionary = pages[0]
-	var transfers := (first.get("list", []) as Array).filter(func(command: Dictionary) -> bool: return command.get("code") == 201)
-	if transfers.size() != 1 or _has_condition(first) or int(first.get("trigger", ACTION)) in [AUTORUN, 4]:
-		return {}
-	if int(first.get("trigger", ACTION)) == ACTION:
-		return _by_hand("a transfer on the action key")
-	var parameters: Array = transfers[0].get("parameters", [])
-	if parameters.size() < 6 or int(parameters[0]) != 0:
-		return _by_hand("a transfer to a place held in variables") if parameters.size() >= 6 else {}
-	var notes: Array[String] = []
-	var unknown := _first_unknown(first, COSMETIC + STATE + [201], COSMETIC_SCRIPTS + STATE_SCRIPTS)
-	if not unknown.is_empty():
-		return _by_hand("a transfer, and %s" % unknown)
-	notes.append_array(_state_notes(first))
-	for index in range(1, pages.size()):
-		var page: Dictionary = pages[index]
-		var condition: Dictionary = page.get("condition", {})
-		var arrival: bool = int(page.get("trigger", ACTION)) == AUTORUN and condition.get("self_switch_valid", false) \
-			and not condition.get("switch1_valid", false) and not condition.get("switch2_valid", false) \
-			and not condition.get("variable_valid", false) \
-			and _first_unknown(page, COSMETIC + [123], COSMETIC_SCRIPTS).is_empty()
-		if not arrival:
-			return _by_hand("a transfer, and a page %d that is not its arrival" % (index + 1))
-		notes.append("its arrival page %d" % (index + 1))
-	var graphic := _has_graphic(first) and not str(event.get("name", "")).contains(NO_SPRITE)
-	var bumped: bool = (graphic and not first.get("through", false)) or str(event.get("name", "")).contains(INVISIBLE) or blocked
-	return {"form": "door", "notes": notes, "reason": "", "map": int(parameters[1]), "cell": Vector2i(int(parameters[2]), int(parameters[3])),
-		"direction": int(parameters[4]), "bumped": bumped, "graphic": graphic}
+func _variables(p: Array) -> WgEventSetVariables:
+	var made := WgEventSetVariables.new()
+	made.first = int(p[0])
+	made.last = int(p[1])
+	made.operation = clampi(int(p[2]), 0, 5) as WgEventSetVariables.Operation
+	var Operand := WgEventSetVariables.Operand
+	match int(p[3]):
+		0:
+			made.operand = Operand.CONSTANT
+			made.value = int(p[4])
+		1:
+			made.operand = Operand.VARIABLE
+			made.value = int(p[4])
+		2:
+			made.operand = Operand.RANDOM
+			made.value = int(p[4])
+			made.value_max = int(p[5])
+		3:
+			made.operand = Operand.ITEM
+			made.item = _item(int(p[4]))
+		6:
+			made.operand = Operand.CHARACTER
+			made.value = int(p[4])
+			made.character_value = clampi(int(p[5]), 0, 5) as WgEventSetVariables.Of
+		7:
+			made.operand = Operand.GAME
+			made.game_value = clampi(int(p[4]), 0, 6) as WgEventSetVariables.Game
+		_:
+			made.operand = Operand.UNSUPPORTED
+			made.about = "actor" if int(p[3]) == 4 else "enemy"
+			raw_counts["operand: " + made.about] = raw_counts.get("operand: " + made.about, 0) + 1
+	return made
 
 
-func _state_notes(page: Dictionary) -> Array[String]:
-	var notes: Array[String] = []
-	for command: Dictionary in page.get("list", []):
-		var code := int(command.get("code", 0))
-		var parameters: Array = command.get("parameters", [])
-		match code:
-			117:
-				notes.append("calls common event %d" % int(parameters[0]))
-			121:
-				notes.append("sets switch %s" % _range(parameters))
-			122:
-				notes.append("sets variable %s" % _range(parameters))
-			123:
-				notes.append("sets its self switch %s" % str(parameters[0]))
-			355, 655:
-				if script_method(str(parameters[0])) in STATE_SCRIPTS:
-					notes.append("sets another event's self switch")
-	var once: Array[String] = []
-	for note in notes:
-		if not note in once:
-			once.append(note)
-	return once
+## The item numbered `id` in Studio, by its dbSymbol.
+func _item(id: int) -> StringName:
+	if _items.is_empty():
+		var folder := data_folder.path_join("Studio/items")
+		for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+			var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(folder.path_join(file))) if file.ends_with(".json") else null
+			if parsed is Dictionary and parsed.has("id"):
+				_items[int(parsed["id"])] = StringName(str(parsed.get("dbSymbol", "")))
+	return _items.get(id, StringName("item_%d" % id))
 
 
-static func _range(parameters: Array) -> String:
-	return str(parameters[0]) if parameters[0] == parameters[1] else "%s to %s" % [parameters[0], parameters[1]]
-
-
-## The first command of `page` neither in `codes` nor a script whose method
-## is in `methods`, named; "" if none.
-func _first_unknown(page: Dictionary, codes: Array, methods: Array) -> String:
-	for command: Dictionary in page.get("list", []):
-		var code := int(command.get("code", 0))
-		if code == 355 or code == 655:
-			var method := script_method(str((command.get("parameters", [""]) as Array)[0]))
-			if not method in methods:
-				return "a script (%s)" % method if not method.is_empty() else "a script"
-		elif code in [401, 408, 509]:
-			continue
-		elif not code in codes:
-			return "a command %d (%s)" % [code, COMMANDS.get(code, "unknown")]
-	return ""
-
-
-func _scripts(page: Dictionary) -> Array[String]:
-	var methods: Array[String] = []
-	for command: Dictionary in page.get("list", []):
-		if int(command.get("code", 0)) == 355:
-			methods.append(script_method(str((command.get("parameters", [""]) as Array)[0])))
-	return methods
-
-
-static func _codes(page: Dictionary) -> Array:
-	return (page.get("list", []) as Array).map(func(command: Dictionary) -> int: return int(command.get("code", 0)))
-
-
-static func _has_condition(page: Dictionary) -> bool:
-	var condition: Dictionary = page.get("condition", {})
-	for key: String in ["switch1_valid", "switch2_valid", "variable_valid", "self_switch_valid"]:
-		if condition.get(key, false):
-			return true
-	return false
-
-
-static func _has_graphic(page: Dictionary) -> bool:
-	var graphic: Dictionary = page.get("graphic", {})
-	return not str(graphic.get("character_name", "")).is_empty() or int(graphic.get("tile_id", 0)) > 0
-
-
-static func _trigger_name(trigger: int) -> String:
-	return ["action", "player touch", "event touch", "autorun", "parallel"][trigger] if trigger >= 0 and trigger <= 4 else str(trigger)
-
-
-static func _by_hand(reason: String) -> Dictionary:
-	return {"form": "", "notes": [], "reason": reason}
+func _count_raw(code: int, p: Array) -> void:
+	if code in CONTINUATIONS:
+		return
+	var what := str(COMMANDS.get(code, "command %d" % code))
+	if code == 355 and not p.is_empty():
+		what = "script %s" % script_method(str(p[0]))
+	raw_counts[what] = raw_counts.get(what, 0) + 1

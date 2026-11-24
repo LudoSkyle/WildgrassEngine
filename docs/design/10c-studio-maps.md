@@ -230,8 +230,7 @@ going on and kept as the player walks and warps.
 
 ## Later
 
-- **Events** (doors, characters, signs, items): feature 10 quater; the
-  importer sorts them already (`events.txt`).
+- **Events**: feature 10 quater.
 - Studio's switch turning every link off, and its older overlapping links
   (neighbours sharing a three-tile strip), a display setting.
 - The encounter step count (`stepsAverage`).

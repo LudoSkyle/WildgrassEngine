@@ -529,32 +529,45 @@ func test_a_map_naming_no_sound_keeps_the_one_playing_one_missing_or_unplayed_is
 	])
 
 
-func test_the_event_report_sorts_each_map_s_events_and_counts_them() -> void:
+func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events_too() -> void:
 	const Events := preload("res://tests/studio/events_test.gd")
 	const Writer := preload("res://tests/support/marshal_writer.gd")
-	# Map 1: a door on (1, 0), whose passages block every side; a character;
-	# an event with choices. Map 2 has no events file: nothing to say.
-	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2)], {"trigger": 1})], "§ door")
-	door["x"] = 1
-	door["y"] = 0
-	var talker := Events.event([Events.page(Events.words(), {"graphic": "npc"})], "Talker")
-	talker["id"] = 2
-	var asker := Events.event([Events.page(Events.words() + [Events.command(102, [["Yes", "No"], 2])], {"graphic": "npc"})], "Asker")
-	asker["id"] = 3
-	var bytes := Writer.bytes_of({"class": "RPG::Map", "events": {1: door, 2: talker, 3: asker}})
+	_picture(_world.sandbox.root + "graphics/characters/npc.png", 4, 4, func(_x: int, _y: int) -> Color: return Color.GREEN)
+	_world.sandbox.write_json("Data/Studio/items/potion.json", {"klass": "Item", "id": 17, "dbSymbol": "potion"})
+	var has_potion := Events.command(111, [8, 17])
+	var talker := Events.event([Events.page([Events.command(101, ["1, 0 Hi"]), Events.command(401, ["there"]), has_potion], {"graphic": "npc"})], "Talker")
+	talker["x"] = 2
+	talker["y"] = 1
+	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2)], {"trigger": 1})], "Door")
+	door["id"] = 2
 	var file := FileAccess.open(_data + "Map001.rxdata", FileAccess.WRITE)
-	file.store_buffer(bytes)
+	file.store_buffer(Writer.bytes_of({"class": "RPG::Map", "events": {1: talker, 2: door}}))
 	file.close()
+	var common := {"class": "RPG::CommonEvent", "id": 3, "name": "Heal", "trigger": 2, "switch_id": 9, "list": [Events.command(121, [1, 1, 0]), Events.command(0)]}
+	file = FileAccess.open(_data + "CommonEvents.rxdata", FileAccess.WRITE)
+	file.store_buffer(Writer.bytes_of([null, common]))
+	file.close()
+	_importer.common_events_folder = _world.sandbox.root + "common_events"
+	_importer._events_reader().sheets_folder = _world.sandbox.root + "graphics/game_characters"
+	assert_array(_importer.write_sheets(["map001"])).is_equal([_world.sandbox.root + "graphics/game_characters/npc.png"])
+	var map := _import()
+	var events := map.get_node("Entities").get_children().filter(func(child: Node) -> bool: return child is WgEvent)
+	assert_array(events.map(func(event: WgEvent) -> String: return String(event.name))).is_equal(["Event1", "Event2"])
+	var first: WgEvent = events[0]
+	assert_that(first.position).is_equal(Vector2(40, 24))
+	assert_object(first.pages[0].sheet).is_not_null()
+	assert_array(first.pages[0].commands.map(func(made: WgEventCommand) -> String: return made.get_script().get_global_name())).is_equal(["WgEventRaw", "WgEventRaw", "WgEventIf", "WgEventBlockEnd"])
+	assert_str((first.pages[0].commands[2] as WgEventIf).item).is_equal("potion")
+	assert_int(_importer.write_common_events()).is_equal(1)
+	var written := load(_world.sandbox.root + "common_events/3.tres") as WgCommonEvent
+	assert_array([written.trigger, written.switch, written.commands.size()]).is_equal([WgCommonEvent.Trigger.PARALLEL, &"switch_9", 2])
 	var counts := _importer.write_event_report(["map001", "map002"])
-	assert_dict(counts).is_equal({"door": 1, "character": 1, "": 1})
-	assert_array(FileAccess.get_file_as_string(_world.sandbox.root + "maps/events.txt").split("\n")).is_equal(("\n".join([
-		"Studio events, as the importer sorts them.",
-		"3 events on 2 maps: 1 doors, 1 characters, 1 to rewrite by hand.",
-		"1 of the doors leave nothing out.",
-		"Nothing is written into the maps yet: each form comes with its own step.",
+	assert_array([counts["events"], counts["commands"], counts["raw"]]).is_equal([2, 6, 2])
+	assert_array(FileAccess.get_file_as_string(_world.sandbox.root + "maps/events.txt").split("\n")).is_equal([
+		"Studio events, as the importer writes them.",
+		"2 events on 2 maps, 6 commands.",
+		"What the engine does not run yet, by count:",
+		"  1 Show Text",
+		"  1 Transfer Player",
 		"",
-		"map001 (001 Test)",
-		"  #1 (1, 0) § door: door, bumped, to map002 (3, 1)",
-		"  #2 (1, 1) Talker: character",
-		"  #3 (1, 1) Asker: by hand: a command 102 (Show Choices)",
-	]) + "\n").split("\n"))
+	])

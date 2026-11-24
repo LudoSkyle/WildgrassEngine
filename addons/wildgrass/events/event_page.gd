@@ -25,6 +25,7 @@ enum Trigger {
 @export var direction := Vector2i.DOWN
 ## The column of the sheet it shows at rest.
 @export var pattern := 0
+@export_range(0.0, 1.0) var opacity := 1.0
 @export var trigger := Trigger.ACTION
 ## Walks through and is walked through.
 @export var through := false
