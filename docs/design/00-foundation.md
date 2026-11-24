@@ -78,7 +78,10 @@ settings (viewport size, window size override, window mode, stretch mode,
 aspect or scale) keeps that window: the engine leaves it alone.
 Then:
 
-- window = resolution × window scale, or fullscreen;
+- window = resolution × window scale, in the screen's points, or
+  fullscreen. Godot counts a window in pixels: on a screen of scale 2
+  (Retina) the engine asks twice as many, so the window looks the same
+  size everywhere, then centres it;
 - the game works in game pixels but is drawn at window size (`canvas_items`):
   a `Node2D` at x = 10.25 lands on screen pixel 41, so movement stays smooth
   at any refresh rate. Controls stay snapped to game pixels;
