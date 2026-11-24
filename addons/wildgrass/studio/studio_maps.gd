@@ -61,6 +61,12 @@ const HEIGHT_0 := 424
 const HEIGHT_6 := 430
 ## The engine's level of a bridge's deck.
 const DECK := 1
+## A Studio map link's lists, in the order Studio reads them, and the side
+## of the map each touches.
+const SIDES: Dictionary[String, WgMapLink.Side] = {
+	"northMaps": WgMapLink.Side.NORTH, "eastMaps": WgMapLink.Side.EAST,
+	"southMaps": WgMapLink.Side.SOUTH, "westMaps": WgMapLink.Side.WEST,
+}
 ## Studio counts an animated tile's frames in steps of this many game
 ## frames (at 60 a second), unless its display config says otherwise.
 const IDLE_FRAMES := 6
@@ -93,6 +99,9 @@ var _zones: Dictionary[int, StringName] = {}
 ## Each `.tsx` read, by its path.
 var _tilesets: Dictionary[String, Dictionary] = {}
 var _idle_frames := 0
+## The dbSymbol of each map id; the project's map links, by id.
+var _symbols: Dictionary[int, String] = {}
+var _map_links: Array[Dictionary] = []
 
 
 func _init(data: String, target := "res://maps") -> void:
@@ -266,6 +275,10 @@ func import_map(symbol: String) -> bool:
 	root.name = symbol
 	root.size = Vector2i(width, height)
 	root.zone = _zone_of(int(record.get("id", 0)))
+	root.links = links_of(symbol, int(record.get("id", 0)))
+	# The entities of neighbouring maps sort together, as Studio draws its
+	# linked maps as one.
+	root.y_sort_enabled = true
 	var entities := Node2D.new()
 	entities.name = "Entities"
 	entities.y_sort_enabled = true
@@ -739,6 +752,62 @@ func _make_tags(source: TileSetAtlasSource) -> void:
 		if tag >= HEIGHT_0 + 2 and tag <= HEIGHT_6:
 			data.set_custom_data("floor", DECK)
 			data.set_custom_data("ramp", true)
+
+
+## The maps shown against the sides of map `map_id`: those of the first
+## map link (by id) Studio keeps for it. A link to no map, to the map itself,
+## or to a map already linked is a problem, left out.
+func links_of(symbol: String, map_id: int) -> Array[WgMapLink]:
+	var found: Array[WgMapLink] = []
+	var record := {}
+	for map_link in _links():
+		if int(map_link.get("mapId", -1)) == map_id:
+			record = map_link
+			break
+	var linked: Array[StringName] = []
+	for key: String in SIDES:
+		var side := key.trim_suffix("Maps")
+		var listed: Variant = record.get(key, [])
+		for entry: Variant in listed if listed is Array else []:
+			var other := int((entry as Dictionary).get("mapId", 0)) if entry is Dictionary else 0
+			var other_symbol := _symbol_of(other)
+			if other_symbol.is_empty():
+				problems.append("%s: linked %s to map %d, which is no map; left out" % [symbol, side, other])
+			elif other == map_id:
+				problems.append("%s: linked %s to itself; left out" % [symbol, side])
+			elif StringName(other_symbol) in linked:
+				problems.append("%s: linked %s to %s, already linked; left out" % [symbol, side, other_symbol])
+			else:
+				var link := WgMapLink.new()
+				link.side = SIDES[key]
+				link.map = StringName(other_symbol)
+				link.offset = int((entry as Dictionary).get("offset", 0))
+				found.append(link)
+				linked.append(link.map)
+	return found
+
+
+## The project's map links, sorted by id.
+func _links() -> Array[Dictionary]:
+	if _map_links.is_empty():
+		var folder := data_folder.path_join("Studio/maplinks")
+		for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+			var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(folder.path_join(file))) if file.ends_with(".json") else null
+			if parsed is Dictionary:
+				_map_links.append(parsed)
+		_map_links.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("id", 0)) < int(b.get("id", 0)))
+	return _map_links
+
+
+## The dbSymbol of map `map_id`, or "" if no map has it.
+func _symbol_of(map_id: int) -> String:
+	if _symbols.is_empty():
+		for symbol in map_symbols():
+			var path := data_folder.path_join("Studio/maps/%s.json" % symbol)
+			var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+			if parsed is Dictionary and parsed.has("id"):
+				_symbols[int(parsed["id"])] = symbol
+	return _symbols.get(map_id, "")
 
 
 func _zone_of(map_id: int) -> StringName:

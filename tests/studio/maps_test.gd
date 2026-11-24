@@ -390,3 +390,95 @@ func test_a_tile_set_from_an_older_import_gets_the_new_data_layers_and_tags() ->
 	var tags := reloaded.get_source(again.tile_set().get_meta(&"studio_sources")["systemtags.tsx"]) as TileSetAtlasSource
 	var height_4 := 428 - 384
 	assert_bool(tags.get_tile_data(Vector2i(height_4 % 8, height_4 / 8), 0).get_custom_data("ramp")).is_true()
+
+
+## Map records 3 and 4, each the 4 × 4 test map.
+func _write_more_maps() -> void:
+	for id: int in [3, 4]:
+		_world.sandbox.write_json("Data/Studio/maps/map%03d.json" % id, {"klass": "Map", "id": id, "dbSymbol": "map%03d" % id, "tiledFilename": "001 Test"})
+
+
+func _write_link(id: int, map_id: int, sides: Dictionary) -> void:
+	var record := {"klass": "MapLink", "id": id, "dbSymbol": "maplink_%d" % id, "mapId": map_id, "northMaps": [], "eastMaps": [], "southMaps": [], "westMaps": []}
+	for side: String in sides:
+		record[side] = (sides[side] as Array).map(func(pair: Array) -> Dictionary: return {"mapId": pair[0], "offset": pair[1]})
+	_world.sandbox.write_json("Data/Studio/maplinks/maplink_%d.json" % id, record)
+
+
+static func _described(links: Array[WgMapLink]) -> Array:
+	return links.map(func(link: WgMapLink) -> Array: return [WgMapLink.Side.keys()[link.side], String(link.map), link.offset])
+
+
+func test_a_map_s_links_are_the_first_studio_map_link_naming_it_side_by_side() -> void:
+	_write_more_maps()
+	# Two records name map 1: Studio keeps the one of lowest id, whatever
+	# its file's name.
+	_write_link(10, 1, {"northMaps": [[2, 0]]})
+	_write_link(2, 1, {"eastMaps": [[2, -1]], "westMaps": [[3, 2], [4, -3]]})
+	_write_link(3, 2, {"westMaps": [[1, 1]]})
+	var map := _import()
+	assert_array(_described(map.links)).is_equal([["EAST", "map002", -1], ["WEST", "map003", 2], ["WEST", "map004", -3]])
+	# Their entities sort with the current map's, as Studio draws them as one.
+	assert_bool(map.y_sort_enabled).is_true()
+	assert_array(_importer.problems).is_empty()
+	# Importing again writes the same links, none added.
+	assert_bool(_importer.import_map("map001")).is_true()
+	var again := (load(_world.sandbox.root + "maps/map001.tscn") as PackedScene).instantiate() as WgMap
+	assert_array(_described(again.links)).has_size(3)
+	again.free()
+	_importer.write_textures(["map002"])
+	assert_bool(_importer.import_map("map002")).is_true()
+	var other := (load(_world.sandbox.root + "maps/map002.tscn") as PackedScene).instantiate() as WgMap
+	assert_array(_described(other.links)).is_equal([["WEST", "map001", 1]])
+	other.free()
+
+
+func test_a_link_to_no_map_to_the_map_itself_or_to_a_map_linked_already_is_told_and_left_out() -> void:
+	_write_link(1, 1, {"northMaps": [[0, 0], [9, 0]], "eastMaps": [[1, 0]], "southMaps": [[2, 0]], "westMaps": [[2, 3]]})
+	var map := _import()
+	assert_array(_described(map.links)).is_equal([["SOUTH", "map002", 0]])
+	assert_array(_importer.problems).is_equal([
+		"map001: linked north to map 0, which is no map; left out",
+		"map001: linked north to map 9, which is no map; left out",
+		"map001: linked east to itself; left out",
+		"map001: linked west to map002, already linked; left out",
+	])
+
+
+func test_linked_maps_are_shown_against_the_map_and_walked_into_across_the_seam() -> void:
+	_write_more_maps()
+	_write_link(1, 1, {"eastMaps": [[2, 1]], "southMaps": [[3, -1]]})
+	_write_link(2, 2, {"westMaps": [[1, -1]]})
+	_world.sandbox.use_maps_folder()
+	_importer.write_textures(["map001", "map002", "map003"])
+	for symbol: String in ["map001", "map002", "map003"]:
+		assert_bool(_importer.import_map(symbol)).is_true()
+	_importer.save_tile_set()
+	var maps := _world.maps
+	maps.traveller = auto_free(Node2D.new())
+	await maps.go_to(&"map001", &"")
+	if maps.is_loading_neighbours:
+		await maps.neighbours_loaded
+	# Studio's places: east, from the map's right edge, `offset` rows down;
+	# south, from its bottom edge, `offset` columns right.
+	var east := maps.map_at(_world.tiles.center_of(Vector2i(4, 1)))
+	var south := maps.map_at(_world.tiles.center_of(Vector2i(-1, 4)))
+	assert_str(east.scene_file_path.get_file()).is_equal("map002.tscn")
+	assert_that(east.position).is_equal(Vector2(64, 16))
+	assert_str(south.scene_file_path.get_file()).is_equal("map003.tscn")
+	assert_that(south.position).is_equal(Vector2(-16, 64))
+	var tiles := _world.tiles
+	# Across the seam onto the neighbour's open ground, both ways.
+	assert_bool(tiles.can_step(Vector2i(3, 1), Vector2i.RIGHT)).is_true()
+	assert_bool(tiles.can_step(Vector2i(4, 1), Vector2i.LEFT)).is_true()
+	# The neighbour's own passages hold: map003's solid cell (1, 0).
+	assert_bool(tiles.can_step(Vector2i(0, 3), Vector2i.DOWN)).is_false()
+	assert_bool(tiles.can_step(Vector2i(1, 3), Vector2i.DOWN)).is_true()
+	# Off an edge with no link: nothing there.
+	assert_bool(tiles.can_step(Vector2i(0, 1), Vector2i.LEFT)).is_false()
+	# Standing in the neighbour, it becomes the current map.
+	maps.traveller.global_position = tiles.center_of(Vector2i(4, 1))
+	assert_bool(maps.cross()).is_true()
+	assert_object(maps.current).is_same(east)
+	if maps.is_loading_neighbours:
+		await maps.neighbours_loaded
