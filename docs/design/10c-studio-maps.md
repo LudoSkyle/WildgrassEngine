@@ -1,7 +1,7 @@
 # Feature 10 ter — Studio maps
 
-Status: in progress (tiles, layers, passages, tags and animated tiles; see
-*Later*).
+Status: in progress (tiles, layers, passages, tags, animated tiles and
+bridges; see *Later*).
 
 A Studio project draws its maps in Tiled. The importer turns each into a
 plain Godot map, once: a `WgMap` scene, one `TileMapLayer` per Tiled layer,
@@ -103,6 +103,8 @@ neither way.
 | 385 ice | `ice` true, `encounter` `ice` |
 | 389 grass, 390 tall grass, 391 cave, 397 mountain, 398 sand, 399 pond, 405 sea, 406 under water, 407 snow | `encounter`: `grass`, `tall_grass`, `cave`, `mountain`, `sand`, `pond`, `ocean`, `under_water`, `snow` (the names the Studio layer gives encounter groups) |
 | 392 / 400 / 408 / 416, jumps right, left, down, up | `jump`: `(1, 0)`, `(-1, 0)`, `(0, 1)`, `(0, -1)` |
+| 402 / 404, bridge crossed up and down, left and right | `floor` 1: a bridge's deck |
+| 426 to 430, heights 2 to 6 | `ramp` true, `floor` 1: where a walker climbs onto a deck |
 | every tag | `system_tag`: its name (`wet_sand`, `rapids_left`, `stairs_down`…), for a game's own rules |
 
 A terrain tag is data `terrain_tag` (int). Tags and passages are read from
@@ -140,11 +142,38 @@ In Godot a layer of priority p ≥ 1 is y-sorted among the entities, each cell
 at its centre plus `16·p − 1` px: a walker, sorted at its cell's centre,
 draws over it exactly from row R + p down.
 
+### Bridges
+
+Studio gives a character a height: 1 on the ground, the number of a height
+tag it steps on (heights 0 and 1 are the ground). From a height of 2 up, a
+character steps onto a bridge's deck (a bridge tag, crossed its way) and
+stays on it, the ground's passages forgotten, until it steps back onto the
+height it came from; on the ground it goes under the deck, the ground's
+passages holding.
+
+The engine's levels say the same (tiles: *Levels and bridges*):
+
+| Studio | Engine |
+|---|---|
+| a height of 2 or more | a ramp up to level 1: stepping onto it from the ground, the walker is on the deck's level |
+| a bridge's deck | a floor of level 1: crossed on level 1 only where the deck goes, nothing of the ground blocking |
+| back onto a height of 0 or 1, or any cell off the deck | stepping off a ramp onto a cell without the floor: back on the ground |
+| under the deck | level 0: the ground's passages |
+
+A deck needs a second level in the `map` config, which the engine has by
+default. On the deck the walker is drawn over the y-sorted tiles (`z_index`
+2), as Studio draws a character raised by its height; under it, among them,
+on its row. One case differs: under a deck, Studio draws a character
+(height 0 there) below a tile of priority 1 on the row above; the engine
+draws it over.
+
+Checked on the sample project's maps with heights and bridges, walked from
+every ground cell with Studio's rules (height, bridge entered and left) and
+with the engine's answers side by side: they agree on every step, on and
+under the decks.
+
 ## Later
 
-- **Bridges**: `systemtags_bridge1`, `ZTag` ends, a walker's height: the
-  engine's `floor` and `ramp`, and drawing a walker on a deck among the
-  y-sorted tiles instead of above them.
 - **Links** (`Data/Studio/maplinks`): `WgMapLink`s, with their offsets.
 - **Events** (doors, characters, signs, items): from the map's events.
 - **Music** (`bgm`, `bgs`) and the encounter step count.
@@ -158,7 +187,9 @@ names and groups, hidden and special layers, csv and base64 data, flipped
 tiles, the key colour and the halving, passages (solid, edges, bush,
 counter), tags and their data, a tag on an empty cell dropped, the priority
 of each layer and the cells moved, the scene's tree, a second map sharing the
-TileSet; animated tiles: the strip of frames, the steps of each frame (and of
+TileSet; bridges: a deck's floor, the ramps up to it, crossing over the
+water and going under, a TileSet from an older import given the new data;
+animated tiles: the strip of frames, the steps of each frame (and of
 another idle count), a flipped one, one among the entities, an animation
 outside its picture, a second map and a second import adding no source. The
 whole sample project is checked outside the engine, cell by cell, against

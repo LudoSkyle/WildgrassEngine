@@ -112,8 +112,8 @@ each has a place here.
 | passage, four directions | solid polygon when all four block, edges otherwise; the importer resolves which layer wins |
 | system tag | data, by name; "empty" is `covers` |
 | terrain tag | data `terrain_tag` |
-| height tags | `ramp`, with the `floor` reached |
-| bridge tags | `floor`, and level 1 edges along the sides |
+| height tags | from height 2 up, `ramp`, with the `floor` reached |
+| bridge tags | `floor`: off the deck's sides is walking on air |
 | priority | the tile's `z_index` |
 
 ## Config
@@ -124,8 +124,9 @@ each has a place here.
 { "tile_size": 16, "fade_seconds": 0.25, "solid_layers": [1, 2], "edge_layers": [4, 5] }
 ```
 
-One entry per level, as many in each list; only level 0 by default. Lists of
-different lengths, empty, or with a layer outside 1–32 are logged and reset.
+One entry per level, as many in each list; by default two levels, the
+ground (layers 1 and 4) and a bridge's deck (2 and 5). Lists of different
+lengths, empty, or with a layer outside 1–32 are logged and reset.
 
 ## Tests
 

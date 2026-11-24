@@ -57,10 +57,12 @@ func test_map_config_resets_impossible_values() -> void:
 
 func test_map_config_needs_one_solid_and_one_edge_layer_from_1_to_32_per_level() -> void:
 	var config := WgMapConfig.new()
+	# By default the ground and a bridge's deck.
+	assert_array([config.solid_layers, config.edge_layers]).is_equal([[1, 2], [4, 5]])
 	assert_array(config.load_data({"solid_layers": [1, 2], "edge_layers": [4, 5]}, "map.json")).is_empty()
 	assert_array(config.solid_layers).is_equal([1, 2])
 	for bad: Dictionary in [{"solid_layers": [1, 2], "edge_layers": [4]}, {"solid_layers": [], "edge_layers": []}, {"solid_layers": [0], "edge_layers": [4]}, {"solid_layers": [1], "edge_layers": [33]}]:
 		config = WgMapConfig.new()
 		assert_array(config.load_data(bad, "map.json")).has_size(1)
-		assert_array(config.solid_layers).is_equal([1])
-		assert_array(config.edge_layers).is_equal([4])
+		assert_array(config.solid_layers).is_equal([1, 2])
+		assert_array(config.edge_layers).is_equal([4, 5])
