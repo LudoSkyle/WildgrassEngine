@@ -40,7 +40,9 @@ Each map declares its own links: the reverse link is never guessed.
 - `Wildgrass.maps.rect(map)`: the map's global rectangle, from `size`. The
   camera (feature 3) uses it.
 - Each map sorts its own entities; between maps, the one whose origin is
-  lower draws on top: the default host is y-sorted.
+  lower draws on top: the default host is y-sorted. A map whose root is
+  y-sorted (an imported Studio map) sorts its entities with the other maps'
+  instead.
 - **Ground layers need a negative `z_index`.** Maps draw one after the other:
   at `z_index` 0, a neighbour's ground covers half of whoever walks across the
   seam.

@@ -1,7 +1,7 @@
 # Feature 10 ter — Studio maps
 
-Status: in progress (tiles, layers, passages, tags, animated tiles and
-bridges; see *Later*).
+Status: in progress (tiles, layers, passages, tags, animated tiles, bridges
+and links; see *Later*).
 
 A Studio project draws its maps in Tiled. The importer turns each into a
 plain Godot map, once: a `WgMap` scene, one `TileMapLayer` per Tiled layer,
@@ -42,6 +42,9 @@ imported again is written again; the TileSet keeps the tiles of every map.
   keys out a colour (`<image trans="f05ba1">`) instead of alpha.
 - A tileset's animated tiles are Tiled animations: `<tile id>` and its
   `<frame tileid duration>` (ms), any tiles of the tileset in any order.
+- `Data/Studio/maplinks/<dbSymbol>.json`: a map's neighbours. `id`, `mapId`
+  (the map they are shown around), and `northMaps`, `eastMaps`, `southMaps`,
+  `westMaps`: lists of `{mapId, offset}`.
 - `Data/configs/display_config.json`: `tilemapSettings.autotileIdleFrameCount`,
   the game frames (at 60 a second) of a step of animated tiles; 6 if absent.
 
@@ -172,10 +175,39 @@ every ground cell with Studio's rules (height, bridge entered and left) and
 with the engine's answers side by side: they agree on every step, on and
 under the decks.
 
+### Links
+
+Studio shows a map's neighbours against its sides, from the first map link
+(by `id`) whose `mapId` is the map's; walking off the map onto one of them
+makes it the current map, with no transition. The engine's links (feature
+1b) do the same:
+
+| Studio | Engine |
+|---|---|
+| a map link's `northMaps`, `eastMaps`, `southMaps`, `westMaps` | the map's `links`, a `WgMapLink` each, in that order |
+| `{mapId, offset}` | `map`: that map's dbSymbol; `offset`: as is, columns right (north, south) or rows down (east, west) |
+| several maps on one side | several links on that side |
+| a link to no map (0, or an id no map has), to the map itself, to a map already linked | a problem; left out |
+
+Studio draws a map and its neighbours as one picture, so a tall tile of one
+hides a character of the other as it would its own. The imported map's root
+is y-sorted: its entities sort with those of the maps beside it.
+
+Stepping onto a neighbour, Studio checks the cell stepped onto only: solid,
+water, or its passage bit for the step's direction (its far side, the one a
+step onward would cross); the engine checks the border crossed, as on any
+step: the near side of that cell and the side of the cell left. They differ
+only where one of these cells has an edge; the sample's seams have none.
+
+Checked on the sample project's linked maps: along each linked edge, the
+neighbour shown and every step across agree with Studio's rules, and a
+walker crosses and comes back.
+
 ## Later
 
-- **Links** (`Data/Studio/maplinks`): `WgMapLink`s, with their offsets.
 - **Events** (doors, characters, signs, items): from the map's events.
+- Studio's switch turning every link off, and its older overlapping links
+  (neighbours sharing a three-tile strip), a display setting.
 - **Music** (`bgm`, `bgs`) and the encounter step count.
 - The editor's menu to import from Godot, and importing again only what
   changed (the `.tmx`'s `sha1` Studio keeps).
@@ -189,6 +221,10 @@ counter), tags and their data, a tag on an empty cell dropped, the priority
 of each layer and the cells moved, the scene's tree, a second map sharing the
 TileSet; bridges: a deck's floor, the ramps up to it, crossing over the
 water and going under, a TileSet from an older import given the new data;
+links: the first map link by id, the sides in order with their offsets,
+several on a side, a link to no map, to itself or twice told and left out,
+the neighbours placed as Studio places them and stepped into across the
+seam, the map becoming current;
 animated tiles: the strip of frames, the steps of each frame (and of
 another idle count), a flipped one, one among the entities, an animation
 outside its picture, a second map and a second import adding no source. The
