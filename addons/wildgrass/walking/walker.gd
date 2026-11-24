@@ -45,6 +45,13 @@ signal bumped(direction: Vector2i)
 ## Its walk plays all the time, standing too, at the same cadence whatever its
 ## pace, as Pokémon do on the map; still while it slides.
 @export var always_stepping := false
+## Goes through walls (any tile, edge or ledge) as long as there is a map,
+## as RPG Maker's `through`; set `through` too to go through walkers.
+@export var passes_walls := false
+## Keeps its facing when it steps or turns (RPG Maker's direction fix).
+@export var fixed_direction := false
+## Moves its legs when it walks; else it glides.
+@export var walk_animation := true
 
 ## The walkers service: the engine's, unless set before entering the tree.
 var walkers: _Walkers
@@ -98,6 +105,8 @@ var _turning := false
 var _crossing := false
 var _sprite: AnimatedSprite2D
 var _shadow: CanvasItem
+## The top of the jump under way, px; 0: the config's.
+var _jump_height := 0.0
 var _sprite_rest := Vector2.ZERO
 
 
@@ -190,10 +199,12 @@ func can_step(direction: Vector2i) -> bool:
 
 
 ## Starts a step in `direction`, running or not, facing it unless `face` is
-## false. Returns false if refused: moving already, a warp under way, or
-## something in the way (then `bumped`).
+## false. A diagonal step goes where either way round the corner is free,
+## facing to the side only when it faced the other side, as RPG Maker's.
+## Returns false if refused: moving already, a warp under way, or something
+## in the way (then `bumped`).
 func step(direction: Vector2i, run := false, face := true) -> bool:
-	if not _valid(direction) or is_moving or walkers.maps.is_changing:
+	if not _valid(direction, true) or is_moving or walkers.maps.is_changing:
 		return false
 	if face:
 		_face(direction)
@@ -220,7 +231,16 @@ func _start_step(direction: Vector2i, pace: float, run: bool) -> bool:
 	var landing := _cell + direction
 	var length := 1
 	var next_level := level
-	if tiles.can_step(_cell, direction, level, self):
+	_jump_height = 0.0
+	if passes_walls:
+		if walkers.maps.map_at(tiles.center_of(landing)) == null:
+			return false
+	elif direction.x != 0 and direction.y != 0:
+		var via := _diagonal_via(direction)
+		if via == Vector2i.ZERO:
+			return false
+		next_level = tiles.level_after(_cell + via, direction - via, tiles.level_after(_cell, via, level))
+	elif tiles.can_step(_cell, direction, level, self):
 		next_level = tiles.level_after(_cell, direction, level)
 	elif jumps and _can_jump(direction):
 		landing += direction
@@ -342,18 +362,78 @@ func _is_traveller() -> bool:
 	return walkers.maps.traveller == self
 
 
+## Jumps by `offset` cells, none for a hop in place, as RPG Maker's jump:
+## it faces the way it jumps furthest, and lands on a cell it may stand on,
+## else does not jump. `seconds` in the air, `height` px at the top (0: the
+## config's). Returns false if it does not jump.
+func jump_by(offset: Vector2i, seconds: float, height := 0.0) -> bool:
+	if is_moving or walkers.maps.is_changing or seconds <= 0.0:
+		return false
+	var tiles := walkers.tiles
+	var landing := _cell + offset
+	if offset != Vector2i.ZERO:
+		_face(Vector2i(signi(offset.x), 0) if absi(offset.x) > absi(offset.y) else Vector2i(0, signi(offset.y)))
+		if walkers.maps.map_at(tiles.center_of(landing)) == null:
+			return false
+		if not passes_walls and tiles.is_solid(landing, level):
+			return false
+		var other := walkers.at(landing, level)
+		if not through and other != null and other != self:
+			return false
+	is_moving = true
+	is_jumping = true
+	is_running = false
+	step_count += 1
+	_entered = false
+	_length = 1
+	_pace = 1.0 / seconds
+	_progress = 0.0
+	_jump_height = height
+	_heading = Vector2i(signi(offset.x), signi(offset.y))
+	_from = tiles.center_of(_cell)
+	_to = tiles.center_of(landing)
+	_to_cell = landing
+	_to_level = level
+	walkers.hold(self, landing, level)
+	if _shadow != null:
+		_shadow.show()
+	step_started.emit(_cell, landing)
+	return true
+
+
 func _face(direction: Vector2i) -> void:
-	if facing == direction:
+	if fixed_direction:
 		return
-	facing = direction
-	turned.emit(direction)
+	var way := direction
+	if way.x != 0 and way.y != 0:
+		if facing == Vector2i(-way.x, 0):
+			way = Vector2i(way.x, 0)
+		elif facing == Vector2i(0, -way.y):
+			way = Vector2i(0, way.y)
+		else:
+			return
+	if facing == way:
+		return
+	facing = way
+	turned.emit(way)
 
 
-func _valid(direction: Vector2i) -> bool:
-	if DIRECTION_NAMES.has(direction):
+func _valid(direction: Vector2i, diagonal := false) -> bool:
+	if DIRECTION_NAMES.has(direction) or (diagonal and absi(direction.x) == 1 and absi(direction.y) == 1):
 		return true
-	walkers.log.error(&"walking", "%s is not up, down, left or right" % direction)
+	walkers.log.error(&"walking", ("%s is not a step to a cell around" if diagonal else "%s is not up, down, left or right") % direction)
 	return false
+
+
+## The first way round the corner of diagonal `direction` that is free (the
+## vertical first, as RPG Maker's), or zero.
+func _diagonal_via(direction: Vector2i) -> Vector2i:
+	var tiles := walkers.tiles
+	for via: Vector2i in [Vector2i(0, direction.y), Vector2i(direction.x, 0)]:
+		var rest := direction - via
+		if tiles.can_step(_cell, via, level, self) and tiles.can_step(_cell + via, rest, tiles.level_after(_cell, via, level), self):
+			return via
+	return Vector2i.ZERO
 
 
 ## Raises the sprite along the jump's arc; shows the shadow while in the air.
@@ -361,7 +441,7 @@ func _lift() -> void:
 	if _sprite != null:
 		var height := 0.0
 		if is_jumping:
-			height = walkers.movement().jump_height * 4.0 * _progress * (1.0 - _progress)
+			height = (_jump_height if _jump_height > 0.0 else walkers.movement().jump_height) * 4.0 * _progress * (1.0 - _progress)
 		_sprite.position = _sprite_rest - Vector2(0.0, height)
 	if _shadow != null and not is_jumping:
 		_shadow.hide()
@@ -373,7 +453,7 @@ func _animate() -> void:
 	var state := "idle"
 	if is_jumping:
 		state = "jump"
-	elif is_moving:
+	elif is_moving and walk_animation:
 		state = "run" if is_running else "walk"
 	elif _pushing:
 		state = "walk"
