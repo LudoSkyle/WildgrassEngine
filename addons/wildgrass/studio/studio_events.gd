@@ -5,6 +5,7 @@
 extends RefCounted
 
 const _Reader := preload("res://addons/wildgrass/studio/marshal_reader.gd")
+const _StudioMessages := preload("res://addons/wildgrass/studio/studio_messages.gd")
 
 ## RPG Maker's commands, by code, as the report names them.
 const COMMANDS: Dictionary[int, String] = {
@@ -47,6 +48,8 @@ var texture_of := Callable()
 var sheets_folder := "res://graphics/characters"
 ## The commands kept raw, by what they are: "Show Text", "script give_item".
 var raw_counts: Dictionary[String, int] = {}
+## The words of messages and choices.
+var messages: _StudioMessages
 
 var _reader := _Reader.new()
 var _script_method := RegEx.create_from_string("^\\s*(?:[A-Za-z_][\\w]*::)*(?:[$@]?[A-Za-z_]\\w*(?:\\([^()]*\\))?\\.)*([A-Za-z_]\\w*[?!]?)")
@@ -55,6 +58,7 @@ var _items: Dictionary[int, StringName] = {}
 
 func _init(data: String) -> void:
 	data_folder = data
+	messages = _StudioMessages.new(data)
 	texture_of = func(path: String) -> Texture2D: return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
@@ -163,16 +167,41 @@ static func condition_of(condition: Dictionary) -> String:
 	return ", ".join(terms)
 
 
-## RPG Maker's list as the engine's commands, one to one.
+## RPG Maker's list as the engine's commands, one to one; a message takes
+## its lines (401) with it.
 func build_commands(list: Array) -> Array[WgEventCommand]:
 	var built: Array[WgEventCommand] = []
-	for command: Variant in list:
+	var at := 0
+	while at < list.size():
+		var command: Variant = list[at]
+		at += 1
 		if not command is Dictionary:
 			continue
-		var made := build_command(command)
+		var made: WgEventCommand
+		if int(command.get("code", 0)) == 101:
+			var text := str((command.get("parameters", [""]) as Array)[0])
+			while at < list.size() and list[at] is Dictionary and int(list[at].get("code", 0)) == 401:
+				text += "\n" + str((list[at].get("parameters", [""]) as Array)[0])
+				at += 1
+			var say := WgEventSay.new()
+			say.text = messages.text_of(text)
+			made = say
+		else:
+			made = build_command(command)
 		made.indent = int((command as Dictionary).get("indent", 0))
 		built.append(made)
 	return built
+
+
+## The text variables (`[POKE]`) scripts set in `lists`, for messages to read.
+func gather_text_variables(lists: Array) -> void:
+	var set_variable := RegEx.create_from_string("set_variable\\(\\s*[\"'](\\[[A-Za-z0-9_]+\\])[\"']")
+	for list: Variant in lists:
+		for command: Variant in list if list is Array else []:
+			if command is Dictionary and int(command.get("code", 0)) in [355, 655]:
+				for found: RegExMatch in set_variable.search_all(str((command.get("parameters", [""]) as Array)[0])):
+					if not found.get_string(1) in messages.text_variables:
+						messages.text_variables.append(found.get_string(1))
 
 
 func build_command(command: Dictionary) -> WgEventCommand:
@@ -223,6 +252,30 @@ func build_command(command: Dictionary) -> WgEventCommand:
 			var made := _variables(p)
 			if made != null:
 				return made
+		102:
+			var asked := WgEventChoices.new()
+			var texts: Array[String] = []
+			for choice: Variant in p[0]:
+				texts.append(messages.text_of(str(choice)))
+			asked.choices = texts
+			asked.cancel = int(p[1])
+			return asked
+		402:
+			var when := WgEventWhen.new()
+			when.choice = int(p[0])
+			return when
+		403:
+			return WgEventWhenCancel.new()
+		103:
+			var number := WgEventInputNumber.new()
+			number.variable = int(p[0])
+			number.digits = int(p[1])
+			return number
+		104:
+			var options := WgEventTextOptions.new()
+			options.place = [WgEventTextOptions.Place.TOP, WgEventTextOptions.Place.MIDDLE, WgEventTextOptions.Place.BOTTOM][clampi(int(p[0]), 0, 2)]
+			options.frame = int(p[1]) == 0
+			return options
 		123:
 			var local := WgEventSetLocalSwitch.new()
 			local.letter = str(p[0])

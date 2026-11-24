@@ -118,6 +118,8 @@ func _init() -> void:
 	weather.follow(maps)
 	tiles = _service(&"tiles", _Tiles, [log, config, hooks, maps])
 	story = _service(&"story", _Story, [log, hooks, maps])
+	texts.add_placeholder("flag", story.flag_text)
+	texts.add_placeholder("value", story.value_text)
 	quests = _service(&"quests", _Quests, [log, hooks, paths])
 	items = _service(&"items", _Items, [paths, log, config])
 	species = _service(&"species", _SpeciesData, [paths, log])
@@ -133,6 +135,7 @@ func _init() -> void:
 	walkers.encounters = encounters
 	events = _service(&"events", _Events, [paths, log, hooks, maps, story, walkers, clock])
 	events.bag = bag
+	events.dialogue = dialogue
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", _Footprints, [paths, config, maps, walkers, tiles])

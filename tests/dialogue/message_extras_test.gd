@@ -137,3 +137,15 @@ func test_a_message_s_values_are_translated_as_labels() -> void:
 	assert_str(_box().shown_text()).is_equal("Clochette!")
 	TranslationServer.remove_translation(french)
 	TranslationServer.set_locale("en")
+
+
+func test_a_number_that_cannot_be_cancelled_waits_for_confirm() -> void:
+	var answers: Array = []
+	var ask := func() -> void: answers.append(await _world.dialogue.ask_number("How many?", {"max": 5, "can_cancel": false}))
+	ask.call()
+	_box().advance(10.0)
+	_press("ui_cancel")
+	assert_array(answers).is_empty()
+	_press("ui_up")
+	_press("ui_accept")
+	assert_array(answers).is_equal([1])

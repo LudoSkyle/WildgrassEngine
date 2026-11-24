@@ -845,7 +845,7 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 ## and commands, and each command the engine has no class for yet, with its
 ## count. Returns {events, commands, raw}.
 func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
-	var events := _events_reader()
+	var events := _new_events_reader()
 	var counts: Dictionary[String, int] = {"events": 0, "commands": 0, "raw": 0}
 	var raw: Dictionary[String, int] = {}
 	for symbol in symbols:
@@ -862,6 +862,8 @@ func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
 		for what: String in events.raw_counts:
 			raw[what] = raw.get(what, 0) + events.raw_counts[what]
 		events.raw_counts = before
+	for what: String in events.messages.counts:
+		raw[what] = raw.get(what, 0) + events.messages.counts[what]
 	var ordered := raw.keys()
 	ordered.sort_custom(func(a: String, b: String) -> bool: return raw[a] > raw[b] or (raw[a] == raw[b] and a < b))
 	var lines: Array[String] = ["Studio events, as the importer writes them.",
@@ -925,11 +927,35 @@ func write_common_events() -> int:
 	return count
 
 
+## Writes the words of the messages and choices imported so far into the
+## translation file `dialogs.csv` beside the maps, which the game lists in its
+## localization settings. Returns its path, or "".
+func write_translations() -> String:
+	var path := target_folder.path_join("dialogs.csv")
+	return path if _events_reader().messages.write_translations(path) else ""
+
+
 func _events_reader() -> _StudioEvents:
 	if _events == null:
-		_events = _StudioEvents.new(data_folder)
-		_events.texture_of = texture_of
+		_events = _new_events_reader()
 	return _events
+
+
+## A reader of events that knows the text variables every script sets.
+func _new_events_reader() -> _StudioEvents:
+	var made := _StudioEvents.new(data_folder)
+	made.texture_of = texture_of
+	var lists: Array = []
+	for symbol in map_symbols():
+		var record := map_record(symbol)
+		for event in made.events_of(int(record.get("id", 0))):
+			for page: Dictionary in event.get("pages", []):
+				lists.append(page.get("list", []))
+	var commons := made.common_events()
+	for number: int in commons:
+		lists.append(commons[number].get("list", []))
+	made.gather_text_variables(lists)
+	return made
 
 
 ## The maps shown against the sides of map `map_id`: those of the first

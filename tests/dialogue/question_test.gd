@@ -291,3 +291,14 @@ func test_a_game_s_box_frames_its_choices_and_points_at_the_selected_one() -> vo
 	assert_that(answer[0]).is_equal(2)
 	assert_bool(frame.visible).is_false()
 	assert_bool(cursor.visible).is_false()
+
+
+func test_cancel_may_be_an_answer_of_its_own_one_past_the_choices() -> void:
+	var own := _ask("Pick?", ["A", "B"], {"cancel": 2})
+	_world.dialogue.box.advance(1.0)
+	_press("ui_cancel")
+	assert_int(own[0]).is_equal(2)
+	var beyond := _ask("Pick?", ["A", "B"], {"cancel": 3})
+	_world.dialogue.box.advance(1.0)
+	_press("ui_cancel")
+	assert_int(beyond[0]).is_equal(1)

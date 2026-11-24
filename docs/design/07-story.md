@@ -27,6 +27,8 @@ Wildgrass.story.value(&"badges")              # 3; unset: 0
 - `state()` gives everything as a dictionary that JSON can hold,
   `restore(state)` puts it back, `reset()` empties it: feature 9 saves and
   loads with them.
+- In a text, `{flag:name?yes|no}` reads a flag, `{value:name}` a value (0
+  when unset, as a variable is).
 - A value set shows in texts as `{name}` (feature 5's placeholders), unless
   the game set a text value of that name; an unset one stays as written.
 - Studio and RPG Maker number their switches and variables; an importer names

@@ -504,3 +504,22 @@ func test_a_missing_confirm_action_is_logged_once() -> void:
 	_press("ui_accept")
 	assert_bool(done[0]).is_false()
 	assert_array(_world.logged).is_equal(["WARN no input action 'talk' (dialogue config, actions.confirm)"])
+
+
+func test_a_message_sets_its_speaker_colour_and_alignment_in_its_own_words() -> void:
+	var both := func() -> void:
+		await _world.dialogue.say("[speaker=Alix][speaker_color=#ff0000][align=center]Hi.")
+		await _world.dialogue.say("[align=sideways]Bye.")
+	both.call()
+	_box().set_process(false)
+	var name_label := _box().get_node("Speaker/Name") as Label
+	assert_str(name_label.text).is_equal("Alix")
+	assert_that(name_label.get_theme_color(&"font_color")).is_equal(Color.RED)
+	var text := _box().get_node("Frame/Margin/Text") as RichTextLabel
+	assert_int(text.horizontal_alignment).is_equal(HORIZONTAL_ALIGNMENT_CENTER)
+	_box().advance(10.0)
+	assert_str(_shown()).is_equal("Hi.")
+	_press("ui_accept")
+	_press("ui_accept")
+	assert_int(text.horizontal_alignment).is_equal(HORIZONTAL_ALIGNMENT_LEFT)
+	assert_array(_world.logged.filter(func(line: String) -> bool: return line.contains("align sideways"))).has_size(1)

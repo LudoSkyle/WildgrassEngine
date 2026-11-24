@@ -33,6 +33,10 @@ var story: _Story
 var log: _Log
 
 var _running := false
+## The answer of the last choice at each indent.
+var _answers: Dictionary[int, int] = {}
+## Numbers each wait for a message: one cut short never ends a later one.
+var _wait_number := 0
 ## The map shown when it started: on another map, it forgets its event.
 var _started_on: WgMap
 ## The result of the last condition at each indent.
@@ -61,6 +65,8 @@ func setup(commands: Array[WgEventCommand], by: WgEvent) -> void:
 	waiting = false
 	child = null
 	_branches.clear()
+	_answers.clear()
+	_wait_number += 1
 	_running = true
 
 
@@ -189,6 +195,78 @@ func set_local_switch(letter: String, on: bool) -> void:
 ## common event). Null if none.
 func character(number: int) -> WgWalker:
 	return events.call(&"character", number, event)
+
+
+## True while a message or a question is under way, this list's or another's.
+func message_busy() -> bool:
+	var dialogue: Object = events.get(&"dialogue")
+	return dialogue != null and bool(dialogue.call(&"is_busy"))
+
+
+## Says `text`; the list waits until it is read.
+func say(text: String) -> void:
+	var dialogue: Object = events.get(&"dialogue")
+	if dialogue == null:
+		unsupported("messages (no dialogue)")
+		return
+	var mine := _start_wait()
+	await dialogue.call(&"say", text, events.call(&"message_options"))
+	_end_wait(mine)
+
+
+## Asks `question` and `choices`; the answer is kept for the `WgEventWhen`
+## at `at`. `cancel_answer`: what cancel answers, -1 nothing.
+func ask(question: String, choices: Array[String], cancel_answer: int, at: int) -> void:
+	var dialogue: Object = events.get(&"dialogue")
+	if dialogue == null:
+		unsupported("messages (no dialogue)")
+		return
+	var options: Dictionary = events.call(&"message_options")
+	options["cancel"] = cancel_answer if cancel_answer < choices.size() else choices.size()
+	var mine := _start_wait()
+	var answer := int(await dialogue.call(&"ask", question, choices, options))
+	if answer == choices.size():
+		answer = cancel_answer
+	if mine == _wait_number:
+		_answers[at] = answer
+	_end_wait(mine)
+
+
+## Asks a number from 0 to `top` into variable `variable`.
+func ask_number(question: String, variable: int, top: int) -> void:
+	var dialogue: Object = events.get(&"dialogue")
+	if dialogue == null:
+		unsupported("messages (no dialogue)")
+		return
+	var options: Dictionary = events.call(&"message_options")
+	options.merge({"min": 0, "max": top, "default": 0, "can_cancel": false})
+	var mine := _start_wait()
+	var number: Variant = await dialogue.call(&"ask_number", question, options)
+	if mine == _wait_number and number != null:
+		story.set_value(StringName("variable_%d" % variable), int(number))
+	_end_wait(mine)
+
+
+## A `WgEventWhen` for `answer`: runs its block when the choice before it at
+## its indent answered it, else skips it.
+func take_answer(answer: int) -> bool:
+	var at := list[index].indent
+	if _answers.get(at, -1) == answer:
+		_answers.erase(at)
+		return true
+	skip_block()
+	return true
+
+
+func _start_wait() -> int:
+	_wait_number += 1
+	waiting = true
+	return _wait_number
+
+
+func _end_wait(mine: int) -> void:
+	if mine == _wait_number:
+		waiting = false
 
 
 ## A command the engine cannot run yet: logged once.
