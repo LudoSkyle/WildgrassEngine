@@ -54,10 +54,15 @@ var sheets_folder := "res://graphics/characters"
 var raw_counts: Dictionary[String, int] = {}
 ## The words of messages and choices.
 var messages: _StudioMessages
+## Each Studio map's id (its RPG Maker number) and its dbSymbol, the engine's
+## map id: where a transfer goes.
+var map_symbols: Dictionary[int, StringName] = {}
 
 var _reader := _Reader.new()
 var _script_method := RegEx.create_from_string("^\\s*(?:[A-Za-z_][\\w]*::)*(?:[$@]?[A-Za-z_]\\w*(?:\\([^()]*\\))?\\.)*([A-Za-z_]\\w*[?!]?)")
 var _items: Dictionary[int, StringName] = {}
+# A script line that is only `set_self_switch(on, "A", event[, [map_id =] map])`.
+var _self_switch := RegEx.create_from_string("^\\s*set_self_switch\\(\\s*(true|false)\\s*,\\s*[\"']([A-D])[\"']\\s*,\\s*(\\d+)\\s*(?:,\\s*(?:map_id\\s*=\\s*)?(\\d+)\\s*)?\\)\\s*$")
 
 
 func _init(data: String) -> void:
@@ -242,6 +247,8 @@ func build_commands(list: Array) -> Array[WgEventCommand]:
 			var say := WgEventSay.new()
 			say.text = messages.text_of(text)
 			made = say
+		elif int(command.get("code", 0)) == 355 and not (at < list.size() and list[at] is Dictionary and int(list[at].get("code", 0)) == 655):
+			made = _script(command)
 		else:
 			made = build_command(command)
 		made.indent = int((command as Dictionary).get("indent", 0))
@@ -339,6 +346,24 @@ func build_command(command: Dictionary) -> WgEventCommand:
 			return move
 		210:
 			return WgEventWaitForMoves.new()
+		201:
+			var transfer := _transfer(p)
+			if transfer != null:
+				return transfer
+		202:
+			var place := WgEventSetEventLocation.new()
+			place.character = int(p[0])
+			place.mode = clampi(int(p[1]), 0, 2) as WgEventSetEventLocation.Mode
+			match place.mode:
+				WgEventSetEventLocation.Mode.CELL:
+					place.cell = Vector2i(int(p[2]), int(p[3]))
+				WgEventSetEventLocation.Mode.VARIABLES:
+					place.x_variable = int(p[2])
+					place.y_variable = int(p[3])
+				WgEventSetEventLocation.Mode.SWAP:
+					place.other = int(p[2])
+			place.direction = DIRECTIONS.get(int(p[4]), Vector2i.ZERO)
+			return place
 		123:
 			var local := WgEventSetLocalSwitch.new()
 			local.letter = str(p[0])
@@ -349,6 +374,41 @@ func build_command(command: Dictionary) -> WgEventCommand:
 	raw.parameters = p
 	_count_raw(code, p)
 	return raw
+
+
+## Transfer Player: to a map by its id, or by variables; null (kept raw) for a
+## map the project does not have.
+func _transfer(p: Array) -> WgEventTransfer:
+	var made := WgEventTransfer.new()
+	if int(p[0]) == 0:
+		made.map = map_symbols.get(int(p[1]), &"")
+		if made.map.is_empty():
+			raw_counts["Transfer Player to a map not in the project"] = raw_counts.get("Transfer Player to a map not in the project", 0) + 1
+			return null
+		made.cell = Vector2i(int(p[2]), int(p[3]))
+	else:
+		made.by_variables = true
+		made.map_variable = int(p[1])
+		made.x_variable = int(p[2])
+		made.y_variable = int(p[3])
+	made.direction = DIRECTIONS.get(int(p[4]), Vector2i.ZERO)
+	made.transition = &"dissolve" if int(p[5]) == 0 else &"none"
+	return made
+
+
+## A script line alone: `set_self_switch(…)` with numbers is the engine's
+## command; any other is kept raw.
+func _script(command: Dictionary) -> WgEventCommand:
+	var p: Array = command.get("parameters", [])
+	var found := _self_switch.search(str(p[0]) if not p.is_empty() else "")
+	if found != null and (found.get_string(4).is_empty() or map_symbols.has(int(found.get_string(4)))):
+		var local := WgEventSetLocalSwitch.new()
+		local.on = found.get_string(1) == "true"
+		local.letter = found.get_string(2)
+		local.event = int(found.get_string(3))
+		local.map = &"" if found.get_string(4).is_empty() else map_symbols[int(found.get_string(4))]
+		return local
+	return build_command(command)
 
 
 ## RPG Maker's move route as the engine's: each step but the end marker.

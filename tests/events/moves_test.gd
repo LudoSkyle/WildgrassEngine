@@ -201,6 +201,18 @@ func test_an_event_of_a_map_just_built_moves_by_itself() -> void:
 	assert_that(event.cell).is_not_equal(start)
 
 
+func test_the_movers_of_walkers_freed_with_their_map_are_dropped() -> void:
+	var page := Events.page()
+	page.move_type = WgEventPage.MoveType.RANDOM
+	var gone := _event(Vector2i(5, 5), page)
+	var kept := _event(Vector2i(2, 2), page.duplicate(), 2)
+	_run(0.1)
+	gone.free()
+	_run(0.1)
+	var movers: Dictionary = _world.events.get(&"_movers")
+	assert_array(movers.keys()).is_equal([kept])
+
+
 func test_a_route_changes_pace_look_through_and_more() -> void:
 	var event := _event(Vector2i(8, 3), Events.page())
 	var graphic := route([[K.SPEED, 4], [K.SWITCH_ON, 7], K.THROUGH_ON, K.MOVE_RIGHT, K.FIXED_DIRECTION_ON, K.ON_TOP_ON, [K.OPACITY, 51], K.GRAPHIC])

@@ -99,6 +99,8 @@ var target_folder := "res://maps"
 var audio_folder := "res://audio"
 ## Where common events go.
 var common_events_folder := "res://common_events"
+## Where the game's configs are: the map numbers go into `map.json`.
+var config_folder := "res://config"
 ## Gives the texture of a picture written, by its path. Default: `load()`,
 ## once Godot imported it.
 var texture_of := Callable()
@@ -962,6 +964,33 @@ func write_common_events() -> int:
 	return count
 
 
+## Writes each Studio map's number and id into the game's map config
+## (`numbers`, its other fields kept), for transfers by variables. Returns
+## its path, or "" if it could not be written.
+func write_map_numbers() -> String:
+	var path := config_folder.path_join("map.json")
+	var data: Dictionary = {}
+	if FileAccess.file_exists(path):
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not parsed is Dictionary:
+			problems.append("%s: not a JSON object, map numbers not written" % path)
+			return ""
+		data = parsed
+	var numbers := {}
+	for symbol in map_symbols():
+		var record := map_record(symbol)
+		if record.has("id"):
+			numbers[str(int(record["id"]))] = symbol
+	data["numbers"] = numbers
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(config_folder))
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		problems.append("%s: cannot be written" % path)
+		return ""
+	file.store_string(JSON.stringify(data, "\t") + "\n")
+	return path
+
+
 ## Writes the words of the messages and choices imported so far into the
 ## translation file `dialogs.csv` beside the maps, which the game lists in its
 ## localization settings. Returns its path, or "".
@@ -983,6 +1012,8 @@ func _new_events_reader() -> _StudioEvents:
 	var lists: Array = []
 	for symbol in map_symbols():
 		var record := map_record(symbol)
+		if record.has("id"):
+			made.map_symbols[int(record["id"])] = StringName(symbol)
 		for event in made.events_of(int(record.get("id", 0))):
 			for page: Dictionary in event.get("pages", []):
 				lists.append(page.get("list", []))

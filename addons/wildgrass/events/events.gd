@@ -93,6 +93,10 @@ func advance(delta: float) -> void:
 	if main.is_running():
 		_hold_player()
 		main.advance(delta)
+		# A transfer ends every hold: the list still running holds the player
+		# again before it can step.
+		if main.is_running():
+			_hold_player()
 
 
 ## Every event of the maps shown.
@@ -340,10 +344,15 @@ func _set_moves(event: WgEvent) -> void:
 
 
 ## Forgets the movers of walkers freed with their map.
+## A typed dictionary cannot erase a freed key: the living are kept instead.
 func _prune_movers() -> void:
+	if _movers.keys().all(func(walker: Variant) -> bool: return is_instance_valid(walker)):
+		return
+	var living: Dictionary[WgWalker, _Mover] = {}
 	for walker: Variant in _movers.keys():
-		if not is_instance_valid(walker):
-			_movers.erase(walker)
+		if is_instance_valid(walker):
+			living[walker] = _movers[walker]
+	_movers = living
 
 
 func _on_map_built(map: Node, _map_id: StringName = &"") -> void:

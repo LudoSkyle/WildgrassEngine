@@ -529,6 +529,15 @@ func test_a_map_naming_no_sound_keeps_the_one_playing_one_missing_or_unplayed_is
 	])
 
 
+func test_the_map_numbers_go_into_the_game_s_map_config_its_other_fields_kept() -> void:
+	_world.sandbox.write_json("Data/Studio/maps/harbour.json", {"klass": "Map", "id": 5, "dbSymbol": "harbour", "tiledFilename": "005 Harbour"})
+	_world.sandbox.write_json("config/map.json", {"tile_size": 32})
+	_importer.config_folder = _world.sandbox.root + "config"
+	assert_str(_importer.write_map_numbers()).is_equal(_world.sandbox.root + "config/map.json")
+	var written: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(_world.sandbox.root + "config/map.json"))
+	assert_dict(written).is_equal({"tile_size": 32.0, "numbers": {"1": "map001", "2": "map002", "5": "harbour"}})
+
+
 func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events_too() -> void:
 	const Events := preload("res://tests/studio/events_test.gd")
 	const Writer := preload("res://tests/support/marshal_writer.gd")
@@ -538,7 +547,7 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 	var talker := Events.event([Events.page([Events.command(101, ["Hi"]), Events.command(401, ["there"]), has_potion], {"graphic": "npc"})], "Talker")
 	talker["x"] = 2
 	talker["y"] = 1
-	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2)], {"trigger": 1})], "Door")
+	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2), Events.command(203, [2, 3, 4])], {"trigger": 1})], "Door")
 	door["id"] = 2
 	var file := FileAccess.open(_data + "Map001.rxdata", FileAccess.WRITE)
 	file.store_buffer(Writer.bytes_of({"class": "RPG::Map", "events": {1: talker, 2: door}}))
@@ -559,15 +568,16 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 	assert_array(first.pages[0].commands.map(func(made: WgEventCommand) -> String: return made.get_script().get_global_name())).is_equal(["WgEventSay", "WgEventIf", "WgEventBlockEnd"])
 	assert_str((first.pages[0].commands[0] as WgEventSay).text).is_equal("Hi\nthere")
 	assert_str((first.pages[0].commands[1] as WgEventIf).item).is_equal("potion")
+	assert_str(String((events[1] as WgEvent).pages[0].commands[0].get(&"map"))).is_equal("map002")
 	assert_int(_importer.write_common_events()).is_equal(1)
 	var written := load(_world.sandbox.root + "common_events/3.tres") as WgCommonEvent
 	assert_array([written.trigger, written.switch, written.commands.size()]).is_equal([WgCommonEvent.Trigger.PARALLEL, &"switch_9", 2])
 	var counts := _importer.write_event_report(["map001", "map002"])
-	assert_array([counts["events"], counts["commands"], counts["raw"]]).is_equal([2, 5, 1])
+	assert_array([counts["events"], counts["commands"], counts["raw"]]).is_equal([2, 6, 1])
 	assert_array(FileAccess.get_file_as_string(_world.sandbox.root + "maps/events.txt").split("\n")).is_equal([
 		"Studio events, as the importer writes them.",
-		"2 events on 2 maps, 5 commands.",
+		"2 events on 2 maps, 6 commands.",
 		"What the engine does not run yet, by count:",
-		"  1 Transfer Player",
+		"  1 Scroll Map",
 		"",
 	])

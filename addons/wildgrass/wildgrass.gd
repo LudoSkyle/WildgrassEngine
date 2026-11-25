@@ -188,6 +188,7 @@ func _init() -> void:
 	menu.add_entry(&"pokedex", "wg.menu.pokedex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
 	screens.register(&"transition_fade", "res://addons/wildgrass/maps/transitions/fade.tscn")
+	screens.register(&"transition_dissolve", "res://addons/wildgrass/maps/transitions/dissolve.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")
 	screens.register(&"item_reveal", "res://addons/wildgrass/bag/item_reveal.tscn")
 	screens.register(&"bag", "res://addons/wildgrass/bag/bag_screen.tscn")

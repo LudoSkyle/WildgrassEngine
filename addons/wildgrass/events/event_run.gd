@@ -39,6 +39,9 @@ var _answers: Dictionary[int, int] = {}
 var _wait_number := 0
 ## The map shown when it started: on another map, it forgets its event.
 var _started_on: WgMap
+## The id of its event's map, else of the map shown, when it started: the
+## map whose events it names by number for their local switches.
+var _map_id: StringName
 ## The result of the last condition at each indent.
 var _branches: Dictionary[int, bool] = {}
 var _map: WgMap
@@ -61,6 +64,8 @@ func setup(commands: Array[WgEventCommand], by: WgEvent) -> void:
 	event = by
 	_map = _map_of(by)
 	_started_on = events.get(&"maps").get(&"current")
+	var maps: Object = events.get(&"maps")
+	_map_id = maps.call(&"id_of", _map) if _map != null else maps.get(&"current_id")
 	wait_left = 0.0
 	waiting = false
 	child = null
@@ -79,7 +84,8 @@ func advance(delta: float) -> void:
 	for _count in MAX_COMMANDS:
 		if not _running:
 			return
-		if event != null and (not is_instance_valid(event) or events.get(&"maps").get(&"current") != _started_on):
+		# A freed event compares equal to null: only is_instance_valid() tells.
+		if not is_instance_valid(event) or events.get(&"maps").get(&"current") != _started_on:
 			event = null
 		if child != null:
 			child.call(&"advance", delta)
@@ -180,10 +186,20 @@ func erase_event() -> void:
 		events.call(&"erase", event)
 
 
-func set_local_switch(letter: String, on: bool) -> void:
-	if event == null:
-		return
-	var flag := story.local(event, StringName(letter))
+## Turns local switch `letter` of event `number` of map `map` on or off: 0
+## the event running the list, an empty map the one it started on.
+func set_local_switch(letter: String, on: bool, number := 0, map := &"") -> void:
+	var flag: StringName
+	if number <= 0 and map.is_empty():
+		if event == null:
+			return
+		flag = story.local(event, StringName(letter))
+	else:
+		var own := number if number > 0 else (event.event_id if event != null else 0)
+		var map_id := map if not map.is_empty() else _map_id
+		if own <= 0 or map_id.is_empty():
+			return
+		flag = _Story.local_on(map_id, WgEvent.local_place_of(own), StringName(letter))
 	if on:
 		story.set_flag(flag)
 	else:
@@ -195,6 +211,15 @@ func set_local_switch(letter: String, on: bool) -> void:
 ## common event). Null if none.
 func character(number: int) -> WgWalker:
 	return events.call(&"character", number, event)
+
+
+## Takes the player to `cell` of `map` (empty: the map shown), facing
+## `direction` (zero: as it faces), through `transition` for `seconds`; the
+## list waits until it has arrived.
+func transfer(map: StringName, cell: Vector2i, direction: Vector2i, transition: StringName, seconds: float) -> void:
+	var mine := _start_wait()
+	await events.get(&"maps").call(&"transfer", map, cell, direction, transition, seconds)
+	_end_wait(mine)
 
 
 ## True while a message or a question is under way, this list's or another's.
