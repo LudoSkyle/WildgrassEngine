@@ -259,7 +259,7 @@ func test_a_page_s_way_of_moving_and_its_route_are_the_engine_s() -> void:
 	assert_array([made.move_type, made.move_speed, made.move_frequency, made.move_route.repeat]).is_equal([WgEventPage.MoveType.ROUTE, 4, 6, true])
 	var steps := made.move_route.steps
 	assert_array(steps.map(func(step: WgMoveStep) -> int: return step.kind)).is_equal([1, 15, 14, 29, 27, 42, 45])
-	assert_array([steps[1].value, steps[2].offset, steps[3].value, steps[4].value, steps[5].value, steps[6].call]).is_equal([10, Vector2i(-1, 2), 5, 12, 128, "Mod::Thing.wave(1)"])
+	assert_array([steps[1].value, steps[2].offset, steps[3].value, steps[4].value, steps[5].value, steps[6].original, steps[6].call]).is_equal([10, Vector2i(-1, 2), 5, 12, 128, "Mod::Thing.wave(1)", ""])
 	var counts := {}
 	counts.merge(_events.raw_counts)
 	assert_dict(counts).is_equal({"route script wave": 1})

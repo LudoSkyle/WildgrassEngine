@@ -119,7 +119,8 @@ frequency, an opacity, a blending. A graphic's sheet is copied as a page's;
 a sound effect is found in `audio/se` as Studio finds it (the name in any
 case, then each extension Studio plays) and copied into `res://audio/effects`
 (paths `effects`), the step naming it as written; a sound not found is
-counted. A script line (45) is kept as written, counted by its method.
+counted. A script line (45) is kept as written in the step's `original`,
+not run, counted by its method (feature 22 translates it).
 
 ## The report
 

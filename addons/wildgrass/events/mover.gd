@@ -346,8 +346,12 @@ func _special(command: WgMoveStep) -> void:
 			if events != null:
 				events.call(&"report_unsupported", "a route's blending")
 		WgMoveStep.Kind.CALL:
-			if events != null:
+			if events == null:
+				return
+			if command.call.strip_edges().is_empty():
 				events.call(&"report_unsupported", "a route's call")
+			else:
+				events.call(&"run_step_script", walker, command.call)
 
 
 func _player() -> WgWalker:

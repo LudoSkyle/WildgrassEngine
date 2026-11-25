@@ -446,8 +446,8 @@ func build_route(route: Dictionary) -> WgMoveRoute:
 				step.volume = int(sound.get("volume", 100))
 				step.pitch = int(sound.get("pitch", 100))
 			WgMoveStep.Kind.CALL:
-				step.call = str(p[0])
-				var what := "route script %s" % script_method(step.call)
+				step.original = str(p[0])
+				var what := "route script %s" % script_method(step.original)
 				raw_counts[what] = raw_counts.get(what, 0) + 1
 		made.steps.append(step)
 	return made
