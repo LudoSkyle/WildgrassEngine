@@ -118,7 +118,7 @@ func test_variables_take_their_operand_as_rpg_maker_says() -> void:
 func test_a_command_with_no_class_is_kept_raw_and_counted_by_what_it_is() -> void:
 	var list := [
 		command(231, [1, "picture"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
-		command(203, [2, 3, 4]), command(111, [12, "gv[3] > 2"]), command(111, [4, 1, 0]),
+		command(203, [2, 3, 4]), command(111, [12, "gv[3] % 2 == 1"]), command(111, [4, 1, 0]),
 	]
 	var built := _events.build_commands(list)
 	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 203])
@@ -164,6 +164,72 @@ func test_set_self_switch_alone_on_its_line_is_a_local_switch_of_an_event_and_ma
 	var made: Array = built.slice(0, 3).map(func(local: WgEventSetLocalSwitch) -> Array: return [local.on, local.letter, local.event, local.map])
 	assert_array(made).is_equal([[true, "A", 7, &""], [false, "B", 1, &"map019"], [true, "C", 3, &"map019"]])
 	assert_array(built.slice(3).map(func(command: WgEventCommand) -> bool: return command is WgEventRaw)).is_equal([true, true, true, true, true])
+
+
+## A condition as a short text: its kind and what it holds, its terms in
+## brackets, `!` when turned over.
+static func _described(made: WgEventIf) -> String:
+	var K := WgEventIf.Kind
+	var text := "!" if made.negate else ""
+	match made.kind:
+		K.ALL, K.ANY:
+			var parts: Array[String] = []
+			for term: WgEventCommand in made.terms:
+				parts.append(_described(term as WgEventIf))
+			return text + ("all" if made.kind == K.ALL else "any") + "[" + ", ".join(parts) + "]"
+		K.PLAYER_SEEN:
+			return text + "seen %d %s side %d common %d (%d)" % [made.reach, made.reaches, made.side, made.then_common, made.number]
+		K.PLAYER_IN_LINE:
+			return text + "line %d %s" % [made.reach, made.direction]
+		K.PLAYER_IN_RECT:
+			return text + "rect %s" % made.size
+		K.PLAYER_IN_CIRCLE:
+			return text + "circle %d" % made.value
+		K.SWITCH:
+			return text + "switch %d" % made.number
+		K.VARIABLE:
+			return text + "variable %d %d %s%d" % [made.number, made.comparison, "v" if made.against_variable else "", made.value]
+		K.FACING:
+			return text + "facing %d %s" % [made.number, made.direction]
+		K.CELL:
+			return text + "cell %d %s %d %d" % [made.number, "xy"[made.axis], made.comparison, made.value]
+		K.LOCAL_SWITCH:
+			return text + "local %s %d %s" % [made.letter, made.event, made.map]
+		K.UNSUPPORTED:
+			return text + "unread " + made.about
+	return "?"
+
+
+func test_a_script_condition_is_read_as_the_engine_s_conditions() -> void:
+	_events.map_symbols = {21: &"map021"}
+	var cases := {
+		"player_spotted?(3) && $actors.empty?": "all[seen 3 [] side 0 common 0 (0), unread script empty?]",
+		"trainer_spotted(4)": "seen 4 [] side 0 common 0 (0)",
+		"player_spotted_rect?(3, 2)": "seen 3 [] side 2 common 2 (0)",
+		"player_spotted_directional?(up: 3, down: 4, left: 4, right: 4)": "seen 1 [4, 4, 4, 3] side 0 common 0 (0)",
+		"player_spotted_directional?(left: 7)": "seen 1 [7, 7, 7, 7] side 0 common 0 (0)",
+		"detect_player(4, :right) && gp.direction == 8": "all[line 4 (1, 0), facing -1 (0, -1)]",
+		"detect_player(2, 4)": "line 2 (-1, 0)",
+		"detect_player_rect(3, 1)": "rect (3, 1)",
+		"detect_player_circle(9)": "circle 9",
+		"!gs[17] && !gs[23]": "all[!switch 17, !switch 23]",
+		"gs[37] || gs[38]": "any[switch 37, switch 38]",
+		"$game_switches[17] == true && gp.direction == 6": "all[switch 17, facing -1 (1, 0)]",
+		"gv[26] >= 16 && get_self_switch('A', 17, 21) == false": "all[variable 26 1 16, !local A 17 map021]",
+		"gv[26] == gv[3]": "variable 26 0 v3",
+		"gp.direction != 8": "!facing -1 (0, -1)",
+		"gp.x == 12 && gp.y == 16": "all[cell -1 x 0 12, cell -1 y 0 16]",
+		"$game_map.events[6].x == 24": "cell 6 x 0 24",
+		"get_character(9).y < 3": "cell 9 y 4 3",
+		"(gs[1] || gs[2]) && !(gv[4] > 1)": "all[any[switch 1, switch 2], !variable 4 3 1]",
+		"gv[26] % 3 == 0": "unread script gv",
+		"$bag.contain_item?(:coin_case)": "unread script contain_item?",
+	}
+	for text: String in cases:
+		var made := _built(111, [12, text]) as WgEventIf
+		assert_str(_described(made)).override_failure_message("%s: %s" % [text, _described(made)]).is_equal(cases[text])
+	assert_int(_events.raw_counts.get("condition: script gv", 0)).is_equal(1)
+	assert_int(_events.raw_counts.get("condition: script empty?", 0)).is_equal(1)
 
 
 func test_a_script_s_method_drops_its_modules_and_receivers() -> void:

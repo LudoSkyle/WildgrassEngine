@@ -55,6 +55,8 @@ var _reported: Dictionary[String, bool] = {}
 var _locked: WgEvent
 ## The player's hold while the main list runs: [walker, number].
 var _hold: Array = []
+## A common event to run first as soon as no list holds the player.
+var _common_wanted := 0
 
 
 func _init(paths: _Paths, logger: _Log, hooks: _Hooks, maps_service: _Maps, story_service: _Story, walkers_service: _Walkers, clock_service: _Clock) -> void:
@@ -210,6 +212,49 @@ func any_forced_route() -> bool:
 		if mover.forced != null:
 			return true
 	return false
+
+
+## True if `watcher` sees the player, as RPG Maker's trainers do: the
+## player within `reach` cells ahead of it (its own cell counted) on its
+## level, and the first cell it could not step from, going ahead, next to
+## the player's. `side`: in a band that wide on each side, the way blocked
+## somewhere or the watcher through. The action key, pressed by the player
+## facing it, is seen too.
+func sees_player(watcher: WgWalker, reach: int, side := 0) -> bool:
+	var player := maps.traveller as WgWalker
+	if player == null or watcher == null or player == watcher:
+		return false
+	var off := watcher.cell - player.cell
+	if absi(off.x) > reach or absi(off.y) > reach or watcher.level != player.level:
+		return false
+	if Input.is_action_just_pressed(&"ui_accept") and player.cell + player.facing == watcher.cell:
+		return true
+	var ahead := watcher.facing
+	var across := Vector2i(ahead.y, ahead.x)
+	var cells: Array[Vector2i] = []
+	for line in range(-side, side + 1):
+		for step in reach + 1:
+			cells.append(watcher.cell + across * line + ahead * step)
+	if not player.cell in cells:
+		return false
+	var through := watcher.through and watcher.passes_walls
+	var blocked := -1
+	for index in cells.size():
+		if not through and not tiles.call(&"can_step", cells[index], ahead, watcher.level, watcher):
+			blocked = index
+			break
+	if side > 0:
+		return blocked >= 0 or through
+	if blocked < 0:
+		return false
+	var gap := cells[blocked] - player.cell
+	return absi(gap.x) <= 1 and absi(gap.y) <= 1
+
+
+## Runs common event `number` as soon as no list holds the player, before
+## any event starting.
+func start_common(number: int) -> void:
+	_common_wanted = number
 
 
 ## Called by a mover as the route imposed on `walker` ends.
@@ -451,6 +496,12 @@ func _run_common_parallel(delta: float) -> void:
 ## The main list takes the first event starting on the map shown, by number;
 ## else a common event that runs by itself while its switch is on.
 func _start_next() -> void:
+	if _common_wanted > 0:
+		var wanted := common_event(_common_wanted)
+		_common_wanted = 0
+		if wanted != null:
+			main.setup(wanted.commands, null)
+			return
 	for event in events_of(maps.current):
 		if not event.starting:
 			continue

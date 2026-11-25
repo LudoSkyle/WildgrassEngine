@@ -41,7 +41,8 @@ to one, nothing left out.
 | 0, 404, 412, 604 (ends of blocks) | `WgEventBlockEnd` |
 | 106 Wait `n` | `WgEventWait`, `n / 30` s |
 | 108, 408 Comment | `WgEventComment` |
-| 111 Conditional Branch: switch, variable, self switch, timer, a character facing, money, item (Studio's id read as its dbSymbol), button | `WgEventIf`; an actor, an enemy, a weapon, an armor, a script: `UNSUPPORTED`, false |
+| 111 Conditional Branch: switch, variable, self switch, timer, a character facing, money, item (Studio's id read as its dbSymbol), button | `WgEventIf`; an actor, an enemy, a weapon, an armor: `UNSUPPORTED`, false |
+| 111 Conditional Branch: a script | `WgEventIf` as the script reads (see *Script conditions*) |
 | 411 Else, 112 Loop, 413 Repeat, 113 Break, 115 Exit, 116 Erase, 117 Common Event, 118 Label, 119 Jump | `WgEventElse`, `WgEventLoop`, `WgEventRepeat`, `WgEventBreak`, `WgEventExit`, `WgEventErase`, `WgEventCallCommon`, `WgEventLabel`, `WgEventJump` |
 | 121 Switches, 123 Self Switch | `WgEventSetSwitches`, `WgEventSetLocalSwitch` |
 | 201 Transfer Player: a map by its id, or by variables; with or without fade | `WgEventTransfer`: the map's dbSymbol (a map not in the project: raw, counted), or the variables; `dissolve` or `none` |
@@ -88,6 +89,27 @@ Studio's codes, in the order Studio reads them:
 | `\G` (money window), `face`, `city`, `\^` (big text), `\spd`, `\img`, `\d` | not shown yet: counted in the report, taken out |
 | any other `[` | written as text (`[lb]`) |
 
+## Script conditions
+
+`studio/studio_conditions.gd` reads the Ruby of a script condition, running
+nothing: `&&` and `and` (`ALL`), `||` and `or` (`ANY`), `!` and `not`
+(`negate`), parentheses; `== true`, `== false`, `!=`. The parts it knows:
+
+| Studio | Engine |
+|---|---|
+| `player_spotted?(n)`, `trainer_spotted(n)` | `PLAYER_SEEN`, `reach` n |
+| `player_spotted_rect?(n, d)`, `trainer_spotted_rect` | `PLAYER_SEEN` with `side` d, `then_common` 2 (Studio's appearance) |
+| `player_spotted_directional?(up:, down:, left:, right:)` | `PLAYER_SEEN`, `reaches`: each facing's, else the others' in Studio's order |
+| `detect_player(n, :left)`, `detect_player_rect(x, y)`, `detect_player_circle(r)` | `PLAYER_IN_LINE`, `PLAYER_IN_RECT`, `PLAYER_IN_CIRCLE` |
+| `gs[n]`, `$game_switches[n]` | `SWITCH` |
+| `gv[n]`, `$game_variables[n]` compared to a number or another | `VARIABLE` |
+| `gp.direction`, `ge.direction`, `get_character(n).direction` == a direction | `FACING` |
+| `.x`, `.y` of the same, or of `$game_map.events[n]` | `CELL` |
+| `get_self_switch('A'[, event[, map]])` | `LOCAL_SWITCH` of that event and map |
+
+Any other part is an `UNSUPPORTED` term, counted in the report by its
+method; a part that is a sum or a modulo (`gv[26] % 3 == 0`) too.
+
 ## Routes
 
 A route (`RPG::MoveRoute`: its list, `repeat`, `skippable`) becomes a
@@ -108,7 +130,7 @@ modules and receiver dropped: `ge(2).animate_from_charset(…)` is
 `animate_from_charset`), each condition and operand it cannot read. It is
 the list of what to add to the engine.
 
-On the sample project: 482 events on 21 maps, 12 225 commands, 2 331 not
+On the sample project: 482 events on 21 maps, 12 225 commands, 2 259 not
 run yet (sound effects, screen tones, pictures and script calls first); 100
 common events; 24 sound effects copied.
 
@@ -131,6 +153,10 @@ import writes every Studio map's id and dbSymbol into the game's map config
   boatman's, and the list waits for both before its first message. On
   map010 and map021, the pages' routes loop as Studio's and the random
   walkers wander at their frequency.
+- Every conditional branch (603, 359 read whole) agrees with the map files,
+  the script ones read apart by Python's own parser. Played headless:
+  map020's scout sees the player three cells ahead and not one aside;
+  map010's bike check sends the player on foot back with its message.
 - Every transfer (90), event placed (59) and local switch set (259, the
   `set_self_switch` lines among them) of the sample's events and common
   events, and the map numbers the engine reads, agree with the map files
