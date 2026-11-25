@@ -1,8 +1,9 @@
 # Feature 22 — Event scripts
 
 Status: in progress. Done: step 1 (scripts, script conditions, route
-steps' scripts, the engine's first words, the setting). Next: Studio's
-words and the importer's translations (step 2).
+steps' scripts, the engine's first words, the setting), step 2 (Studio's
+first words, the importer's translation, the project's translations).
+Next: each feature adds its words (step 3).
 
 Events say most things with commands (feature 21). What commands cannot say,
 a script says: a few lines of GDScript an event runs, or a condition it
@@ -72,6 +73,7 @@ The first set:
 | `start_common(n)`, `play_effect(name, volume, pitch)` | as the engine's |
 | `player_in_circle(distance_squared)` | as feature 21's condition |
 | `memory`, `this`, `player` | the list's memory, its event, the player |
+| `erase(event)`, `erase_forever(event)` | this event, or `event`, removed until its map is built again, or for good (feature 21) |
 | `engine` | `Wildgrass`: every service, for what has no word yet |
 
 ## A tool's words: a module
@@ -88,10 +90,16 @@ engine depends on a module.
 Studio, on the engine's services. A word the engine cannot do yet logs
 "not handled yet: <word>" once and does nothing. They come with the
 features that do them (the party with the party, battles with battles…);
-first those the sample calls most: `set_self_switch`, `get_self_switch`,
-`give_item`, `add_item`, `remove_item`, `player_spotted`, `trainer_spotted`,
-`detect_player`, `choice`, `ext_text`, `set_variable` of messages' texts,
-`moveto`, `get_character`, `emotion`, `animate_from_charset`…
+first: `gv`, `set_gv`, `gs`, `set_gs`; `gp`, `ge()`, `get_character()`
+(`x`, `y`, `direction`, `moveto()`); `set_self_switch`, `get_self_switch`;
+`player_spotted`, `trainer_spotted`, `player_spotted_rect`,
+`trainer_spotted_rect`, `player_spotted_directional`, `detect_player`,
+`detect_player_rect`, `detect_player_circle`; `delete_this_event_forever`,
+`delete_event_forever`, `delete_event`; `text.set_variable`,
+`text.unset_variable`, `text.reset_variables`; `cry_pokemon`. Next, with
+their features: the items with their messages (`give_item`, `add_item`,
+`pick_item`), `choice`, the following Pokémon, the party, the sheets'
+animations, emotions…
 
 **From Ruby to GDScript**, the rules an importer and a developer follow:
 
@@ -108,6 +116,7 @@ first those the sample calls most: `set_self_switch`, `get_self_switch`,
 | `@choices` | `memory.choices` |
 | `&&`, `\|\|`, `!`, `nil` | `and`, `or`, `not`, `null` |
 | `list.map { \|x\| … }`, `.each`, `do … end` | `list.map(func(x): …)`, `for x in list:` |
+| keyword arguments `f(1, volume: 80)` | a Dictionary last: `f(1, {volume = 80})` |
 
 ## The Studio importer
 
@@ -115,14 +124,25 @@ A script command (355 and its 655 lines), a script condition, a route's
 script step:
 
 1. **The project's translation**, if it has one: `res://studio/scripts/`,
-   one file per Ruby script, named by a hash of its text, the Ruby kept in
-   a comment at its top. A developer writes there what the importer cannot.
-2. Else **the importer's own translation**, for a script made only of
-   calls and conditions it knows (the forms of `studio_conditions.gd`,
-   which writes GDScript instead of feature 21's condition kinds).
-3. Else the Ruby is kept raw and reported; the importer writes the stub
-   for the developer to fill (its Ruby in comment, `pass`), listed in the
-   report.
+   one file per Ruby script, `<hash>.gd`, the hash the first 12 hex of the
+   SHA-1 of its Ruby. It is a real GDScript file extending Studio's context,
+   its Ruby in a comment at its top, with `func run() -> void:` (a script,
+   a route's step) or `func check():` returning the condition: written in
+   the Godot editor, with its completion. The importer takes that
+   function's body.
+2. Else **the importer's own translation** (`studio/studio_ruby.gd`), for
+   a script made only of words Studio's context has, by the rules above;
+   statements: calls, `gv[n] = …` (`+=`, `-=` too), `gs[n] = …`,
+   `gp.direction = …`, `@name = …`. Feature 21's condition kinds are no
+   longer written: a script condition becomes a `SCRIPT` condition.
+3. Else the Ruby is kept (a raw command, a condition not read, a step's
+   `original`) and reported; the importer writes its file in
+   `res://studio/scripts/to_translate/`, its body `pass` (or `false`), for
+   a developer to fill and move up a folder.
+
+The project's script context is Studio's: a Studio project gets it when
+the layer is installed; a game imported once from Studio names it in its
+settings (the importer says so).
 
 The sample's scripts get their GDScript this way: the importer's for most,
 written by hand for the others (the tower's team choice first), with
@@ -163,5 +183,10 @@ memory; a script that does not compile logged once with its place and
 skipped, in a list and in a condition; a condition's answer, true, false,
 or neither (logged); seeing the player in a condition; the project's
 context giving its own words, a wrong one logged; a route step's script,
-and a step not translated reported. To come: Studio's translation rules,
-the project's translation winning, a stub written.
+and a step not translated reported. Step 2: each translation rule, in a
+condition and in a script; what stays raw; the project's translation
+winning, a file to translate written once and kept; each of Studio's
+words run (variables, switches, characters from their map's origin, local
+switches of a map by its number, the detections, events deleted for good
+and still deleted when their map is built again, text variables); the
+Studio layer naming its context, unless the game names one.

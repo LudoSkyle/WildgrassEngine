@@ -67,7 +67,9 @@ func setup(commands: Array[WgEventCommand], by: WgEvent) -> void:
 	_map = _map_of(by)
 	_started_on = events.get(&"maps").get(&"current")
 	var maps: Object = events.get(&"maps")
-	_map_id = maps.call(&"id_of", _map) if _map != null else maps.get(&"current_id")
+	_map_id = maps.call(&"id_of", _map) if _map != null else &""
+	if _map_id.is_empty():
+		_map_id = maps.get(&"current_id")
 	wait_left = 0.0
 	waiting = false
 	child = null
@@ -193,7 +195,7 @@ func erase_event() -> void:
 ## event running the list, an empty map the one it started on. Empty if
 ## there is none (no event).
 func local_switch(letter: String, number := 0, map := &"") -> StringName:
-	if number <= 0 and map.is_empty():
+	if map.is_empty() and (number <= 0 or (event != null and number == event.event_id)):
 		return story.local(event, StringName(letter)) if event != null else &""
 	var own := number if number > 0 else (event.event_id if event != null else 0)
 	var map_id := map if not map.is_empty() else _map_id

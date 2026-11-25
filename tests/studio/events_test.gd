@@ -118,15 +118,15 @@ func test_variables_take_their_operand_as_rpg_maker_says() -> void:
 func test_a_command_with_no_class_is_kept_raw_and_counted_by_what_it_is() -> void:
 	var list := [
 		command(231, [1, "picture"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
-		command(203, [2, 3, 4]), command(111, [12, "gv[3] % 2 == 1"]), command(111, [4, 1, 0]),
+		command(203, [2, 3, 4]), command(111, [12, "$bag.contain_item?(:potion)"]), command(111, [4, 1, 0]),
 	]
 	var built := _events.build_commands(list)
 	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 203])
 	assert_array((built[3] as WgEventRaw).parameters).is_equal([2, 3, 4])
-	assert_array([(built[4] as WgEventIf).kind, (built[4] as WgEventIf).about, (built[5] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script gv", "actor condition"])
+	assert_array([(built[4] as WgEventIf).kind, (built[4] as WgEventIf).about, (built[5] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script contain_item?", "actor condition"])
 	var counts := {}
 	counts.merge(_events.raw_counts)
-	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Scroll Map": 1, "condition: script gv": 1, "condition: actor condition": 1})
+	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Scroll Map": 1, "condition: script contain_item?": 1, "condition: actor condition": 1})
 
 
 func test_a_transfer_goes_to_the_map_of_studio_s_number_or_by_variables() -> void:
@@ -150,86 +150,95 @@ func test_an_event_location_is_set_by_cell_by_variables_or_by_swapping() -> void
 	assert_array([swap.character, swap.mode, swap.other, swap.direction]).is_equal([-1, WgEventSetEventLocation.Mode.SWAP, 4, Vector2i.RIGHT])
 
 
-func test_set_self_switch_alone_on_its_line_is_a_local_switch_of_an_event_and_map() -> void:
-	_events.map_symbols = {19: &"map019"}
-	var built := _events.build_commands([
-		command(355, ["set_self_switch(true, \"A\", 7)"]),
-		command(355, ["set_self_switch(false,'B',1, 19)"]),
-		command(355, ["set_self_switch(true,\"C\",3,map_id = 19)"]),
-		command(355, ["set_self_switch(true,\"A\",3,map_id = 42)"]),
-		command(355, ["set_self_switch(true, \"A\", id_event)"]),
-		command(355, ["(1..3).each { |id| set_self_switch(true, 'A', id) }"]),
-		command(355, ["set_self_switch(true, \"A\", 7)"]), command(655, ["gv[1] = 2"]),
-	])
-	var made: Array = built.slice(0, 3).map(func(local: WgEventSetLocalSwitch) -> Array: return [local.on, local.letter, local.event, local.map])
-	assert_array(made).is_equal([[true, "A", 7, &""], [false, "B", 1, &"map019"], [true, "C", 3, &"map019"]])
-	assert_array(built.slice(3).map(func(command: WgEventCommand) -> bool: return command is WgEventRaw)).is_equal([true, true, true, true, true])
-
-
-## A condition as a short text: its kind and what it holds, its terms in
-## brackets, `!` when turned over.
-static func _described(made: WgEventIf) -> String:
-	var K := WgEventIf.Kind
-	var text := "!" if made.negate else ""
-	match made.kind:
-		K.ALL, K.ANY:
-			var parts: Array[String] = []
-			for term: WgEventCommand in made.terms:
-				parts.append(_described(term as WgEventIf))
-			return text + ("all" if made.kind == K.ALL else "any") + "[" + ", ".join(parts) + "]"
-		K.PLAYER_SEEN:
-			return text + "seen %d %s side %d common %d (%d)" % [made.reach, made.reaches, made.side, made.then_common, made.number]
-		K.PLAYER_IN_LINE:
-			return text + "line %d %s" % [made.reach, made.direction]
-		K.PLAYER_IN_RECT:
-			return text + "rect %s" % made.size
-		K.PLAYER_IN_CIRCLE:
-			return text + "circle %d" % made.value
-		K.SWITCH:
-			return text + "switch %d" % made.number
-		K.VARIABLE:
-			return text + "variable %d %d %s%d" % [made.number, made.comparison, "v" if made.against_variable else "", made.value]
-		K.FACING:
-			return text + "facing %d %s" % [made.number, made.direction]
-		K.CELL:
-			return text + "cell %d %s %d %d" % [made.number, "xy"[made.axis], made.comparison, made.value]
-		K.LOCAL_SWITCH:
-			return text + "local %s %d %s" % [made.letter, made.event, made.map]
-		K.UNSUPPORTED:
-			return text + "unread " + made.about
-	return "?"
-
-
-func test_a_script_condition_is_read_as_the_engine_s_conditions() -> void:
-	_events.map_symbols = {21: &"map021"}
+func test_a_script_of_studio_s_words_is_written_in_gdscript_others_kept_raw() -> void:
 	var cases := {
-		"player_spotted?(3) && $actors.empty?": "all[seen 3 [] side 0 common 0 (0), unread script empty?]",
-		"trainer_spotted(4)": "seen 4 [] side 0 common 0 (0)",
-		"player_spotted_rect?(3, 2)": "seen 3 [] side 2 common 2 (0)",
-		"player_spotted_directional?(up: 3, down: 4, left: 4, right: 4)": "seen 1 [4, 4, 4, 3] side 0 common 0 (0)",
-		"player_spotted_directional?(left: 7)": "seen 1 [7, 7, 7, 7] side 0 common 0 (0)",
-		"detect_player(4, :right) && gp.direction == 8": "all[line 4 (1, 0), facing -1 (0, -1)]",
-		"detect_player(2, 4)": "line 2 (-1, 0)",
-		"detect_player_rect(3, 1)": "rect (3, 1)",
-		"detect_player_circle(9)": "circle 9",
-		"!gs[17] && !gs[23]": "all[!switch 17, !switch 23]",
-		"gs[37] || gs[38]": "any[switch 37, switch 38]",
-		"$game_switches[17] == true && gp.direction == 6": "all[switch 17, facing -1 (1, 0)]",
-		"gv[26] >= 16 && get_self_switch('A', 17, 21) == false": "all[variable 26 1 16, !local A 17 map021]",
-		"gv[26] == gv[3]": "variable 26 0 v3",
-		"gp.direction != 8": "!facing -1 (0, -1)",
-		"gp.x == 12 && gp.y == 16": "all[cell -1 x 0 12, cell -1 y 0 16]",
-		"$game_map.events[6].x == 24": "cell 6 x 0 24",
-		"get_character(9).y < 3": "cell 9 y 4 3",
-		"(gs[1] || gs[2]) && !(gv[4] > 1)": "all[any[switch 1, switch 2], !variable 4 3 1]",
-		"gv[26] % 3 == 0": "unread script gv",
-		"$bag.contain_item?(:coin_case)": "unread script contain_item?",
+		"set_self_switch(true, \"A\", 7)": "set_self_switch(true, \"A\", 7)",
+		"set_self_switch(false,'B',1, 19)": "set_self_switch(false, \"B\", 1, 19)",
+		"set_self_switch(true,\"C\",3,map_id = 19)": "set_self_switch(true, \"C\", 3, 19)",
+		"$game_player.moveto(3, 4); $game_player.direction = 6": "gp.moveto(3, 4)\ngp.direction = 6",
+		"PFM::Text.set_variable(\"[TEAM]\", gv[2])": "text.set_variable(\"[TEAM]\", gv(2))",
+		"@choices = nil": "memory[\"choices\"] = null",
+		"cry_pokemon(:pikachu, volume: 80, form: 1)": "cry_pokemon(&\"pikachu\", {volume = 80, form = 1})",
+		"delete_this_event_forever": "delete_this_event_forever()",
+		"$game_switches[4] = gv[1] >= 2": "set_gs(4, gv(1) >= 2)",
+		"get_character(3).direction = 2": "get_character(3).direction = 2",
 	}
-	for text: String in cases:
-		var made := _built(111, [12, text]) as WgEventIf
-		assert_str(_described(made)).override_failure_message("%s: %s" % [text, _described(made)]).is_equal(cases[text])
-	assert_int(_events.raw_counts.get("condition: script gv", 0)).is_equal(1)
-	assert_int(_events.raw_counts.get("condition: script empty?", 0)).is_equal(1)
+	for ruby: String in cases:
+		var made := _built(355, [ruby]) as WgEventScript
+		assert_object(made).override_failure_message(ruby).is_not_null()
+		assert_str(made.source).override_failure_message(ruby).is_equal(cases[ruby])
+	var lines := _events.build_commands([command(355, ["gv[26] = 3"]), command(655, ["gv[26] += 2"]), command(655, ["gv[27] -= gv[26] * 2"])])
+	assert_int(lines.size()).is_equal(1)
+	assert_str((lines[0] as WgEventScript).source).is_equal("set_gv(26, 3)\nset_gv(26, gv(26) + 2)\nset_gv(27, gv(27) - gv(26) * 2)")
+	var kept := _events.build_commands([
+		command(355, ["(1..3).each { |id| set_self_switch(true, 'A', id) }"]),
+		command(355, ["set_self_switch(true, \"A\", id_event)"]),
+		command(355, ["Mod::Follow.smart_enable"]), command(655, ["gv[1] = 2"]),
+		command(355, ["gs[3] += 1"]),
+	])
+	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true])
+
+
+func test_a_script_condition_is_written_as_a_gdscript_expression() -> void:
+	var cases := {
+		"trainer_spotted(4)": "trainer_spotted(4)",
+		"player_spotted_rect?(3, 2)": "player_spotted_rect(3, 2)",
+		"player_spotted_directional?(up: 3, down: 4)": "player_spotted_directional({up = 3, down = 4})",
+		"detect_player(4, :right) && gp.direction == 8": "detect_player(4, &\"right\") and gp.direction == 8",
+		"!gs[17] && !gs[23]": "not gs(17) and not gs(23)",
+		"gs[37] || gs[38]": "gs(37) or gs(38)",
+		"$game_switches[17] == true && gp.direction == 6": "gs(17) == true and gp.direction == 6",
+		"gv[26] >= 16 && get_self_switch('A', 17, 21) == false": "gv(26) >= 16 and get_self_switch(\"A\", 17, 21) == false",
+		"(gs[1] || gs[2]) && !(gv[4] > 1)": "(gs(1) or gs(2)) and not gv(4) > 1",
+		"gs[1] && (gs[2] && gs[3])": "gs(1) and (gs(2) and gs(3))",
+		"gv[26] % 3 == 0": "gv(26) % 3 == 0",
+		"gv[1] - (gv[2] - 3) < -gv[4]": "gv(1) - (gv(2) - 3) < -gv(4)",
+		"$game_map.events[6].x == 24": "get_character(6).x == 24",
+		"ge.x == 22 && ge.y == 33": "ge().x == 22 and ge().y == 33",
+		"!gs[1] == false": "(not gs(1)) == false",
+		"(gv[1] == 1) == true": "(gv(1) == 1) == true",
+		"!(gs[1] || gs[2])": "not (gs(1) or gs(2))",
+		"get_self_switch(\"B\")": "get_self_switch(\"B\")",
+	}
+	for ruby: String in cases:
+		var made := _built(111, [12, ruby]) as WgEventIf
+		assert_int(made.kind).override_failure_message(ruby).is_equal(WgEventIf.Kind.SCRIPT)
+		assert_str(made.source).override_failure_message(ruby).is_equal(cases[ruby])
+	for ruby: String in ["player_spotted?(3) && $actors.empty?", "$bag.contain_item?(:coin_case)", "gv[1] == 2 == true", "x ? 1 : 2"]:
+		assert_int((_built(111, [12, ruby]) as WgEventIf).kind).override_failure_message(ruby).is_equal(WgEventIf.Kind.UNSUPPORTED)
+	assert_int(_events.raw_counts.get("condition: script contain_item?", 0)).is_equal(1)
+
+
+func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_file() -> void:
+	var folder := "user://studio_scripts_test"
+	_events.scripts_folder = folder
+	DirAccess.make_dir_recursive_absolute(folder + "/to_translate")
+	var ruby := "choice(26, -1, *@choices)"
+	var mine := FileAccess.open("%s/%s.gd" % [folder, StudioEvents.hash_of(ruby)], FileAccess.WRITE)
+	mine.store_string("extends WgScriptContext\n# Ruby: choice(26, -1, *@choices)\n\n\nfunc run() -> void:\n\tvar answer := await ask(\"?\", memory.get(\"choices\"))\n\n\tset_value(&\"variable_26\", answer + 1)\n\n\nfunc other() -> void:\n\tpass\n")
+	mine.close()
+	var seen := FileAccess.open("%s/%s.gd" % [folder, StudioEvents.hash_of("seen_by(3)")], FileAccess.WRITE)
+	seen.store_string("extends WgScriptContext\n\nfunc check():\n\treturn sees_player(3)\n")
+	seen.close()
+	assert_str((_built(355, [ruby]) as WgEventScript).source).is_equal("var answer := await ask(\"?\", memory.get(\"choices\"))\n\nset_value(&\"variable_26\", answer + 1)")
+	assert_str((_built(111, [12, "seen_by(3)"]) as WgEventIf).source).is_equal("sees_player(3)")
+	assert_object(_built(355, ["wave(1)\nwave(2)"]) as WgEventRaw).is_not_null()
+	var waiting := "%s/to_translate/%s.gd" % [folder, StudioEvents.hash_of("wave(1)\nwave(2)")]
+	assert_bool(FileAccess.file_exists(waiting)).is_true()
+	assert_str(FileAccess.get_file_as_string(waiting)).contains("#   wave(1)\n#   wave(2)").contains("func run() -> void:\n\tpass")
+	_events.build_commands([command(111, [12, "nope?(1)"])])
+	var condition := "%s/to_translate/%s.gd" % [folder, StudioEvents.hash_of("nope?(1)")]
+	assert_str(FileAccess.get_file_as_string(condition)).contains("func check():\n\treturn false")
+	FileAccess.open(waiting, FileAccess.WRITE).store_string("kept")
+	_built(355, ["wave(1)\nwave(2)"])
+	assert_str(FileAccess.get_file_as_string(waiting)).is_equal("kept")
+	assert_dict(_events.to_translate).contains_keys([StudioEvents.hash_of("wave(1)\nwave(2)"), StudioEvents.hash_of("nope?(1)")])
+	for file in DirAccess.get_files_at(folder + "/to_translate"):
+		DirAccess.remove_absolute(folder + "/to_translate/" + file)
+	for file in DirAccess.get_files_at(folder):
+		DirAccess.remove_absolute(folder + "/" + file)
+	DirAccess.remove_absolute(folder + "/to_translate")
+	DirAccess.remove_absolute(folder)
 
 
 func test_a_script_s_method_drops_its_modules_and_receivers() -> void:

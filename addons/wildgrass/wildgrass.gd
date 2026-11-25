@@ -136,6 +136,7 @@ func _init() -> void:
 	events = _service(&"events", _Events, [paths, log, hooks, maps, story, walkers, clock])
 	events.bag = bag
 	events.dialogue = dialogue
+	events.texts = texts
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", _Footprints, [paths, config, maps, walkers, tiles])

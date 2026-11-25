@@ -159,7 +159,7 @@ each with its own services. Done:
 | `WgEventIf` | a condition: a switch on or off, a variable against a number or a variable, a local switch, the money, an item in the bag, a character facing a way, a key held, a story condition; `WgEventElse` its other branch |
 | `WgEventLoop`, `WgEventRepeat`, `WgEventBreak` | a loop and its end; a break leaves the loop it is in |
 | `WgEventLabel`, `WgEventJump` | a jump to the first label of that name |
-| `WgEventExit`, `WgEventErase` | end the list; remove the event until its map is built again |
+| `WgEventExit`, `WgEventErase` | end the list; remove the event until its map is built again (`Wildgrass.events.erase_forever()`: for good, its map built again leaving it out, kept by the save) |
 | `WgEventWait` | seconds (RPG Maker's `n` is `n / 30` s) |
 | `WgEventCallCommon` | a common event's list, then on |
 | `WgEventSetSwitches`, `WgEventSetLocalSwitch` | switches `first` to `last` on or off; a local switch of the event, or of event `event` of `map` |
