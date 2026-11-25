@@ -6,7 +6,8 @@ extends RefCounted
 
 const _Reader := preload("res://addons/wildgrass/studio/marshal_reader.gd")
 const _StudioMessages := preload("res://addons/wildgrass/studio/studio_messages.gd")
-const _StudioConditions := preload("res://addons/wildgrass/studio/studio_conditions.gd")
+const _StudioRuby := preload("res://addons/wildgrass/studio/studio_ruby.gd")
+const _Studio := preload("res://addons/wildgrass/studio/studio.gd")
 
 ## RPG Maker's commands, by code, as the report names them.
 const COMMANDS: Dictionary[int, String] = {
@@ -55,21 +56,26 @@ var sheets_folder := "res://graphics/characters"
 var raw_counts: Dictionary[String, int] = {}
 ## The words of messages and choices.
 var messages: _StudioMessages
+## The project's translations of Studio's Ruby scripts (feature 22): one
+## `<hash>.gd` each; those still to translate in `to_translate/`. Empty:
+## none read, none written.
+var scripts_folder := ""
+## The scripts not translated, by their hash: their files to translate.
+var to_translate: Dictionary[String, bool] = {}
 ## Each Studio map's id (its RPG Maker number) and its dbSymbol, the engine's
 ## map id: where a transfer goes.
 var map_symbols: Dictionary[int, StringName] = {}
 
 var _reader := _Reader.new()
-var _conditions := _StudioConditions.new()
+var _ruby := _StudioRuby.new()
 var _script_method := RegEx.create_from_string("^\\s*(?:[A-Za-z_][\\w]*::)*(?:[$@]?[A-Za-z_]\\w*(?:\\([^()]*\\))?\\.)*([A-Za-z_]\\w*[?!]?)")
 var _items: Dictionary[int, StringName] = {}
-# A script line that is only `set_self_switch(on, "A", event[, [map_id =] map])`.
-var _self_switch := RegEx.create_from_string("^\\s*set_self_switch\\(\\s*(true|false)\\s*,\\s*[\"']([A-D])[\"']\\s*,\\s*(\\d+)\\s*(?:,\\s*(?:map_id\\s*=\\s*)?(\\d+)\\s*)?\\)\\s*$")
 
 
 func _init(data: String) -> void:
 	data_folder = data
-	_conditions.method_of = script_method
+	_ruby.method_of = script_method
+	_ruby.use_words_of(load(_Studio.SCRIPT_CONTEXT) as Script)
 	messages = _StudioMessages.new(data)
 	texture_of = func(path: String) -> Texture2D: return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
@@ -250,8 +256,20 @@ func build_commands(list: Array) -> Array[WgEventCommand]:
 			var say := WgEventSay.new()
 			say.text = messages.text_of(text)
 			made = say
-		elif int(command.get("code", 0)) == 355 and not (at < list.size() and list[at] is Dictionary and int(list[at].get("code", 0)) == 655):
-			made = _script(command)
+		elif int(command.get("code", 0)) == 355:
+			var lines := [str((command.get("parameters", [""]) as Array)[0])]
+			var next := at
+			while next < list.size() and list[next] is Dictionary and int(list[next].get("code", 0)) == 655:
+				lines.append(str((list[next].get("parameters", [""]) as Array)[0]))
+				next += 1
+			var source := translated("\n".join(lines), false)
+			if source.is_empty():
+				made = build_command(command)
+			else:
+				var script := WgEventScript.new()
+				script.source = source
+				made = script
+				at = next
 		else:
 			made = build_command(command)
 		made.indent = int((command as Dictionary).get("indent", 0))
@@ -399,19 +417,70 @@ func _transfer(p: Array) -> WgEventTransfer:
 	return made
 
 
-## A script line alone: `set_self_switch(…)` with numbers is the engine's
-## command; any other is kept raw.
-func _script(command: Dictionary) -> WgEventCommand:
-	var p: Array = command.get("parameters", [])
-	var found := _self_switch.search(str(p[0]) if not p.is_empty() else "")
-	if found != null and (found.get_string(4).is_empty() or map_symbols.has(int(found.get_string(4)))):
-		var local := WgEventSetLocalSwitch.new()
-		local.on = found.get_string(1) == "true"
-		local.letter = found.get_string(2)
-		local.event = int(found.get_string(3))
-		local.map = &"" if found.get_string(4).is_empty() else map_symbols[int(found.get_string(4))]
-		return local
-	return build_command(command)
+## The GDScript of Studio's Ruby `ruby`, a condition's (`condition`) or
+## a script's lines: the project's translation, else the importer's own; ""
+## if neither, its file to translate written.
+func translated(ruby: String, condition: bool) -> String:
+	var name := hash_of(ruby)
+	var own := scripts_folder.path_join(name + ".gd")
+	if not scripts_folder.is_empty() and FileAccess.file_exists(own):
+		var body := body_of(FileAccess.get_file_as_string(own), condition)
+		if not body.is_empty():
+			return body
+		problems.append("%s: no %s() to take" % [own, "check" if condition else "run"])
+	var made := _ruby.condition(ruby) if condition else _ruby.statements(ruby)
+	if not made.is_empty():
+		return made
+	_write_to_translate(name, ruby, condition)
+	return ""
+
+
+## The name of the translation of `ruby`: the first 12 hex of its SHA-1.
+static func hash_of(ruby: String) -> String:
+	return ruby.sha1_text().substr(0, 12)
+
+
+## The body of `func run()` (or, `condition`, the expression `func check()`
+## returns) in a translation's text; "" if it has none.
+static func body_of(text: String, condition: bool) -> String:
+	var lines := text.split("\n")
+	var start := -1
+	for index in lines.size():
+		if lines[index].begins_with("func check(" if condition else "func run("):
+			start = index + 1
+			break
+	if start < 0:
+		return ""
+	var body: Array[String] = []
+	for index in range(start, lines.size()):
+		var line := lines[index]
+		if not line.is_empty() and not line.begins_with("\t"):
+			break
+		body.append(line.trim_prefix("\t"))
+	while not body.is_empty() and body[-1].strip_edges().is_empty():
+		body.pop_back()
+	var joined := "\n".join(body)
+	if condition:
+		return joined.trim_prefix("return ").strip_edges() if joined.begins_with("return ") else ""
+	return joined
+
+
+func _write_to_translate(name: String, ruby: String, condition: bool) -> void:
+	to_translate[name] = true
+	if scripts_folder.is_empty():
+		return
+	var folder := scripts_folder.path_join("to_translate")
+	var path := folder.path_join(name + ".gd")
+	if FileAccess.file_exists(path):
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var text := "extends \"%s\"\n# Studio's script, in Ruby, to translate: write its GDScript below with\n# Studio's words, then move this file up a folder.\n#\n" % _Studio.SCRIPT_CONTEXT
+	for line in ruby.split("\n"):
+		text += ("#   " + line).strip_edges(false, true) + "\n"
+	text += "\n\nfunc check():\n\treturn false\n" if condition else "\n\nfunc run() -> void:\n\tpass\n"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(text)
 
 
 ## RPG Maker's move route as the engine's: each step but the end marker.
@@ -446,9 +515,11 @@ func build_route(route: Dictionary) -> WgMoveRoute:
 				step.volume = int(sound.get("volume", 100))
 				step.pitch = int(sound.get("pitch", 100))
 			WgMoveStep.Kind.CALL:
-				step.original = str(p[0])
-				var what := "route script %s" % script_method(step.original)
-				raw_counts[what] = raw_counts.get(what, 0) + 1
+				step.call = translated(str(p[0]), false)
+				if step.call.is_empty():
+					step.original = str(p[0])
+					var what := "route script %s" % script_method(step.original)
+					raw_counts[what] = raw_counts.get(what, 0) + 1
 		made.steps.append(step)
 	return made
 
@@ -496,23 +567,20 @@ func _condition(p: Array) -> WgEventIf:
 			made.kind = WgEventIf.Kind.KEY
 			made.action = BUTTONS.get(int(p[1]), &"ui_accept")
 		12:
-			_conditions.map_symbols = map_symbols
-			made = _conditions.read(str(p[1]))
-			_count_unread(made)
+			var source := translated(str(p[1]), true)
+			if source.is_empty():
+				made.kind = WgEventIf.Kind.UNSUPPORTED
+				made.about = "script %s" % script_method(str(p[1]))
+				raw_counts["condition: " + made.about] = raw_counts.get("condition: " + made.about, 0) + 1
+			else:
+				made.kind = WgEventIf.Kind.SCRIPT
+				made.source = source
 		_:
 			var what: String = "script %s" % script_method(str(p[1])) if int(p[0]) == 12 else ["actor", "enemy", "", "", "", "", "weapon", "armor"][clampi(int(p[0]) - 4, 0, 7)] + " condition"
 			made.kind = WgEventIf.Kind.UNSUPPORTED
 			made.about = what
 			raw_counts["condition: " + what] = raw_counts.get("condition: " + what, 0) + 1
 	return made
-
-
-## Counts each part of `made` the engine cannot read.
-func _count_unread(made: WgEventIf) -> void:
-	if made.kind == WgEventIf.Kind.UNSUPPORTED:
-		raw_counts["condition: " + made.about] = raw_counts.get("condition: " + made.about, 0) + 1
-	for term in made.terms:
-		_count_unread(term)
 
 
 func _variables(p: Array) -> WgEventSetVariables:

@@ -5,6 +5,7 @@
 extends SceneTree
 
 const _StudioMaps := preload("res://addons/wildgrass/studio/studio_maps.gd")
+const _Studio := preload("res://addons/wildgrass/studio/studio.gd")
 
 
 func _initialize() -> void:
@@ -14,6 +15,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var importer := _StudioMaps.new(args[0])
+	importer.scripts_folder = "res://studio/scripts"
 	var wanted: Array[String] = []
 	wanted.assign(args.slice(1))
 	if wanted.is_empty():
@@ -41,6 +43,9 @@ func _initialize() -> void:
 		print("the words of messages and choices: %s; list its translations in Project Settings > Localization" % translations)
 	var counts := importer.write_event_report(wanted)
 	print("%d events, %d commands, %d not run yet (maps/events.txt)" % [counts["events"], counts["commands"], counts["raw"]])
+	print("%d scripts to translate in %s/to_translate/" % [counts["to_translate"], importer.scripts_folder])
+	if str(ProjectSettings.get_setting(WgScriptContext.SETTING, "")).is_empty():
+		print("scripts are written with Studio's words: name %s in Project Settings > %s" % [_Studio.SCRIPT_CONTEXT, WgScriptContext.SETTING])
 	for problem in importer.problems:
 		printerr(problem)
 	print("%d of %d maps imported" % [imported, wanted.size()])

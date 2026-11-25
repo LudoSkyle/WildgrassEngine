@@ -168,6 +168,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	events = Events.new(paths, logger, hooks, maps, story, walkers, clock)
 	events.bag = bag
 	events.dialogue = dialogue
+	events.texts = texts
 	followers = Followers.new(logger, hooks, maps, walkers, species)
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)

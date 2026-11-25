@@ -158,6 +158,21 @@ func transfer(map: StringName, cell: Vector2i, facing := Vector2i.ZERO) -> void:
 	await _events().get(&"maps").call(&"transfer", map, cell, facing, &"dissolve", DISSOLVE_SECONDS)
 
 
+## Removes this event (or `event`) until its map is built again.
+func erase(event: WgEvent = null) -> void:
+	var erased := event if event != null else this
+	if erased != null:
+		_events().call(&"erase", erased)
+
+
+## Removes this event (or `event`) for good: its map, built again, leaves
+## it out too.
+func erase_forever(event: WgEvent = null) -> void:
+	var erased := event if event != null else this
+	if erased != null:
+		_events().call(&"erase_forever", erased)
+
+
 ## Runs common event `number` as soon as no list holds the player.
 func start_common(number: int) -> void:
 	_events().call(&"start_common", number)

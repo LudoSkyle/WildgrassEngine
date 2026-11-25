@@ -15,6 +15,8 @@ const _Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const _Run := preload("res://addons/wildgrass/events/event_run.gd")
 const _Mover := preload("res://addons/wildgrass/events/mover.gd")
 const _Scripts := preload("res://addons/wildgrass/events/scripts.gd")
+## The local flag of an event erased for good.
+const DELETED := &"deleted"
 
 ## The group every event of the maps shown is in.
 const GROUP := &"wildgrass_events"
@@ -58,6 +60,8 @@ var _reported: Dictionary[String, bool] = {}
 var _locked: WgEvent
 ## The player's hold while the main list runs: [walker, number].
 var _hold: Array = []
+## The texts service, for scripts' words (feature 22); null without one.
+var texts: Object
 ## A common event to run first as soon as no list holds the player.
 var _common_wanted := 0
 
@@ -144,6 +148,13 @@ func refresh(event: WgEvent) -> void:
 func erase(event: WgEvent) -> void:
 	event.erased = true
 	refresh(event)
+
+
+## Erases `event` for good: its map, built again, leaves it out too (kept by
+## the save, as its local flag `deleted`).
+func erase_forever(event: WgEvent) -> void:
+	story.set_flag(story.local(event, DELETED))
+	erase(event)
 
 
 ## Starts `event`: it runs once the list holding the player is free.
@@ -446,11 +457,13 @@ func _prune_movers() -> void:
 	_movers = living
 
 
-func _on_map_built(map: Node, _map_id: StringName = &"") -> void:
+func _on_map_built(map: Node, built_id: StringName = &"") -> void:
 	var found: Array[WgEvent] = []
 	_collect(map, found)
+	var map_id: StringName = built_id if not built_id.is_empty() else maps.id_of(map as WgMap)
 	for event in found:
-		event.erased = false
+		var place := event.local_place() if not event.local_place().is_empty() else String(map.get_path_to(event))
+		event.erased = story.has(_Story.local_on(map_id, place, DELETED))
 		event.page = null
 		refresh(event)
 

@@ -22,6 +22,8 @@ const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const _Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 
+## Studio's words for events' scripts (feature 22).
+const SCRIPT_CONTEXT := "res://addons/wildgrass/studio/studio_script_context.gd"
 ## The project setting turning the layer on: `auto` (when the project has
 ## `project.studio`), `on`, `off`.
 const SETTING := "wildgrass/studio/enabled"
@@ -90,6 +92,8 @@ var _zones: _StudioZones
 ## Studio config file -> its data, read once.
 var _files: Dictionary[String, Dictionary] = {}
 var _translations: Array[Translation] = []
+## True once the layer named Studio's script context in the settings.
+var _named_context := false
 
 
 func _init(paths: _Paths, logger: _Log, config_registry: _ConfigRegistry, hook_registry: _Hooks) -> void:
@@ -117,12 +121,13 @@ func is_project() -> bool:
 
 ## Plugs the project into the engine: its configs as sources, its texts, its
 ## items, pockets, quests, species, types, Pokédexes, wild groups and
-## zones. Done once.
+## zones, its words for events' scripts. Done once.
 func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _SpeciesData, types: _Types, pokedex: _Pokedex, encounters: _Encounters, zones: _Zones) -> void:
 	if installed:
 		return
 	installed = true
 	_texts = engine_texts
+	name_script_context()
 	_config.add_source(&"display", _display)
 	_config.add_source(&"language", _language)
 	_config.add_source(&"save", _save)
@@ -144,8 +149,20 @@ func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _Spe
 	_add_translations()
 
 
-## Takes back the labels' translations: tests, a project switched.
+## Names Studio's words for events' scripts in the settings (feature 22),
+## unless the game names its own. Done by `install()`.
+func name_script_context() -> void:
+	if str(ProjectSettings.get_setting(WgScriptContext.SETTING, "")).is_empty():
+		ProjectSettings.set_setting(WgScriptContext.SETTING, SCRIPT_CONTEXT)
+		_named_context = true
+
+
+## Takes back the labels' translations and the script context it named:
+## tests, a project switched.
 func uninstall() -> void:
+	if _named_context:
+		ProjectSettings.set_setting(WgScriptContext.SETTING, "")
+		_named_context = false
 	for translation in _translations:
 		TranslationServer.remove_translation(translation)
 	_translations.clear()

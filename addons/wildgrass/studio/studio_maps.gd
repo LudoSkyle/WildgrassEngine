@@ -101,6 +101,9 @@ var audio_folder := "res://audio"
 var common_events_folder := "res://common_events"
 ## Where the game's configs are: the map numbers go into `map.json`.
 var config_folder := "res://config"
+## Where the game's translations of Studio's scripts are (feature 22);
+## empty: none read, none written.
+var scripts_folder := ""
 ## Gives the texture of a picture written, by its path. Default: `load()`,
 ## once Godot imported it.
 var texture_of := Callable()
@@ -881,7 +884,7 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 ## count. Returns {events, commands, raw}.
 func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
 	var events := _new_events_reader()
-	var counts: Dictionary[String, int] = {"events": 0, "commands": 0, "raw": 0}
+	var counts: Dictionary[String, int] = {"events": 0, "commands": 0, "raw": 0, "to_translate": 0}
 	var raw: Dictionary[String, int] = {}
 	for symbol in symbols:
 		var record := map_record(symbol)
@@ -907,6 +910,11 @@ func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
 	for what: String in ordered:
 		counts["raw"] += raw[what]
 		lines.append("  %d %s" % [raw[what], what])
+	var waiting := scripts_folder.path_join("to_translate") if not scripts_folder.is_empty() else ""
+	if not waiting.is_empty():
+		var to_translate := Array(DirAccess.get_files_at(waiting)).filter(func(file: String) -> bool: return file.ends_with(".gd")) if DirAccess.dir_exists_absolute(waiting) else []
+		counts["to_translate"] = to_translate.size()
+		lines.append("Scripts to translate: %d, in %s/ (each to fill, then move up a folder)." % [to_translate.size(), waiting])
 	DirAccess.make_dir_recursive_absolute(target_folder)
 	var file := FileAccess.open(target_folder.path_join("events.txt"), FileAccess.WRITE)
 	if file == null:
@@ -1009,6 +1017,7 @@ func _events_reader() -> _StudioEvents:
 func _new_events_reader() -> _StudioEvents:
 	var made := _StudioEvents.new(data_folder)
 	made.texture_of = texture_of
+	made.scripts_folder = scripts_folder
 	var lists: Array = []
 	for symbol in map_symbols():
 		var record := map_record(symbol)
