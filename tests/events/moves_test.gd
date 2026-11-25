@@ -50,20 +50,25 @@ static func route(kinds: Array, repeat := false, skippable := false) -> WgMoveRo
 	return made
 
 
-func _event(cell: Vector2i, page: WgEventPage, number := 1) -> WgEvent:
+## `built`: its page chosen before it enters the tree and has its walkers
+## service, as on a map just built.
+func _event(cell: Vector2i, page: WgEventPage, number := 1, built := false) -> WgEvent:
 	var event := WgEvent.new()
 	event.name = "Event%d" % number
 	event.event_id = number
-	event.walkers = _world.walkers
 	event.position = _world.tiles.center_of(cell)
 	page.sheet = _sheet
 	event.pages = [page]
 	var sprite := WgCharacterSprite.new()
 	sprite.name = "Sprite"
 	event.add_child(sprite)
+	if built:
+		_world.events.refresh(event)
+	event.walkers = _world.walkers
 	_world.maps.current.entities_node().add_child(event)
 	event.set_process(false)
-	_world.events.refresh(event)
+	if not built:
+		_world.events.refresh(event)
 	return event
 
 
@@ -184,6 +189,16 @@ func test_moving_by_itself_waits_its_frequency_and_stops_while_its_list_runs() -
 	_run(2.0)
 	assert_bool(event.is_locked()).is_true()
 	assert_that(event.cell).is_equal(held)
+
+
+func test_an_event_of_a_map_just_built_moves_by_itself() -> void:
+	var page := Events.page()
+	page.move_type = WgEventPage.MoveType.RANDOM
+	page.move_frequency = 6
+	var event := _event(Vector2i(5, 5), page, 1, true)
+	var start := event.cell
+	_run(2.0)
+	assert_that(event.cell).is_not_equal(start)
 
 
 func test_a_route_changes_pace_look_through_and_more() -> void:

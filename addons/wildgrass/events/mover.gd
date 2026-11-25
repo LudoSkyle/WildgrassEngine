@@ -39,10 +39,12 @@ var _stop_ticks := 0
 var _time := 0.0
 
 
+## `service`'s walkers, not the walker's: on a map just built, it has none yet.
 func _init(service: Object, moved: WgWalker) -> void:
 	_events = weakref(service)
 	walker = moved
-	speed = speed_of(walker.pace if walker.pace > 0.0 else walker.walkers.movement().walk_pace)
+	var walkers: Object = service.get(&"walkers")
+	speed = speed_of(walker.pace if walker.pace > 0.0 else walkers.call(&"movement").walk_pace)
 
 
 ## Cells a second at RPG Maker's speed `value`.

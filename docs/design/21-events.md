@@ -64,9 +64,9 @@ named `Sprite`:
 Moves keep RPG Maker's time: 60 ticks a second, counted from the frame's
 time, whatever the frame rate.
 
-- **Speed** `s` is `60 × 2^s / 128` cells a second (3: 3.75, the player's
-  walk; 4: 7.5). **Frequency** `f` is how many ticks it stands between two
-  moves by itself: `(40 − 2f) × (6 − f)` (3: 102; 6: none).
+- **Speed** `s` is `60 × 2^s / 128` cells a second (3: 3.75; 4: 7.5).
+  **Frequency** `f` is how many ticks it stands between two moves by
+  itself: `(40 − 2f) × (6 − f)` (3: 102; 6: none).
 - A `WgMoveRoute` is a list of `WgMoveStep`, numbered as RPG Maker's 45:
   steps the four ways and the diagonals, at random, toward or away from the
   player, forward, backward; jumps; waits; turns; switches; speed,
@@ -206,7 +206,7 @@ switches, erasing; common events called, missing, running by themselves; a
 command with no class. Moving: a route imposed, then let go; a list waiting
 for it; a blocked step tried again or skipped; RPG Maker's ticks at 60 and
 120 frames a second; a page route repeated or run once; moving by itself at
-its frequency, still while its list runs; speed, switches, through, fixed
+its frequency, still while its list runs, from a map just built; speed, switches, through, fixed
 direction, on top, opacity and graphic changed by a route; a jump's ticks; a
 route imposed on the player while a list holds it; a new page ending a route;
 an `EVENT_TOUCH` event walking into the player.

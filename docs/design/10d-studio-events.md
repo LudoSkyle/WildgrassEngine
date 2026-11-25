@@ -118,10 +118,12 @@ transfers first); 100 common events; 24 sound effects copied.
   either way.
 
 - How each of the 659 pages moves by itself (type, speed, frequency, every
-  step of its route) and each of the 515 routes imposed with the 265 waits
+  step of its route with all its values: sheets, sounds, scripts) and each of the 515 routes imposed with the 265 waits
   for them agree with the map files, read apart. Playing the Hub's arrival
   headless, the player walks its route at speed 2, through, then the
-  boatman's, and the list waits for both before its first message.
+  boatman's, and the list waits for both before its first message. On
+  map010 and map021, the pages' routes loop as Studio's and the random
+  walkers wander at their frequency.
 - The reader gives the same events, cells, names, pages, triggers and
   commands as Studio's own readable copies of the sample project's 21 maps
   (`MapXXX.rxdata.yml`).
