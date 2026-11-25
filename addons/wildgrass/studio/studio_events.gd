@@ -6,6 +6,7 @@ extends RefCounted
 
 const _Reader := preload("res://addons/wildgrass/studio/marshal_reader.gd")
 const _StudioMessages := preload("res://addons/wildgrass/studio/studio_messages.gd")
+const _StudioConditions := preload("res://addons/wildgrass/studio/studio_conditions.gd")
 
 ## RPG Maker's commands, by code, as the report names them.
 const COMMANDS: Dictionary[int, String] = {
@@ -59,6 +60,7 @@ var messages: _StudioMessages
 var map_symbols: Dictionary[int, StringName] = {}
 
 var _reader := _Reader.new()
+var _conditions := _StudioConditions.new()
 var _script_method := RegEx.create_from_string("^\\s*(?:[A-Za-z_][\\w]*::)*(?:[$@]?[A-Za-z_]\\w*(?:\\([^()]*\\))?\\.)*([A-Za-z_]\\w*[?!]?)")
 var _items: Dictionary[int, StringName] = {}
 # A script line that is only `set_self_switch(on, "A", event[, [map_id =] map])`.
@@ -67,6 +69,7 @@ var _self_switch := RegEx.create_from_string("^\\s*set_self_switch\\(\\s*(true|f
 
 func _init(data: String) -> void:
 	data_folder = data
+	_conditions.method_of = script_method
 	messages = _StudioMessages.new(data)
 	texture_of = func(path: String) -> Texture2D: return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
@@ -492,12 +495,24 @@ func _condition(p: Array) -> WgEventIf:
 		11:
 			made.kind = WgEventIf.Kind.KEY
 			made.action = BUTTONS.get(int(p[1]), &"ui_accept")
+		12:
+			_conditions.map_symbols = map_symbols
+			made = _conditions.read(str(p[1]))
+			_count_unread(made)
 		_:
 			var what: String = "script %s" % script_method(str(p[1])) if int(p[0]) == 12 else ["actor", "enemy", "", "", "", "", "weapon", "armor"][clampi(int(p[0]) - 4, 0, 7)] + " condition"
 			made.kind = WgEventIf.Kind.UNSUPPORTED
 			made.about = what
 			raw_counts["condition: " + what] = raw_counts.get("condition: " + what, 0) + 1
 	return made
+
+
+## Counts each part of `made` the engine cannot read.
+func _count_unread(made: WgEventIf) -> void:
+	if made.kind == WgEventIf.Kind.UNSUPPORTED:
+		raw_counts["condition: " + made.about] = raw_counts.get("condition: " + made.about, 0) + 1
+	for term in made.terms:
+		_count_unread(term)
 
 
 func _variables(p: Array) -> WgEventSetVariables:

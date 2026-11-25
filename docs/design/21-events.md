@@ -183,6 +183,35 @@ under way, a list's own waits its turn (it is not queued, so a list dropped
 meanwhile shows nothing). `[look_to=3]` in a message turns the player toward
 event 3 of the list's map (0: nothing).
 
+## Conditions
+
+`WgEventIf` holds one condition (see *Commands*), its opposite with
+`negate`, or several: `ALL` (each of `terms`) and `ANY` (one of them). A part
+the engine cannot read yet is false, whatever wraps it.
+
+**Seeing the player**, as RPG Maker's trainers do (the character `number`,
+0 the event running the list):
+
+- `PLAYER_SEEN`: the player stands within `reach` cells ahead of it (its
+  own cell counted), on its level, and the first cell it could not step
+  from, going ahead, is next to the player's (nothing between them);
+  `reaches` gives one reach per facing (down, left, right, up) instead. With
+  `side`, a band `side` cells wide on each side: the player seen in it, the
+  way blocked somewhere (or the watcher `through`), as RPG Maker's. A
+  watcher `through` never sees along a line. The action key, pressed facing
+  it, is seen too. `then_common`: a common event started once it is seen.
+- `PLAYER_IN_LINE`: the player on the line `direction` from it, at most
+  `reach` cells, whatever stands between.
+- `PLAYER_IN_RECT`: at most `size.x` cells across and `size.y` along.
+- `PLAYER_IN_CIRCLE`: its distance squared at most `value`.
+
+Also: `LOCAL_SWITCH` of event `event` of `map` (empty: the map the list
+started on), and `CELL`: character `number`'s cell, counted from its map's
+origin, along `axis` (0: x, 1: y), compared to `value`.
+
+Not yet: the reference's switch turning every detection off, its Safari
+mode, and a spotted player made to walk.
+
 ## Common events
 
 `WgCommonEvent` resources, `res://common_events/<number>.tres` (paths
@@ -251,4 +280,9 @@ map's), by variables through the map numbers, to no map; waiting for a
 warp; RPG Maker's 20 ticks of dissolve, and none without a renderer;
 arriving starting no `TOUCH` page but an `EVENT_TOUCH` one; events placed by
 cell, by variables, swapped, turned; local switches of another event and
-of another map, shown there.
+of another map, shown there. Conditions: the player seen ahead within the
+reach, not beyond, not aside, not past someone or a wall, not by a watcher
+through; the reach of each facing; a band, its common event started; the
+action key facing the watcher; a line, a rectangle, a circle; all, any,
+turned over, a part not read making all false; a cell; another event's
+local switch.

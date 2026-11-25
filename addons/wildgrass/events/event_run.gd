@@ -186,20 +186,25 @@ func erase_event() -> void:
 		events.call(&"erase", event)
 
 
-## Turns local switch `letter` of event `number` of map `map` on or off: 0
-## the event running the list, an empty map the one it started on.
-func set_local_switch(letter: String, on: bool, number := 0, map := &"") -> void:
-	var flag: StringName
+## The flag of local switch `letter` of event `number` of map `map`: 0 the
+## event running the list, an empty map the one it started on. Empty if
+## there is none (no event).
+func local_switch(letter: String, number := 0, map := &"") -> StringName:
 	if number <= 0 and map.is_empty():
-		if event == null:
-			return
-		flag = story.local(event, StringName(letter))
-	else:
-		var own := number if number > 0 else (event.event_id if event != null else 0)
-		var map_id := map if not map.is_empty() else _map_id
-		if own <= 0 or map_id.is_empty():
-			return
-		flag = _Story.local_on(map_id, WgEvent.local_place_of(own), StringName(letter))
+		return story.local(event, StringName(letter)) if event != null else &""
+	var own := number if number > 0 else (event.event_id if event != null else 0)
+	var map_id := map if not map.is_empty() else _map_id
+	if own <= 0 or map_id.is_empty():
+		return &""
+	return _Story.local_on(map_id, WgEvent.local_place_of(own), StringName(letter))
+
+
+## Turns local switch `letter` of event `number` of map `map` on or off (see
+## `local_switch()`).
+func set_local_switch(letter: String, on: bool, number := 0, map := &"") -> void:
+	var flag := local_switch(letter, number, map)
+	if flag.is_empty():
+		return
 	if on:
 		story.set_flag(flag)
 	else:
