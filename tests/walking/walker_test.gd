@@ -186,10 +186,11 @@ func test_a_walker_that_does_not_slide_walks_on_ice() -> void:
 func test_bad_directions_are_logged_and_refused() -> void:
 	_world.map()
 	var walker := _world.walker(Vector2i(1, 1))
-	assert_bool(walker.step(Vector2i(1, 1))).is_false()
+	assert_bool(walker.step(Vector2i(2, 0))).is_false()
 	walker.turn(Vector2i.ZERO)
+	walker.turn(Vector2i(1, 1))
 	assert_that(walker.facing).is_equal(DOWN)
-	assert_array(_world.logged).is_equal(["ERROR (1, 1) is not up, down, left or right", "ERROR (0, 0) is not up, down, left or right"])
+	assert_array(_world.logged).is_equal(["ERROR (2, 0) is not a step to a cell around", "ERROR (0, 0) is not up, down, left or right", "ERROR (1, 1) is not up, down, left or right"])
 
 
 func test_a_freed_walker_gives_its_cells_back() -> void:
@@ -313,3 +314,81 @@ func test_a_walker_always_stepping_keeps_its_jump() -> void:
 	walker.advance(0.01)
 	assert_bool(walker.is_jumping).is_true()
 	assert_str(_sprite(walker).animation).is_equal("jump_down")
+
+
+func test_a_diagonal_step_goes_round_either_side_of_the_corner() -> void:
+	_world.map({Vector2i(3, 4): T.WALL, Vector2i(6, 6): T.WALL, Vector2i(7, 5): T.WALL})
+	var walker := _world.walker(Vector2i(3, 3))
+	# Down is walled: the way through the right is free.
+	assert_bool(walker.step(Vector2i(1, 1))).is_true()
+	walker.advance(1.0)
+	assert_that(walker.cell).is_equal(Vector2i(4, 4))
+	var boxed := _world.walker(Vector2i(6, 5))
+	# Both ways round the corner walled: refused.
+	assert_bool(boxed.step(Vector2i(1, 1))).is_false()
+	assert_that(boxed.cell).is_equal(Vector2i(6, 5))
+
+
+func test_a_diagonal_step_faces_aside_only_from_the_other_side() -> void:
+	_world.map()
+	var walker := _world.walker(Vector2i(5, 5))
+	walker.facing = RIGHT
+	walker.step(Vector2i(-1, 1))
+	walker.advance(1.0)
+	assert_that(walker.facing).is_equal(LEFT)
+	walker.facing = DOWN
+	walker.step(Vector2i(-1, 1))
+	walker.advance(1.0)
+	assert_that(walker.facing).is_equal(DOWN)
+	walker.facing = UP
+	walker.step(Vector2i(1, 1))
+	walker.advance(1.0)
+	assert_that(walker.facing).is_equal(DOWN)
+
+
+func test_a_jump_lands_where_it_may_stand_faces_its_longer_way_or_does_not_jump() -> void:
+	_world.map({Vector2i(5, 2): T.WALL})
+	var walker := _world.walker(Vector2i(2, 2))
+	_world.walker(Vector2i(2, 5))
+	assert_bool(walker.jump_by(Vector2i(2, 1), 0.5)).is_true()
+	assert_bool(walker.is_jumping).is_true()
+	assert_that(walker.facing).is_equal(RIGHT)
+	walker.advance(0.4)
+	assert_bool(walker.is_moving).is_true()
+	walker.advance(0.2)
+	assert_that(walker.cell).is_equal(Vector2i(4, 3))
+	assert_bool(walker.jump_by(Vector2i(1, -1), 0.5)).is_false()
+	assert_bool(walker.jump_by(Vector2i(-2, 2), 0.5)).is_false()
+	assert_that(walker.cell).is_equal(Vector2i(4, 3))
+	# In place: a hop.
+	assert_bool(walker.jump_by(Vector2i.ZERO, 0.3)).is_true()
+	walker.advance(1.0)
+	assert_that(walker.cell).is_equal(Vector2i(4, 3))
+	assert_bool(walker.is_jumping).is_false()
+
+
+func test_passing_walls_goes_through_any_tile_on_the_map_not_off_it() -> void:
+	_world.map({Vector2i(3, 2): T.WALL}, Vector2i(5, 5))
+	var walker := _world.walker(Vector2i(2, 2))
+	walker.passes_walls = true
+	assert_bool(walker.step(RIGHT)).is_true()
+	walker.advance(1.0)
+	assert_that(walker.cell).is_equal(Vector2i(3, 2))
+	walker.place_at(Vector2i(4, 2))
+	assert_bool(walker.step(RIGHT)).is_false()
+	assert_bool(walker.jump_by(Vector2i(-1, 0), 0.3)).is_true()
+
+
+func test_a_fixed_direction_keeps_its_facing_and_no_walk_animation_glides() -> void:
+	_world.map()
+	var walker := _world.walker(Vector2i(5, 5), null, World.frames(["idle_down", "walk_down", "idle_left", "walk_left"]))
+	walker.fixed_direction = true
+	walker.turn(LEFT)
+	walker.step(LEFT)
+	assert_that(walker.facing).is_equal(DOWN)
+	walker.advance(1.0)
+	walker.fixed_direction = false
+	walker.walk_animation = false
+	walker.step(LEFT)
+	walker.advance(0.05)
+	assert_str(String((walker.get_node("Sprite") as AnimatedSprite2D).animation)).is_equal("idle_left")

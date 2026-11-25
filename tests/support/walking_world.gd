@@ -172,6 +172,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
 	reflections = Reflections.new(config, walkers, tiles)
 	audio = Audio.new(paths, logger, config, species, root)
+	events.audio = audio
 	daytime = Daytime.new(logger, config, hooks)
 	daytime.follow(maps)
 	weather = Weather.new(paths, logger)

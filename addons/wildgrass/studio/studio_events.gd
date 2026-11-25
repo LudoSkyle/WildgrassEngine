@@ -37,6 +37,10 @@ const DIRECTIONS: Dictionary[int, Vector2i] = {2: Vector2i.DOWN, 4: Vector2i.LEF
 const BUTTONS: Dictionary[int, StringName] = {2: &"ui_down", 4: &"ui_left", 6: &"ui_right", 8: &"ui_up", 11: &"ui_accept", 12: &"ui_cancel", 13: &"ui_accept"}
 ## Event name tags.
 const INVISIBLE := "invisible_"
+## The extensions Studio tries, in order, for a sound named without one.
+const STUDIO_SOUND_FORMATS: Array[String] = ["ogg", "mp3", "wav", "mid", "aac", "wma", "it", "xm", "mod", "s3m", "midi", "flac"]
+## Those Godot plays.
+const PLAYED_FORMATS: Array[String] = ["ogg", "mp3", "wav"]
 
 ## Problems met: a map file unread.
 var problems: Array[String] = []
@@ -98,15 +102,61 @@ func common_events() -> Dictionary[int, Dictionary]:
 	return found
 
 
-## The names of the character sheets the events of `events` show.
-static func sheets_of(events: Array[Dictionary]) -> Array[String]:
+## The names of the character sheets the events of `events` show, their
+## pages and the routes in their lists; and those `lists` name in routes.
+static func sheets_of(events: Array[Dictionary], lists: Array = []) -> Array[String]:
 	var found: Array[String] = []
+	var all_lists: Array = lists.duplicate()
 	for event in events:
 		for page: Dictionary in event.get("pages", []):
 			var name := str((page.get("graphic", {}) as Dictionary).get("character_name", ""))
 			if not name.is_empty() and not name in found:
 				found.append(name)
+			all_lists.append(page.get("list", []))
+			all_lists.append([{"code": 209, "parameters": [0, page.get("move_route", {})]}])
+	for step in _route_steps(all_lists, 41):
+		var name := str((step.get("parameters", [""]) as Array)[0])
+		if not name.is_empty() and not name in found:
+			found.append(name)
 	return found
+
+
+## The names of the sound effects the routes of `lists` play.
+static func effects_of(lists: Array) -> Array[String]:
+	var found: Array[String] = []
+	for step in _route_steps(lists, 44):
+		var sound: Variant = (step.get("parameters", [{}]) as Array)[0]
+		var name := str((sound as Dictionary).get("name", "")) if sound is Dictionary else ""
+		if not name.is_empty() and not name in found:
+			found.append(name)
+	return found
+
+
+## The route commands of `code` in the routes the commands of `lists` set.
+static func _route_steps(lists: Array, code: int) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	for list: Variant in lists:
+		for command: Variant in list if list is Array else []:
+			if command is Dictionary and int(command.get("code", 0)) == 209:
+				var route: Variant = (command.get("parameters", [0, {}]) as Array)[1]
+				for step: Variant in (route as Dictionary).get("list", []) if route is Dictionary else []:
+					if step is Dictionary and int(step.get("code", 0)) == code:
+						found.append(step)
+	return found
+
+
+## The file of Studio's sound `name` in its `audio/<folder>`, found as Studio
+## finds it: the name as given or in lower case, then with each extension it
+## knows. "" if none.
+static func sound_file(data: String, folder: String, name: String) -> String:
+	var path := data.path_join("../audio").simplify_path().path_join(folder)
+	var files: Dictionary[String, String] = {}
+	for file in DirAccess.get_files_at(path) if DirAccess.dir_exists_absolute(path) else PackedStringArray():
+		files[file.to_lower()] = file
+	for candidate: String in [name] + STUDIO_SOUND_FORMATS.map(func(format: String) -> String: return name + "." + format):
+		if files.has(candidate.to_lower()):
+			return path.path_join(files[candidate.to_lower()])
+	return ""
 
 
 ## Where the sheet `name` goes in the game.
@@ -150,6 +200,11 @@ func build_page(page: Dictionary) -> WgEventPage:
 	made.fixed_direction = bool(page.get("direction_fix", false))
 	made.walk_animation = bool(page.get("walk_anime", true))
 	made.step_animation = bool(page.get("step_anime", false))
+	made.move_type = clampi(int(page.get("move_type", 0)), 0, 3) as WgEventPage.MoveType
+	made.move_speed = clampi(int(page.get("move_speed", 3)), 1, 6)
+	made.move_frequency = clampi(int(page.get("move_frequency", 3)), 1, 6)
+	if made.move_type == WgEventPage.MoveType.ROUTE and page.get("move_route") is Dictionary:
+		made.move_route = build_route(page["move_route"])
 	made.commands = build_commands(page.get("list", []))
 	return made
 
@@ -175,7 +230,8 @@ func build_commands(list: Array) -> Array[WgEventCommand]:
 	while at < list.size():
 		var command: Variant = list[at]
 		at += 1
-		if not command is Dictionary:
+		# A route's lines repeat its steps for the editor: the route has them.
+		if not command is Dictionary or int(command.get("code", 0)) == 509:
 			continue
 		var made: WgEventCommand
 		if int(command.get("code", 0)) == 101:
@@ -276,6 +332,13 @@ func build_command(command: Dictionary) -> WgEventCommand:
 			options.place = [WgEventTextOptions.Place.TOP, WgEventTextOptions.Place.MIDDLE, WgEventTextOptions.Place.BOTTOM][clampi(int(p[0]), 0, 2)]
 			options.frame = int(p[1]) == 0
 			return options
+		209:
+			var move := WgEventMoveRoute.new()
+			move.character = int(p[0])
+			move.route = build_route(p[1] if p[1] is Dictionary else {})
+			return move
+		210:
+			return WgEventWaitForMoves.new()
 		123:
 			var local := WgEventSetLocalSwitch.new()
 			local.letter = str(p[0])
@@ -286,6 +349,45 @@ func build_command(command: Dictionary) -> WgEventCommand:
 	raw.parameters = p
 	_count_raw(code, p)
 	return raw
+
+
+## RPG Maker's move route as the engine's: each step but the end marker.
+func build_route(route: Dictionary) -> WgMoveRoute:
+	var made := WgMoveRoute.new()
+	made.repeat = bool(route.get("repeat", false))
+	made.skippable = bool(route.get("skippable", false))
+	for command: Variant in route.get("list", []):
+		if not command is Dictionary or int(command.get("code", 0)) <= 0 or int(command.get("code", 0)) > WgMoveStep.Kind.CALL:
+			continue
+		var step := WgMoveStep.new()
+		step.kind = int(command["code"]) as WgMoveStep.Kind
+		var p: Array = command.get("parameters", [])
+		match step.kind:
+			WgMoveStep.Kind.JUMP:
+				step.offset = Vector2i(int(p[0]), int(p[1]))
+			WgMoveStep.Kind.WAIT, WgMoveStep.Kind.SWITCH_ON, WgMoveStep.Kind.SWITCH_OFF, WgMoveStep.Kind.SPEED, \
+					WgMoveStep.Kind.FREQUENCY, WgMoveStep.Kind.OPACITY, WgMoveStep.Kind.BLENDING:
+				step.value = int(p[0])
+			WgMoveStep.Kind.GRAPHIC:
+				var sheet := str(p[0])
+				step.sheet = texture_of.call(sheet_path(sheet)) if not sheet.is_empty() else null
+				step.direction = DIRECTIONS.get(int(p[2]), Vector2i.DOWN)
+				step.pattern = int(p[3])
+			WgMoveStep.Kind.SOUND:
+				var sound: Dictionary = p[0] if p[0] is Dictionary else {}
+				var source := sound_file(data_folder, "se", str(sound.get("name", "")))
+				if source.is_empty() or source.get_extension().to_lower() not in PLAYED_FORMATS:
+					raw_counts["route: a sound with no file Godot plays"] = raw_counts.get("route: a sound with no file Godot plays", 0) + 1
+				else:
+					step.sound = StringName(source.get_file())
+				step.volume = int(sound.get("volume", 100))
+				step.pitch = int(sound.get("pitch", 100))
+			WgMoveStep.Kind.CALL:
+				step.call = str(p[0])
+				var what := "route script %s" % script_method(step.call)
+				raw_counts[what] = raw_counts.get(what, 0) + 1
+		made.steps.append(step)
+	return made
 
 
 ## The method a Studio script line calls, its receiver and modules dropped:

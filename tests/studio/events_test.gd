@@ -136,3 +136,49 @@ func test_a_script_s_method_drops_its_modules_and_receivers() -> void:
 	assert_str(_events.script_method("set_self_switch(true, 'A', 1)")).is_equal("set_self_switch")
 	assert_str(_events.script_method("  give_item(:potion)")).is_equal("give_item")
 	assert_str(_events.script_method("")).is_empty()
+
+
+static func move_route(steps: Array, repeat := false) -> Dictionary:
+	var made := {"class": "RPG::MoveRoute", "repeat": repeat, "skippable": false, "list": []}
+	for step: Array in steps:
+		made["list"].append({"class": "RPG::MoveCommand", "code": step[0], "parameters": step.slice(1)})
+	made["list"].append({"class": "RPG::MoveCommand", "code": 0, "parameters": []})
+	return made
+
+
+func test_a_page_s_way_of_moving_and_its_route_are_the_engine_s() -> void:
+	var moving := page([])
+	moving["move_type"] = 3
+	moving["move_speed"] = 4
+	moving["move_frequency"] = 6
+	moving["move_route"] = move_route([[1], [15, 10], [14, -1, 2], [29, 5], [27, 12], [42, 128], [45, "Mod::Thing.wave(1)"]], true)
+	var made := _events.build_page(moving)
+	assert_array([made.move_type, made.move_speed, made.move_frequency, made.move_route.repeat]).is_equal([WgEventPage.MoveType.ROUTE, 4, 6, true])
+	var steps := made.move_route.steps
+	assert_array(steps.map(func(step: WgMoveStep) -> int: return step.kind)).is_equal([1, 15, 14, 29, 27, 42, 45])
+	assert_array([steps[1].value, steps[2].offset, steps[3].value, steps[4].value, steps[5].value, steps[6].call]).is_equal([10, Vector2i(-1, 2), 5, 12, 128, "Mod::Thing.wave(1)"])
+	var counts := {}
+	counts.merge(_events.raw_counts)
+	assert_dict(counts).is_equal({"route script wave": 1})
+
+
+func test_a_route_imposed_drops_its_editor_lines_and_a_wait_for_moves_follows() -> void:
+	var route := move_route([[4], [44, {"class": "RPG::AudioFile", "name": "nowhere", "volume": 80, "pitch": 100}]])
+	var built := _events.build_commands([command(209, [-1, route]), command(509, [route["list"][0]]), command(509, [route["list"][1]]), command(210, [])])
+	assert_int(built.size()).is_equal(2)
+	var move := built[0] as WgEventMoveRoute
+	assert_int(move.character).is_equal(-1)
+	assert_array(move.route.steps.map(func(step: WgMoveStep) -> int: return step.kind)).is_equal([4, 44])
+	assert_int(move.route.steps[1].volume).is_equal(80)
+	assert_object(built[1]).is_instanceof(WgEventWaitForMoves)
+	# A sound with no file is told, never kept.
+	assert_str(String(move.route.steps[1].sound)).is_empty()
+	assert_int(_events.raw_counts.get("route: a sound with no file Godot plays", 0)).is_equal(1)
+
+
+func test_the_sheets_and_sounds_routes_name_are_listed_to_be_copied() -> void:
+	var graphic := move_route([[41, "walker_b", 0, 4, 1], [44, {"class": "RPG::AudioFile", "name": "door", "volume": 100, "pitch": 100}]])
+	var moving := page([command(209, [0, graphic])], {"graphic": "walker_a"})
+	moving["move_route"] = move_route([[41, "walker_c", 0, 2, 0]])
+	assert_array(StudioEvents.sheets_of([event([moving])])).is_equal(["walker_a", "walker_b", "walker_c"])
+	assert_array(StudioEvents.effects_of([[command(209, [0, graphic])]])).is_equal(["door"])

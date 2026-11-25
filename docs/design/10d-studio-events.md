@@ -2,7 +2,8 @@
 
 Status: in progress. Every event and common event is written; the commands
 the engine has a class for run (feature 21), messages and choices with their
-words in each language, the others are kept raw until it has one.
+words in each language, the pages' moves and the routes imposed, the others
+are kept raw until it has one.
 
 A Studio map's events are RPG Maker XP events, in `Data/MapXXX.rxdata` (Ruby
 Marshal): pages, each with a condition, a graphic, a trigger and a list of
@@ -31,6 +32,7 @@ to one, nothing left out.
 | self switch A | `local:A` |
 | `character_name`, `direction`, `pattern`, `opacity` | `sheet` (the file copied from `graphics/characters` into `res://graphics/characters`), `direction`, `pattern`, `opacity` |
 | `trigger`, `through`, `always_on_top`, `direction_fix`, `walk_anime`, `step_anime` | the same |
+| `move_type`, `move_speed`, `move_frequency`, `move_route` | `move_type`, `move_speed`, `move_frequency`; with a custom route, `move_route` (see *Routes*) |
 | its list | its `commands`, one to one, each with its indent |
 | a common event | `res://common_events/<id>.tres`: its trigger, its switch (`switch_N`), its commands |
 
@@ -45,6 +47,8 @@ to one, nothing left out.
 | 101 Show Text and its 401 lines | `WgEventSay`: its words (see *Messages*) |
 | 102 Show Choices, 402 When, 403 When Cancel | `WgEventChoices` (each choice's words, its cancel), `WgEventWhen`, `WgEventWhenCancel` |
 | 103 Input Number, 104 Text Options | `WgEventInputNumber`, `WgEventTextOptions` |
+| 209 Set Move Route, its 509 lines | `WgEventMoveRoute`: its character and its route (see *Routes*); the 509 lines, the route's copy for RPG Maker's editor, are left out |
+| 210 Wait for Move's Completion | `WgEventWaitForMoves` |
 | 122 Variables: a number, a variable, random, an item's count, a character's x, y, direction, screen place, terrain tag, the map, the party, the money, the steps, the play time, the timer, the saves | `WgEventSetVariables`; an actor's or an enemy's: `UNSUPPORTED`, 0 |
 | any other | `WgEventRaw`: its code and parameters, as they are |
 
@@ -81,6 +85,17 @@ Studio's codes, in the order Studio reads them:
 | `\G` (money window), `face`, `city`, `\^` (big text), `\spd`, `\img`, `\d` | not shown yet: counted in the report, taken out |
 | any other `[` | written as text (`[lb]`) |
 
+## Routes
+
+A route (`RPG::MoveRoute`: its list, `repeat`, `skippable`) becomes a
+`WgMoveRoute`, each of its commands a `WgMoveStep` of the same number, its
+parameters with it: a wait's ticks, a jump's offset, a switch, a speed, a
+frequency, an opacity, a blending. A graphic's sheet is copied as a page's;
+a sound effect is found in `audio/se` as Studio finds it (the name in any
+case, then each extension Studio plays) and copied into `res://audio/effects`
+(paths `effects`), the step naming it as written; a sound not found is
+counted. A script line (45) is kept as written, counted by its method.
+
 ## The report
 
 `<maps>/events.txt`, written by each import for the maps imported: the
@@ -90,9 +105,9 @@ modules and receiver dropped: `ge(2).animate_from_charset(…)` is
 `animate_from_charset`), each condition and operand it cannot read. It is
 the list of what to add to the engine.
 
-On the sample project: 482 events on 21 maps, 13 810 commands, 4 995 not
-run yet (messages 1 624, move routes 515, and the screen's and sounds'
-commands first); 100 common events.
+On the sample project: 482 events on 21 maps, 12 225 commands, 2 596 not
+run yet (sound effects, screen tones, `set_self_switch`, pictures and
+transfers first); 100 common events; 24 sound effects copied.
 
 ## Checked
 
@@ -102,6 +117,13 @@ commands first); 100 common events.
   no unknown tag. The Hub's welcome plays to its end, the question answered
   either way.
 
+- How each of the 659 pages moves by itself (type, speed, frequency, every
+  step of its route with all its values: sheets, sounds, scripts) and each of the 515 routes imposed with the 265 waits
+  for them agree with the map files, read apart. Playing the Hub's arrival
+  headless, the player walks its route at speed 2, through, then the
+  boatman's, and the list waits for both before its first message. On
+  map010 and map021, the pages' routes loop as Studio's and the random
+  walkers wander at their frequency.
 - The reader gives the same events, cells, names, pages, triggers and
   commands as Studio's own readable copies of the sample project's 21 maps
   (`MapXXX.rxdata.yml`).
@@ -115,6 +137,9 @@ Map files are written by the tests (`tests/support/marshal_writer.gd`).
 Covered: integers small, large and negative, UTF-8 text, symbols, objects,
 hashes, an object met twice, a self-dumped one, data cut short or not
 Marshal; an event and its pages (conditions, look, trigger); each command
-and its parameters, the raw ones and their count; a script's method; a map's
+and its parameters, the raw ones and their count; a script's method; a
+page's moves and its route, every route step with its parameters, a route
+imposed and the wait for it, the 509 lines left out, a route's sheets and
+sound effects copied; a map's
 events written into its scene, its sheets copied, the common events, the
 report.

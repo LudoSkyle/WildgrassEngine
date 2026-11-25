@@ -216,6 +216,19 @@ func test_the_player_waits_until_the_interaction_ends_its_target_goes_or_the_map
 	assert_bool(_world.walkers.is_busy(_player)).is_false()
 
 
+func test_a_hold_keeps_its_owner_weakly_and_ends_when_it_goes() -> void:
+	_field()
+	var owner := RefCounted.new()
+	var watched: WeakRef = weakref(owner)
+	var number := _world.walkers.occupy(_player, owner)
+	assert_bool(_world.walkers.is_busy(_player)).is_true()
+	owner = null
+	assert_object(watched.get_ref()).is_null()
+	assert_bool(_world.walkers.is_busy(_player)).is_false()
+	_world.walkers.release(_player, number)
+	assert_bool(_world.walkers.is_busy(_player)).is_false()
+
+
 func test_crossing_a_seam_keeps_the_player_waiting() -> void:
 	var build := MapBuilder.new(_world.sandbox)
 	var route := build.map(&"route")

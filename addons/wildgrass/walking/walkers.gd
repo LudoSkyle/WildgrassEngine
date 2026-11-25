@@ -37,6 +37,8 @@ var events: Object:
 	set(value):
 		_events = weakref(value) if value != null else null
 var _events: WeakRef
+## Who drives each driven walker (`drive()`).
+var _drivers: Dictionary[WgWalker, Callable] = {}
 ## Item balls give through it; set once the bag service exists.
 var bag: _Bag
 ## The pause menu, opened by the player's `menu` action.
@@ -48,7 +50,7 @@ var encounters: RefCounted
 ## step goes.
 var _held: Dictionary[WgWalker, Array] = {}
 var _missing_actions: Array[String] = []
-## Walker -> [what it interacts with, the interaction's number].
+## Walker -> [what it interacts with (weakly), the interaction's number].
 var _busy: Dictionary[WgWalker, Array] = {}
 var _interactions := 0
 var _scripts: Dictionary[WgWalker, Walk] = {}
@@ -131,6 +133,7 @@ func settle(walker: WgWalker, cell: Vector2i, level: int) -> void:
 func forget(walker: WgWalker) -> void:
 	_held.erase(walker)
 	_still.erase(walker)
+	_drivers.erase(walker)
 	_end_walk(walker, false)
 
 
@@ -173,7 +176,7 @@ func interact(walker: WgWalker) -> void:
 		target = interactable_at(walker.get_tree(), cell, walker.level, walker.facing)
 	_interactions += 1
 	var number := _interactions
-	_busy[walker] = [target if target != null else walker, number]
+	_busy[walker] = [weakref(target if target != null else walker), number]
 	var handled := false
 	if target != null:
 		await target.interact(walker)
@@ -218,7 +221,7 @@ func trigger_at(walker: WgWalker) -> void:
 	walker.is_sliding = false
 	_interactions += 1
 	var number := _interactions
-	_busy[walker] = [found, number]
+	_busy[walker] = [weakref(found), number]
 	await found.trigger(walker)
 	if _busy.has(walker) and _busy[walker][1] == number:
 		_busy.erase(walker)
@@ -236,7 +239,7 @@ func encounter_at(walker: WgWalker) -> void:
 	walker.is_sliding = false
 	_interactions += 1
 	var number := _interactions
-	_busy[walker] = [walker, number]
+	_busy[walker] = [weakref(walker), number]
 	await encounters.meet(pokemon)
 	if _busy.has(walker) and _busy[walker][1] == number:
 		_busy.erase(walker)
@@ -247,7 +250,7 @@ func encounter_at(walker: WgWalker) -> void:
 func is_busy(walker: WgWalker) -> bool:
 	if not _busy.has(walker):
 		return false
-	if not is_instance_valid(_busy[walker][0]):
+	if not is_instance_valid((_busy[walker][0] as WeakRef).get_ref()):
 		_busy.erase(walker)
 		return false
 	return true
@@ -289,11 +292,29 @@ func walk_to(walker: WgWalker, cell: Vector2i, options := {}) -> bool:
 
 ## True while a script walks `walker`: its controller waits.
 func is_scripted(walker: WgWalker) -> bool:
-	return _scripts.has(walker)
+	return _scripts.has(walker) or _drivers.has(walker)
+
+
+## Drives `walker` instead of its controller, whatever holds the player:
+## `driver(walker, delta)` is asked each time the walker is free to step,
+## until `undrive()` (an event's move route). A scripted walk goes first.
+func drive(walker: WgWalker, driver: Callable) -> void:
+	_drivers[walker] = driver
+
+
+func undrive(walker: WgWalker) -> void:
+	_drivers.erase(walker)
 
 
 ## Asked by a scripted walker free to step: its next step, or the end.
 func drive_script(walker: WgWalker, delta: float) -> void:
+	if not _scripts.has(walker):
+		var driver: Callable = _drivers[walker]
+		if driver.is_valid():
+			driver.call(walker, delta)
+		else:
+			_drivers.erase(walker)
+		return
 	var request := _scripts[walker]
 	while request.index < request.steps.size():
 		var direction := request.steps[request.index]
@@ -378,9 +399,11 @@ func _moves_from(walker: WgWalker, here: Vector3i) -> Array[Array]:
 ## Keeps `walker`'s controller from acting, while it talks say.
 ## Holds `walker`, the traveller, for `owner` until `release()` with the
 ## number returned: it reads no input meanwhile. A later hold takes over.
+## `owner` is held weakly, as every hold's (a service holding this one would
+## never be freed): freed, it lets go.
 func occupy(walker: WgWalker, owner: Object) -> int:
 	_interactions += 1
-	_busy[walker] = [owner, _interactions]
+	_busy[walker] = [weakref(owner), _interactions]
 	return _interactions
 
 

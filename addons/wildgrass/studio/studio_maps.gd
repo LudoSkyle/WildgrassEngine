@@ -70,6 +70,8 @@ const SIDES: Dictionary[String, WgMapLink.Side] = {
 ## A map's sounds in its Studio record: the engine's folder (the `audio`
 ## config's defaults) and Studio's, inside its `audio` folder.
 const SOUNDS: Dictionary[String, Array] = {"bgm": ["music", "bgm"], "bgs": ["ambience", "bgs"]}
+## Sound effects: the engine's folder, Studio's.
+const EFFECTS: Array[String] = ["effects", "se"]
 ## The extensions Studio tries, in order, for a sound named without one.
 const STUDIO_SOUND_FORMATS: Array[String] = ["ogg", "mp3", "wav", "mid", "aac", "wma", "it", "xm", "mod", "s3m", "midi", "flac"]
 ## Those Godot plays.
@@ -216,21 +218,52 @@ func find_sound(key: String, record: Dictionary) -> Dictionary:
 	var name := str((sound as Dictionary).get("name", "")) if sound is Dictionary else ""
 	if name.is_empty():
 		return {}
-	var folder := data_folder.path_join("../audio").simplify_path().path_join(SOUNDS[key][1])
-	var files: Dictionary[String, String] = {}
-	for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
-		files[file.to_lower()] = file
-	var found := ""
-	for candidate: String in [name] + STUDIO_SOUND_FORMATS.map(func(format: String) -> String: return name + "." + format):
-		if files.has(candidate.to_lower()):
-			found = files[candidate.to_lower()]
-			break
-	if found.is_empty():
+	var source := _StudioEvents.sound_file(data_folder, SOUNDS[key][1], name)
+	if source.is_empty():
 		return {"name": name, "problem": "its %s '%s' is in no file of audio/%s: silent" % [SOUNDS[key][0], name, SOUNDS[key][1]]}
-	var source := folder.path_join(found)
+	var found := source.get_file()
 	if found.get_extension().to_lower() not in PLAYED_FORMATS:
 		return {"name": name, "source": source, "problem": "its %s '%s' is %s, which Godot does not play: silent" % [SOUNDS[key][0], found, found.get_extension().to_upper()]}
 	return {"name": name, "source": source}
+
+
+## Copies the sound effects the events of the maps `symbols` and the common
+## events play into the game's audio folder, once each. Returns the files
+## written.
+func write_effects(symbols: Array[String]) -> Array[String]:
+	var written: Array[String] = []
+	for name in _StudioEvents.effects_of(_all_lists(symbols)):
+		var source := _StudioEvents.sound_file(data_folder, EFFECTS[1], name)
+		if source.is_empty() or source.get_extension().to_lower() not in PLAYED_FORMATS:
+			continue
+		var target := effect_path(source)
+		if _is_fresh(target, FileAccess.get_modified_time(source)):
+			continue
+		DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+		if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(target)) == OK:
+			written.append(target)
+	return written
+
+
+## Where the sound effect copied from `source` goes in the game.
+func effect_path(source: String) -> String:
+	return audio_folder.path_join(EFFECTS[0]).path_join(source.get_file())
+
+
+## Every list of commands of the maps `symbols` and of the common events.
+func _all_lists(symbols: Array[String]) -> Array:
+	var events := _events_reader()
+	var lists: Array = []
+	for symbol in symbols:
+		var record := map_record(symbol)
+		for event in events.events_of(int(record.get("id", 0))):
+			for page: Dictionary in event.get("pages", []):
+				lists.append(page.get("list", []))
+				lists.append([{"code": 209, "parameters": [0, page.get("move_route", {})]}])
+	var commons := events.common_events()
+	for number: int in commons:
+		lists.append(commons[number].get("list", []))
+	return lists
 
 
 ## Where the sound copied from `source` goes in the game.
@@ -888,6 +921,8 @@ func write_sheets(symbols: Array[String]) -> Array[String]:
 	var events := _events_reader()
 	var written: Array[String] = []
 	var names: Array[String] = []
+	for name in events.sheets_of([], _all_lists(symbols)):
+		names.append(name)
 	for symbol in symbols:
 		var record := map_record(symbol)
 		if not record.is_empty():
