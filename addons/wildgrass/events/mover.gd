@@ -295,6 +295,9 @@ func _turn(kind: int) -> void:
 		_:
 			way = TURNS[kind]
 	walker.turn(way)
+	# A turn counts as a move, as RPG Maker's: it stands its frequency again.
+	if not walker.fixed_direction:
+		_stop_ticks = 0
 
 
 func _special(command: WgMoveStep) -> void:

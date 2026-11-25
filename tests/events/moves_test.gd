@@ -158,6 +158,23 @@ func test_a_page_route_repeats_or_runs_once() -> void:
 	assert_that(single.cell).is_equal(Vector2i(6, 3))
 
 
+func test_a_page_route_that_only_turns_stands_its_frequency_between_turns() -> void:
+	var page := Events.page()
+	page.move_type = WgEventPage.MoveType.ROUTE
+	page.move_frequency = 3
+	page.move_route = route([K.TURN_RIGHT_90], true)
+	var turning := _event(Vector2i(5, 5), page)
+	var turns := 0
+	var last := turning.facing
+	# Frequency 3: 102 ticks standing between two turns, two turns in 3.5 s.
+	for frame in 210:
+		_run(1.0 / 60.0)
+		if turning.facing != last:
+			turns += 1
+			last = turning.facing
+	assert_int(turns).is_equal(2)
+
+
 func test_moving_by_itself_waits_its_frequency_and_stops_while_its_list_runs() -> void:
 	var wait := WgEventWait.new()
 	wait.seconds = 5.0

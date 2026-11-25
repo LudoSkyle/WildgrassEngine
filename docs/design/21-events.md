@@ -79,7 +79,8 @@ time, whatever the frame rate.
   `repeat`. A step blocked is tried again until it passes, unless the route
   is `skippable`. A jump of `d` cells lasts `(10 + d − speed) × 2` ticks.
   Blending and calls are logged.
-- **By itself**, as its page says, between its frequency's stops; not while
+- **By itself**, as its page says, between its frequency's stops (a step,
+  a jump or a turn starts its stop again); not while
   it is starting or its list holds it, nor during a warp or a screen other
   than a message.
 - **A route imposed** (`WgEventMoveRoute`) replaces the moves of its
@@ -238,7 +239,8 @@ switches, erasing; common events called, missing, running by themselves; a
 command with no class. Moving: a route imposed, then let go; a list waiting
 for it; a blocked step tried again or skipped; RPG Maker's ticks at 60 and
 120 frames a second; a page route repeated or run once; moving by itself at
-its frequency, still while its list runs, from a map just built; the movers
+its frequency, still while its list runs, from a map just built; a page
+route that only turns, standing its frequency between turns; the movers
 of walkers freed dropped; speed, switches, through, fixed direction, on top,
 opacity and graphic changed by a route; a jump's ticks; a route imposed on
 the player while a list holds it; a new page ending a route; an

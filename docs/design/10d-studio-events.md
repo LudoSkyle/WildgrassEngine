@@ -137,7 +137,8 @@ import writes every Studio map's id and dbSymbol into the game's map config
   read apart. Played headless: in through the Hub's tower door and out
   again, back below the door, its arrival page played; the Hub's arrival
   with the boatman placed. The warp pads animate through script conditions
-  not run yet.
+  not run yet. Every map visited in the game: none of its 81 events moving
+  by themselves moves faster than its page's frequency allows.
 - The reader gives the same events, cells, names, pages, triggers and
   commands as Studio's own readable copies of the sample project's 21 maps
   (`MapXXX.rxdata.yml`).
