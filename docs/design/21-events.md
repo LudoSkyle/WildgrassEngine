@@ -74,11 +74,11 @@ time, whatever the frame rate.
   steps the four ways and the diagonals, at random, toward or away from the
   player, forward, backward; jumps; waits; turns; switches; speed,
   frequency, animations, fixed direction, through, on top, graphic,
-  opacity, a sound effect. A step, a turn, a jump and a wait take their tick;
-  the others run at once with the next. Its end starts it again if
+  opacity, a sound effect, a script (feature 22). A step, a turn, a jump
+  and a wait take their tick; the others run at once with the next. Its end starts it again if
   `repeat`. A step blocked is tried again until it passes, unless the route
   is `skippable`. A jump of `d` cells lasts `(10 + d − speed) × 2` ticks.
-  Blending and calls are logged.
+  Blending, and a script not translated, are logged.
 - **By itself**, as its page says, between its frequency's stops (a step,
   a jump or a turn starts its stop again); not while
   it is starting or its list holds it, nor during a warp or a screen other
@@ -170,6 +170,7 @@ each with its own services. Done:
 | `WgEventTextOptions` | where the next messages show, with or without their frame (style `transparent`) |
 | `WgEventMoveRoute` | a `route` imposed on a `character`; the list goes on |
 | `WgEventWaitForMoves` | waits until every route imposed has ended |
+| `WgEventScript` | GDScript lines in the project's script words (feature 22); the list waits until they end |
 | `WgEventTransfer` | the player to a cell of a map, or of the map and cell three variables hold (see *Transfers*) |
 | `WgEventSetEventLocation` | a character on a cell, the cell of two variables, or another character's |
 | `WgEventComment`, `WgEventBlockEnd` | nothing |
@@ -204,6 +205,8 @@ the engine cannot read yet is false, whatever wraps it.
   `reach` cells, whatever stands between.
 - `PLAYER_IN_RECT`: at most `size.x` cells across and `size.y` along.
 - `PLAYER_IN_CIRCLE`: its distance squared at most `value`.
+- `SCRIPT`: a GDScript expression in the project's script words (feature
+  22).
 
 Also: `LOCAL_SWITCH` of event `event` of `map` (empty: the map the list
 started on), and `CELL`: character `number`'s cell, counted from its map's

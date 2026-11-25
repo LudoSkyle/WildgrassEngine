@@ -34,7 +34,8 @@ enum Kind {
 	BLENDING,
 	## The sound effect `sound`, at `volume` and `pitch` (percent).
 	SOUND,
-	## A call the engine runs by name (`call`, as written).
+	## `call`, GDScript in the project's script words (feature 22), run at
+	## once; empty, `original` names the tool's script not translated.
 	CALL,
 }
 
@@ -47,4 +48,6 @@ enum Kind {
 @export var sound: StringName = &""
 @export var volume := 100
 @export var pitch := 100
-@export var call := ""
+@export_multiline var call := ""
+## CALL: the script as the tool wrote it, kept when not translated (not run).
+@export var original := ""

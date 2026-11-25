@@ -14,12 +14,15 @@ const _Walkers := preload("res://addons/wildgrass/walking/walkers.gd")
 const _Clock := preload("res://addons/wildgrass/core/clock/clock.gd")
 const _Run := preload("res://addons/wildgrass/events/event_run.gd")
 const _Mover := preload("res://addons/wildgrass/events/mover.gd")
+const _Scripts := preload("res://addons/wildgrass/events/scripts.gd")
 
 ## The group every event of the maps shown is in.
 const GROUP := &"wildgrass_events"
 
 ## The list holding the player, running or not.
 var main: _Run
+## The events' scripts, compiled (feature 22).
+var scripts: _Scripts
 var log: _Log
 var maps: _Maps
 var story: _Story
@@ -68,6 +71,7 @@ func _init(paths: _Paths, logger: _Log, hooks: _Hooks, maps_service: _Maps, stor
 	walkers = walkers_service
 	tiles = walkers_service.tiles
 	clock = clock_service
+	scripts = _Scripts.new(logger)
 	main = _Run.new(self)
 	walkers.events = self
 	_hooks.add(&"map_built", &"wildgrass_events", _on_map_built)
@@ -251,6 +255,40 @@ func sees_player(watcher: WgWalker, reach: int, side := 0) -> bool:
 	return absi(gap.x) <= 1 and absi(gap.y) <= 1
 
 
+## True if the player is on the line `direction` from `watcher`, at most
+## `reach` cells, whatever stands between.
+func player_in_line(watcher: WgWalker, reach: int, direction: Vector2i) -> bool:
+	var off: Variant = _player_offset(watcher)
+	if off == null:
+		return false
+	var along: int = off.x * direction.x + off.y * direction.y
+	return off - direction * along == Vector2i.ZERO and along >= 0 and along <= reach
+
+
+## True if the player is at most `size.x` cells across and `size.y` along
+## from `watcher`.
+func player_in_rect(watcher: WgWalker, size: Vector2i) -> bool:
+	var off: Variant = _player_offset(watcher)
+	return off != null and absi(off.x) <= size.x and absi(off.y) <= size.y
+
+
+## True if the player's distance to `watcher`, squared, is at most
+## `distance_squared`.
+func player_in_circle(watcher: WgWalker, distance_squared: int) -> bool:
+	var off: Variant = _player_offset(watcher)
+	return off != null and off.x * off.x + off.y * off.y <= distance_squared
+
+
+## Runs `source`, a route step's script, for `walker` at once: it does not
+## wait for it.
+func run_step_script(walker: WgWalker, source: String) -> void:
+	var map := _map_of(walker)
+	var place := "%s %s, a route's step" % [maps.id_of(map) if map != null else &"", walker.name]
+	var made := scripts.make(source, false, place, self, null, walker as WgEvent, {})
+	if made != null:
+		made.call(&"run")
+
+
 ## Runs common event `number` as soon as no list holds the player, before
 ## any event starting.
 func start_common(number: int) -> void:
@@ -389,6 +427,14 @@ func _set_moves(event: WgEvent) -> void:
 
 
 ## Forgets the movers of walkers freed with their map.
+## The player's cell less `watcher`'s, or null if either is missing.
+func _player_offset(watcher: WgWalker) -> Variant:
+	var player := maps.traveller as WgWalker
+	if player == null or watcher == null:
+		return null
+	return player.cell - watcher.cell
+
+
 ## A typed dictionary cannot erase a freed key: the living are kept instead.
 func _prune_movers() -> void:
 	if _movers.keys().all(func(walker: Variant) -> bool: return is_instance_valid(walker)):

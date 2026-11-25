@@ -47,6 +47,9 @@ enum Kind {
 	ALL,
 	## One of `terms` holds.
 	ANY,
+	## `source`, a GDScript expression in the project's script words (feature
+	## 22), is true.
+	SCRIPT,
 }
 enum Comparison { EQUAL, AT_LEAST, AT_MOST, MORE, LESS, NOT_EQUAL }
 
@@ -78,6 +81,8 @@ const DIRECTIONS: Array[Vector2i] = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGH
 @export var event := 0
 @export var map: StringName = &""
 @export var then_common := 0
+## SCRIPT: the expression.
+@export_multiline var source := ""
 
 
 func run(running: _Run) -> bool:
@@ -140,19 +145,14 @@ func _holds(running: _Run) -> bool:
 			if seen and then_common > 0:
 				running.events.call(&"start_common", then_common)
 			return seen
-		Kind.PLAYER_IN_LINE, Kind.PLAYER_IN_RECT, Kind.PLAYER_IN_CIRCLE:
-			var watcher := running.character(number)
-			var player := running.character(-1)
-			if watcher == null or player == null:
-				return false
-			var off := player.cell - watcher.cell
-			match kind:
-				Kind.PLAYER_IN_LINE:
-					var along := off.x * direction.x + off.y * direction.y
-					return off - direction * along == Vector2i.ZERO and along >= 0 and along <= reach
-				Kind.PLAYER_IN_RECT:
-					return absi(off.x) <= size.x and absi(off.y) <= size.y
-			return off.x * off.x + off.y * off.y <= value
+		Kind.PLAYER_IN_LINE:
+			return bool(running.events.call(&"player_in_line", running.character(number), reach, direction))
+		Kind.PLAYER_IN_RECT:
+			return bool(running.events.call(&"player_in_rect", running.character(number), size))
+		Kind.PLAYER_IN_CIRCLE:
+			return bool(running.events.call(&"player_in_circle", running.character(number), value))
+		Kind.SCRIPT:
+			return running.check_script(source)
 		Kind.CELL:
 			var walker := running.character(number)
 			if walker == null:

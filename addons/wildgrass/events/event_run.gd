@@ -44,6 +44,8 @@ var _started_on: WgMap
 var _map_id: StringName
 ## The result of the last condition at each indent.
 var _branches: Dictionary[int, bool] = {}
+## Its scripts' memory (feature 22): what one leaves for the next.
+var _memory: Dictionary = {}
 var _map: WgMap
 
 
@@ -71,6 +73,7 @@ func setup(commands: Array[WgEventCommand], by: WgEvent) -> void:
 	child = null
 	_branches.clear()
 	_answers.clear()
+	_memory = {}
 	_wait_number += 1
 	_running = true
 
@@ -225,6 +228,41 @@ func transfer(map: StringName, cell: Vector2i, direction: Vector2i, transition: 
 	var mine := _start_wait()
 	await events.get(&"maps").call(&"transfer", map, cell, direction, transition, seconds)
 	_end_wait(mine)
+
+
+## Runs `source`, a script (feature 22); the list waits until it ends. One
+## that does not compile is skipped.
+func run_script(source: String) -> void:
+	var made := _script(source, false)
+	if made == null:
+		return
+	var mine := _start_wait()
+	await made.call(&"run")
+	_end_wait(mine)
+
+
+## True if `source`, a script's expression, is: false if it does not
+## compile, waits, or answers something else than true or false (logged).
+func check_script(source: String) -> bool:
+	var made := _script(source, true)
+	if made == null:
+		return false
+	var answer: Variant = made.call(&"check")
+	if answer is bool:
+		return answer
+	log.error(&"events", "%s: a script condition answers %s, not true or false at once" % [_place(), type_string(typeof(answer))])
+	return false
+
+
+func _script(source: String, condition: bool) -> WgScriptContext:
+	var scripts: Object = events.get(&"scripts")
+	return scripts.call(&"make", source, condition, _place(), events, self, event, _memory) as WgScriptContext
+
+
+## Where the list is, for the log: its map, its event and page, its command.
+func _place() -> String:
+	var where := "%s %s page %d" % [_map_id, event.name, event.pages.find(event.page) + 1] if event != null else "%s a common event" % _map_id
+	return "%s, command %d" % [where, index + 1]
 
 
 ## True while a message or a question is under way, this list's or another's.
