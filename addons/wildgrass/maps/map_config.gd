@@ -1,5 +1,5 @@
-## The `map` config: tile size, default fade, and the physics layers of each
-## level.
+## The `map` config: tile size, default fade, the physics layers of each
+## level, and the map each number names.
 class_name WgMapConfig
 extends WgConfig
 
@@ -7,6 +7,8 @@ extends WgConfig
 @export var tile_size := 16
 ## Length of the fade transition, in seconds.
 @export var fade_seconds := 0.25
+## The map each number names, for a transfer by variables (an event's).
+@export var numbers: Dictionary[int, StringName] = {}
 ## Physics layer number (1 to 32) whose polygons make a cell solid, per level:
 ## by default the ground and a bridge's deck.
 @export var solid_layers: Array[int] = [1, 2]

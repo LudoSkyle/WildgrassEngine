@@ -118,15 +118,52 @@ func test_variables_take_their_operand_as_rpg_maker_says() -> void:
 func test_a_command_with_no_class_is_kept_raw_and_counted_by_what_it_is() -> void:
 	var list := [
 		command(231, [1, "picture"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
-		command(201, [0, 2, 3, 1, 2, 1]), command(111, [12, "gv[3] > 2"]), command(111, [4, 1, 0]),
+		command(203, [2, 3, 4]), command(111, [12, "gv[3] > 2"]), command(111, [4, 1, 0]),
 	]
 	var built := _events.build_commands(list)
-	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 201])
-	assert_array((built[3] as WgEventRaw).parameters).is_equal([0, 2, 3, 1, 2, 1])
+	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 203])
+	assert_array((built[3] as WgEventRaw).parameters).is_equal([2, 3, 4])
 	assert_array([(built[4] as WgEventIf).kind, (built[4] as WgEventIf).about, (built[5] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script gv", "actor condition"])
 	var counts := {}
 	counts.merge(_events.raw_counts)
-	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Transfer Player": 1, "condition: script gv": 1, "condition: actor condition": 1})
+	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Scroll Map": 1, "condition: script gv": 1, "condition: actor condition": 1})
+
+
+func test_a_transfer_goes_to_the_map_of_studio_s_number_or_by_variables() -> void:
+	_events.map_symbols = {2: &"map002"}
+	var built := _events.build_commands([transfer(2, Vector2i(3, 1), 4), command(201, [1, 5, 6, 7, 0, 0]), transfer(9)])
+	var direct := built[0] as WgEventTransfer
+	assert_array([direct.map, direct.cell, direct.by_variables, direct.direction, direct.transition]).is_equal([&"map002", Vector2i(3, 1), false, Vector2i.LEFT, &"none"])
+	var by := built[1] as WgEventTransfer
+	assert_array([by.by_variables, by.map_variable, by.x_variable, by.y_variable, by.direction, by.transition]).is_equal([true, 5, 6, 7, Vector2i.ZERO, &"dissolve"])
+	assert_int((built[2] as WgEventRaw).code).is_equal(201)
+	assert_int(_events.raw_counts.get("Transfer Player to a map not in the project", 0)).is_equal(1)
+
+
+func test_an_event_location_is_set_by_cell_by_variables_or_by_swapping() -> void:
+	var built := _events.build_commands([command(202, [3, 0, 4, 5, 8]), command(202, [0, 1, 10, 11, 0]), command(202, [-1, 2, 4, 0, 6])])
+	var by_cell := built[0] as WgEventSetEventLocation
+	assert_array([by_cell.character, by_cell.mode, by_cell.cell, by_cell.direction]).is_equal([3, WgEventSetEventLocation.Mode.CELL, Vector2i(4, 5), Vector2i.UP])
+	var by_variables := built[1] as WgEventSetEventLocation
+	assert_array([by_variables.mode, by_variables.x_variable, by_variables.y_variable, by_variables.direction]).is_equal([WgEventSetEventLocation.Mode.VARIABLES, 10, 11, Vector2i.ZERO])
+	var swap := built[2] as WgEventSetEventLocation
+	assert_array([swap.character, swap.mode, swap.other, swap.direction]).is_equal([-1, WgEventSetEventLocation.Mode.SWAP, 4, Vector2i.RIGHT])
+
+
+func test_set_self_switch_alone_on_its_line_is_a_local_switch_of_an_event_and_map() -> void:
+	_events.map_symbols = {19: &"map019"}
+	var built := _events.build_commands([
+		command(355, ["set_self_switch(true, \"A\", 7)"]),
+		command(355, ["set_self_switch(false,'B',1, 19)"]),
+		command(355, ["set_self_switch(true,\"C\",3,map_id = 19)"]),
+		command(355, ["set_self_switch(true,\"A\",3,map_id = 42)"]),
+		command(355, ["set_self_switch(true, \"A\", id_event)"]),
+		command(355, ["(1..3).each { |id| set_self_switch(true, 'A', id) }"]),
+		command(355, ["set_self_switch(true, \"A\", 7)"]), command(655, ["gv[1] = 2"]),
+	])
+	var made: Array = built.slice(0, 3).map(func(local: WgEventSetLocalSwitch) -> Array: return [local.on, local.letter, local.event, local.map])
+	assert_array(made).is_equal([[true, "A", 7, &""], [false, "B", 1, &"map019"], [true, "C", 3, &"map019"]])
+	assert_array(built.slice(3).map(func(command: WgEventCommand) -> bool: return command is WgEventRaw)).is_equal([true, true, true, true, true])
 
 
 func test_a_script_s_method_drops_its_modules_and_receivers() -> void:

@@ -28,6 +28,17 @@ var _page_direction := Vector2i.ZERO
 var _sheet: Texture2D
 
 
+## Its place in its map for its local flags: its number, so that a list
+## on another map names them; none for an event numbered 0 (its path).
+func local_place() -> String:
+	return local_place_of(event_id) if event_id > 0 else ""
+
+
+## The place of event `number`'s local flags.
+static func local_place_of(number: int) -> String:
+	return "event_%d" % number
+
+
 func _ready() -> void:
 	super()
 	apply_page(page)

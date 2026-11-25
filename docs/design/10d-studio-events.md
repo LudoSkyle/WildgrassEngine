@@ -44,6 +44,9 @@ to one, nothing left out.
 | 111 Conditional Branch: switch, variable, self switch, timer, a character facing, money, item (Studio's id read as its dbSymbol), button | `WgEventIf`; an actor, an enemy, a weapon, an armor, a script: `UNSUPPORTED`, false |
 | 411 Else, 112 Loop, 413 Repeat, 113 Break, 115 Exit, 116 Erase, 117 Common Event, 118 Label, 119 Jump | `WgEventElse`, `WgEventLoop`, `WgEventRepeat`, `WgEventBreak`, `WgEventExit`, `WgEventErase`, `WgEventCallCommon`, `WgEventLabel`, `WgEventJump` |
 | 121 Switches, 123 Self Switch | `WgEventSetSwitches`, `WgEventSetLocalSwitch` |
+| 201 Transfer Player: a map by its id, or by variables; with or without fade | `WgEventTransfer`: the map's dbSymbol (a map not in the project: raw, counted), or the variables; `dissolve` or `none` |
+| 202 Set Event Location: a cell, variables, another event | `WgEventSetEventLocation` |
+| 355 Script, a line alone that is only `set_self_switch(on, "A", event[, [map_id =] map])` | `WgEventSetLocalSwitch` of that event and map; any other script line, raw |
 | 101 Show Text and its 401 lines | `WgEventSay`: its words (see *Messages*) |
 | 102 Show Choices, 402 When, 403 When Cancel | `WgEventChoices` (each choice's words, its cancel), `WgEventWhen`, `WgEventWhenCancel` |
 | 103 Input Number, 104 Text Options | `WgEventInputNumber`, `WgEventTextOptions` |
@@ -105,9 +108,13 @@ modules and receiver dropped: `ge(2).animate_from_charset(…)` is
 `animate_from_charset`), each condition and operand it cannot read. It is
 the list of what to add to the engine.
 
-On the sample project: 482 events on 21 maps, 12 225 commands, 2 596 not
-run yet (sound effects, screen tones, `set_self_switch`, pictures and
-transfers first); 100 common events; 24 sound effects copied.
+On the sample project: 482 events on 21 maps, 12 225 commands, 2 331 not
+run yet (sound effects, screen tones, pictures and script calls first); 100
+common events; 24 sound effects copied.
+
+**Map numbers.** A transfer by variables names its map by Studio's id: each
+import writes every Studio map's id and dbSymbol into the game's map config
+(`config/map.json`, `numbers`), its other fields kept.
 
 ## Checked
 
@@ -124,6 +131,14 @@ transfers first); 100 common events; 24 sound effects copied.
   boatman's, and the list waits for both before its first message. On
   map010 and map021, the pages' routes loop as Studio's and the random
   walkers wander at their frequency.
+- Every transfer (90), event placed (59) and local switch set (259, the
+  `set_self_switch` lines among them) of the sample's events and common
+  events, and the map numbers the engine reads, agree with the map files
+  read apart. Played headless: in through the Hub's tower door and out
+  again, back below the door, its arrival page played; the Hub's arrival
+  with the boatman placed. The warp pads animate through script conditions
+  not run yet. Every map visited in the game: none of its 81 events moving
+  by themselves moves faster than its page's frequency allows.
 - The reader gives the same events, cells, names, pages, triggers and
   commands as Studio's own readable copies of the sample project's 21 maps
   (`MapXXX.rxdata.yml`).
@@ -140,6 +155,9 @@ Marshal; an event and its pages (conditions, look, trigger); each command
 and its parameters, the raw ones and their count; a script's method; a
 page's moves and its route, every route step with its parameters, a route
 imposed and the wait for it, the 509 lines left out, a route's sheets and
-sound effects copied; a map's
+sound effects copied; transfers direct, by variables, to a map not in the
+project; events placed each way; `set_self_switch` lines alone, with or
+without a map, and those kept raw; the map numbers written beside a game's
+own map config; a map's
 events written into its scene, its sheets copied, the common events, the
 report.

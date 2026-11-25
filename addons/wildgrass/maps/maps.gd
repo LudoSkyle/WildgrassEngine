@@ -85,12 +85,29 @@ func go_to_cell(map_id: StringName, cell: Vector2i, direction := Vector2i.ZERO) 
 	return await _warp(map_id, &"", &"none", cell, direction, true)
 
 
+## Moves the traveller to `cell` of map `map_id` (empty: this map, not built
+## again), counted from its origin, facing `direction` (zero: as it faces),
+## through `transition` for `seconds` (negative: the map config's fade). An
+## event's transfer. Returns false if refused: a warp under way, no map.
+func transfer(map_id: StringName, cell: Vector2i, direction := Vector2i.ZERO, transition := &"dissolve", seconds := -1.0) -> bool:
+	var facing := direction
+	if facing == Vector2i.ZERO and traveller != null:
+		facing = traveller.get(&"facing")
+	return await _warp(map_id, &"", transition, cell, facing, true, seconds)
+
+
+## The map number `number` names (the `map` config's `numbers`); empty if
+## none.
+func map_of_number(number: int) -> StringName:
+	return (_config.get_config(&"map") as WgMapConfig).numbers.get(number, &"")
+
+
 ## True if map `map_id` has a scene.
 func has_map(map_id: StringName) -> bool:
 	return not map_id.is_empty() and ResourceLoader.exists(_map_path(map_id))
 
 
-func _warp(map_id: StringName, point: StringName, transition: StringName, offset: Vector2i, direction: Vector2i, at_cell: bool) -> bool:
+func _warp(map_id: StringName, point: StringName, transition: StringName, offset: Vector2i, direction: Vector2i, at_cell: bool, seconds := -1.0) -> bool:
 	if is_changing:
 		return false
 	var target_id := current_id if map_id.is_empty() else map_id
@@ -101,7 +118,7 @@ func _warp(map_id: StringName, point: StringName, transition: StringName, offset
 		if next == null:
 			return false
 	is_changing = true
-	var screen := await _cover(transition)
+	var screen := await _cover(transition, seconds)
 	if not same_map:
 		_replace(next, target_id, Vector2.ZERO)
 	var half := Vector2(_tile_size(), _tile_size()) * 0.5
@@ -455,8 +472,8 @@ func _announce_zone(next: WgMap) -> void:
 	zone_changed.emit(old, _zone)
 
 
-func _cover(transition: StringName) -> WgTransition:
-	var screen := _screens.open(StringName("transition_" + transition), {"seconds": _fade_seconds()}) as WgTransition
+func _cover(transition: StringName, seconds := -1.0) -> WgTransition:
+	var screen := _screens.open(StringName("transition_" + transition), {"seconds": seconds if seconds >= 0.0 else _fade_seconds()}) as WgTransition
 	if screen != null:
 		await screen.cover()
 	return screen

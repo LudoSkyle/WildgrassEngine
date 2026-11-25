@@ -139,7 +139,9 @@ static func _convert_dictionary(value: Dictionary, current: Dictionary, where: S
 	var key_type := current.get_typed_key_builtin()
 	var value_type := current.get_typed_value_builtin()
 	for key: Variant in value:
-		var converted_key := _convert_type(key, key_type, null, where) if key_type != TYPE_NIL else {"value": key}
+		# JSON writes every key as text: a number key is read back.
+		var read_key: Variant = int(key) if key_type == TYPE_INT and key is String and (key as String).is_valid_int() else key
+		var converted_key := _convert_type(read_key, key_type, null, where) if key_type != TYPE_NIL else {"value": key}
 		if converted_key.has("error"):
 			return converted_key
 		var converted := _convert_type(value[key], value_type, null, "%s.%s" % [where, key]) if value_type != TYPE_NIL else {"value": value[key]}

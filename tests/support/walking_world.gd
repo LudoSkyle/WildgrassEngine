@@ -129,6 +129,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	root.add_child(screen_layer)
 	screens = ScreenRegistry.new(logger, screen_layer)
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
+	screens.register(&"transition_dissolve", "res://addons/wildgrass/maps/transitions/dissolve.tscn")
 	screens.register(&"splash", "res://addons/wildgrass/title/splash_screen.tscn")
 	screens.register(&"language_choice", "res://addons/wildgrass/title/language_choice_screen.tscn")
 	screens.register(&"message_box", "res://addons/wildgrass/dialogue/message_box.tscn")

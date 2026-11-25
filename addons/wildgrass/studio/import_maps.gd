@@ -33,6 +33,9 @@ func _initialize() -> void:
 			print("%s: imported" % symbol)
 	importer.save_tile_set()
 	print("%d common events written" % importer.write_common_events())
+	var numbers := importer.write_map_numbers()
+	if not numbers.is_empty():
+		print("map numbers, for transfers: %s" % numbers)
 	var translations := importer.write_translations()
 	if not translations.is_empty():
 		print("the words of messages and choices: %s; list its translations in Project Settings > Localization" % translations)

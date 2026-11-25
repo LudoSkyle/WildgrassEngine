@@ -78,12 +78,20 @@ func has_value(value_name: StringName) -> bool:
 
 
 ## The name of a flag that belongs to `node`, on its own map: the map's id,
-## the node's path in it, and `flag`.
+## the node's place in it (its `local_place()` if it has one, else its
+## path), and `flag`.
 func local(node: Node, flag: StringName) -> StringName:
 	var map := _map_of(node)
+	var place := String(node.call(&"local_place")) if node.has_method(&"local_place") else ""
 	if map == null:
-		return StringName("%s:%s" % [node.name, flag])
-	return StringName("%s/%s:%s" % [_maps.id_of(map), map.get_path_to(node), flag])
+		return StringName("%s:%s" % [place if not place.is_empty() else String(node.name), flag])
+	return local_on(_maps.id_of(map), place if not place.is_empty() else String(map.get_path_to(node)), flag)
+
+
+## The name of flag `flag` of `place` on map `map_id`, as `local()` names
+## it: for a node on a map not loaded.
+static func local_on(map_id: StringName, place: String, flag: StringName) -> StringName:
+	return StringName("%s/%s:%s" % [map_id, place, flag])
 
 
 ## True if every term of `condition` holds: `flag`, `!flag`, `name >= 3`,

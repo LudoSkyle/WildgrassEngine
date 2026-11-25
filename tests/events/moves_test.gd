@@ -158,6 +158,23 @@ func test_a_page_route_repeats_or_runs_once() -> void:
 	assert_that(single.cell).is_equal(Vector2i(6, 3))
 
 
+func test_a_page_route_that_only_turns_stands_its_frequency_between_turns() -> void:
+	var page := Events.page()
+	page.move_type = WgEventPage.MoveType.ROUTE
+	page.move_frequency = 3
+	page.move_route = route([K.TURN_RIGHT_90], true)
+	var turning := _event(Vector2i(5, 5), page)
+	var turns := 0
+	var last := turning.facing
+	# Frequency 3: 102 ticks standing between two turns, two turns in 3.5 s.
+	for frame in 210:
+		_run(1.0 / 60.0)
+		if turning.facing != last:
+			turns += 1
+			last = turning.facing
+	assert_int(turns).is_equal(2)
+
+
 func test_moving_by_itself_waits_its_frequency_and_stops_while_its_list_runs() -> void:
 	var wait := WgEventWait.new()
 	wait.seconds = 5.0
@@ -199,6 +216,18 @@ func test_an_event_of_a_map_just_built_moves_by_itself() -> void:
 	var start := event.cell
 	_run(2.0)
 	assert_that(event.cell).is_not_equal(start)
+
+
+func test_the_movers_of_walkers_freed_with_their_map_are_dropped() -> void:
+	var page := Events.page()
+	page.move_type = WgEventPage.MoveType.RANDOM
+	var gone := _event(Vector2i(5, 5), page)
+	var kept := _event(Vector2i(2, 2), page.duplicate(), 2)
+	_run(0.1)
+	gone.free()
+	_run(0.1)
+	var movers: Dictionary = _world.events.get(&"_movers")
+	assert_array(movers.keys()).is_equal([kept])
 
 
 func test_a_route_changes_pace_look_through_and_more() -> void:

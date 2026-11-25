@@ -63,6 +63,8 @@ Wildgrass.maps.warp(&"cave", &"Ladder", &"fade", Vector2i(0, 1), Vector2i.DOWN)
 Wildgrass.maps.use(door)          # warp to the door's target, by its rules
 Wildgrass.maps.go_to(&"start_island", &"Spawn")   # warp with no transition
 Wildgrass.maps.go_to_cell(&"town", Vector2i(3, 4), Vector2i.LEFT)   # a loaded game
+Wildgrass.maps.transfer(&"town", Vector2i(3, 4))   # an event's: facing kept, RPG Maker's dissolve
+Wildgrass.maps.map_of_number(7)   # the map number 7 names (map config's numbers)
 Wildgrass.maps.has_map(&"town")   # true if its scene exists
 Wildgrass.maps.go_to(&"res://tests/field.tscn", &"Spawn")   # a map outside the maps folder, by its path
 Wildgrass.maps.reload()           # same map, traveller stays
@@ -113,17 +115,21 @@ A warp, in order:
 
 Screens named `transition_<name>`, extending `WgTransition` (`cover()`,
 `uncover()`, both awaited; `seconds` set from `fade_seconds`). They swallow
-input while open. The engine ships `none` and `fade` (to black, texture-free).
+input while open. The engine ships `none`, `fade` (to black, texture-free)
+and `dissolve` (the last picture dissolves into the new one, RPG Maker's
+fade; with no renderer, nothing to dissolve).
 A game replaces them or adds its own (`transition_circle`) like any screen. An
 unknown transition is logged and the warp happens without one.
 
 `config/map.json`:
 
 ```json
-{ "tile_size": 16, "fade_seconds": 0.25 }
+{ "tile_size": 16, "fade_seconds": 0.25, "numbers": { "7": "town" } }
 ```
 
-A tile size below 1 or a negative length is logged and reset.
+A tile size below 1 or a negative length is logged and reset. `numbers`
+says which map each number names, for an event's transfer by variables
+(feature 21); the Studio importer writes Studio's.
 
 ## Tests
 

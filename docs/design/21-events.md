@@ -2,8 +2,9 @@
 
 Status: in progress. Done: events, pages and their conditions, how events
 start, the lists and their flow and story commands, common events, messages,
-choices and numbers, moving by oneself and routes imposed. Next: transfers
-and placing events (step 1), then the rest (see *In steps*).
+choices and numbers, moving by oneself and routes imposed, transfers,
+events placed, local switches of other events. Next: the screen and sound
+commands (step 2), then script calls (see *In steps*).
 
 What a map does as the player goes: characters that talk, doors that open,
 scenes that play. An event stands on a cell with pages; the page shown is the
@@ -57,7 +58,9 @@ named `Sprite`:
 - An event the player started faces the player while its list runs, then
   turns back, unless `fixed_direction`.
 - Local switches `A` to `D` are its local flags (`local:A`), kept by the
-  save.
+  save. They are named by its number on its map (`map019/event_7:A`), so
+  that a list elsewhere can set them; an event numbered 0 by its path in
+  the map. Two events with one number share them.
 
 ## Moving
 
@@ -76,7 +79,8 @@ time, whatever the frame rate.
   `repeat`. A step blocked is tried again until it passes, unless the route
   is `skippable`. A jump of `d` cells lasts `(10 + d − speed) × 2` ticks.
   Blending and calls are logged.
-- **By itself**, as its page says, between its frequency's stops; not while
+- **By itself**, as its page says, between its frequency's stops (a step,
+  a jump or a turn starts its stop again); not while
   it is starting or its list holds it, nor during a warp or a screen other
   than a message.
 - **A route imposed** (`WgEventMoveRoute`) replaces the moves of its
@@ -85,6 +89,33 @@ time, whatever the frame rate.
   `WgEventWaitForMoves` waits until no route imposed is under way.
   `Wildgrass.events.force_route(walker, route)` does the same from code.
 - An `EVENT_TOUCH` event whose step into the player fails starts.
+
+## Transfers
+
+- **`WgEventTransfer`** takes the player to `cell` of `map` (empty: the
+  map shown), counted from the map's origin; or, `by_variables`, to the map
+  numbered by variable `map_variable` (the `map` config's `numbers` say
+  which map a number is) and the cell of variables `x_variable` and
+  `y_variable`. It then faces `direction`, or keeps its facing (zero, or
+  `fixed_direction`). `transition`: `dissolve`, RPG Maker's fade (the last
+  picture dissolves into the new map in 20 ticks), or `none`.
+- It waits while a message is under way or a warp runs, then the list waits
+  until the player has arrived; `Wildgrass.maps.transfer()` does the same
+  from code. The map shown is not built again: its events keep their
+  places and pages. A map or number unknown is logged once and the list
+  goes on.
+- **On another map the list goes on**, its event forgotten: a character it
+  names by number is an event of the map shown, 0 none. A local switch it
+  names by number is still one of the map it started on.
+- Arriving starts nothing: a `TOUCH` page under the player waits for a
+  step; an `EVENT_TOUCH` one starts once the transfer is over, as it does
+  when it comes under the player.
+- **`WgEventSetEventLocation`** puts a character at once on `cell` of its
+  map (from the map's origin), or on the cell of variables `x_variable` and
+  `y_variable`, or on another character's cell, that one taking its place;
+  then faces `direction` (zero: as it was).
+- **`WgEventSetLocalSwitch`** sets a local switch of the event running the
+  list, or of event `event` of `map` (empty: the map the list started on).
 
 ## Commands
 
@@ -131,7 +162,7 @@ each with its own services. Done:
 | `WgEventExit`, `WgEventErase` | end the list; remove the event until its map is built again |
 | `WgEventWait` | seconds (RPG Maker's `n` is `n / 30` s) |
 | `WgEventCallCommon` | a common event's list, then on |
-| `WgEventSetSwitches`, `WgEventSetLocalSwitch` | switches `first` to `last` on or off; a local switch of the event |
+| `WgEventSetSwitches`, `WgEventSetLocalSwitch` | switches `first` to `last` on or off; a local switch of the event, or of event `event` of `map` |
 | `WgEventSetVariables` | set, add, subtract, multiply, divide, modulo, by a number, a variable, a random number, an item's count, a character's place or facing or terrain tag, the map, the money, the play time; floored and within ±99 999 999 as RPG Maker's |
 | `WgEventSay` | a message (a text, or a key the game's translations give); the list waits until it is read. Followed at once by `WgEventChoices` or `WgEventInputNumber`, it is their question |
 | `WgEventChoices`, `WgEventWhen`, `WgEventWhenCancel` | a choice and the block of each answer; `cancel` as RPG Maker's: 0 nothing, `n` the answer `n - 1` (a choice, or 4: the cancel's own block) |
@@ -139,6 +170,8 @@ each with its own services. Done:
 | `WgEventTextOptions` | where the next messages show, with or without their frame (style `transparent`) |
 | `WgEventMoveRoute` | a `route` imposed on a `character`; the list goes on |
 | `WgEventWaitForMoves` | waits until every route imposed has ended |
+| `WgEventTransfer` | the player to a cell of a map, or of the map and cell three variables hold (see *Transfers*) |
+| `WgEventSetEventLocation` | a character on a cell, the cell of two variables, or another character's |
 | `WgEventComment`, `WgEventBlockEnd` | nothing |
 | `WgEventRaw` | a command with no class yet: its code and parameters, logged once |
 
@@ -206,7 +239,16 @@ switches, erasing; common events called, missing, running by themselves; a
 command with no class. Moving: a route imposed, then let go; a list waiting
 for it; a blocked step tried again or skipped; RPG Maker's ticks at 60 and
 120 frames a second; a page route repeated or run once; moving by itself at
-its frequency, still while its list runs, from a map just built; speed, switches, through, fixed
-direction, on top, opacity and graphic changed by a route; a jump's ticks; a
-route imposed on the player while a list holds it; a new page ending a route;
-an `EVENT_TOUCH` event walking into the player.
+its frequency, still while its list runs, from a map just built; a page
+route that only turns, standing its frequency between turns; the movers
+of walkers freed dropped; speed, switches, through, fixed direction, on top,
+opacity and graphic changed by a route; a jump's ticks; a route imposed on
+the player while a list holds it; a new page ending a route; an
+`EVENT_TOUCH` event walking into the player. Transfers: on the map shown
+(its events kept, the player held again), to another map (the list going
+on, its event forgotten, a local switch named by number still the starting
+map's), by variables through the map numbers, to no map; waiting for a
+warp; RPG Maker's 20 ticks of dissolve, and none without a renderer;
+arriving starting no `TOUCH` page but an `EVENT_TOUCH` one; events placed by
+cell, by variables, swapped, turned; local switches of another event and
+of another map, shown there.
