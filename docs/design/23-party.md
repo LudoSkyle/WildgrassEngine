@@ -1,7 +1,7 @@
 # Feature 23 — Pokémon and the party
 
-Status: steps 1 (the data) and 2 (the trainer, a Pokémon) done; step 3 to
-come.
+Status: done: steps 1 (the data), 2 (the trainer, a Pokémon) and 3 (the
+party, the words).
 
 The player's Pokémon: each one as the reference makes it (its level and
 experience, nature, IVs and EVs, stats, gender, shininess, ability, moves,
@@ -108,7 +108,7 @@ reference does, in its order:
    highest levels first, each once, until four, then in level order
    (moves of the same level in the order the species lists them; a move
    the game does not have left out, logged); each with its full PP; `moves`
-   given replace them from the first.
+   given replace them from the first (null leaves one).
 7. Held item: given, else a draw from 0 to 99 walking down the species'
    chances; none past them.
 8. Ability: given, else a draw from 0 to 99: below 49 the species' first,
@@ -160,26 +160,62 @@ the same not copied again; then Godot imports them.
 ## The party: `Wildgrass.party`
 
 Up to six (`party` config's `size`, the reference's 6):
-`add(pokemon) -> bool` (false if full), `remove(index)`, `swap(a, b)`,
-`at(index)`, `size()`, `is_empty()`, `is_full()`, `alive_count()`,
-`heal()`, `has(species)`, `index_of(species)`, `first_alive()`; the signal
-`changed`. Kept by the save, each Pokémon as data. The followers
-(feature 19) and the Pokédex (feature 13: seen and caught when added) are
-told.
+`add(pokemon) -> bool`, `remove(index)`, `swap(a, b)`, `at(index)` (null
+past the end), `all()`, `size()`, `is_empty()`, `is_full()`,
+`alive_count(among := size())` (alive among the first `among`, as the
+reference counts), `heal()`, `has(species)`, `index_of(species)` (-1:
+none), `first_alive()` (null: none); the signal `changed`.
+
+- **Added**: bound, then the Pokédex told (seen and caught, its form; not
+  an egg), as the reference does; full, it is refused (false, logged): the
+  reference stores it in the PC, which is a feature of its own.
+- **Kept by the save**, each Pokémon as data (`WgPokemon.to_data()`, a
+  Dictionary JSON holds; `WgPokemon.from_data()`, its numbers made whole
+  again and its keys names), restored without telling the Pokédex again,
+  each bound. The `party` part comes after `pokemon`, before `followers`.
+- **The followers** (feature 19): `Wildgrass.followers.follow_party`, off by
+  default, kept by the save: on, the line's Pokémon is the party's first
+  alive, not an egg, followed again each time the party changes; none
+  alive, none follows. `heal()` tells the change too: a fainted first one
+  follows again.
 
 ## Words for events' scripts (feature 22)
 
-The engine's: `party`, `give_pokemon(species, level, options) -> bool`
-(made, added, the Pokédex told), `trainer`.
+**The engine's**: `party`, `trainer`, `give_pokemon(species, level, options
+:= {}) -> bool` (made, added: the Pokédex told), and
+`next_message_asks(choices, answered: Callable, cancel := -1)`: the list's
+next message asks `choices` (texts or keys), `answered` given the index
+taken (`cancel`: what cancelling answers, -1 not allowed); RPG Maker's way
+of preparing a choice that the next message shows.
 
-Studio's: `actors` (`$actors`: `empty()`, `size()`, `[i]` as `actors.at(i)`,
-`any(func)`…), `pokemon_party` (`$pokemon_party.heal_party`), `add_pokemon(id,
-level, shiny)`, `add_specific_pokemon(pokemon)`, `add_rename_pokemon(pokemon)`
-(renaming waits for the naming screen: added, logged), `pokemon_from_hash({…})`
-for `PFM::Pokemon.generate_from_hash`, with Studio's keys (`id`, `level`,
-`shiny`, `form`, `given_name`, `nature`, `stats`, `bonus`, `item`, `ability`,
-`moves`, `gender`, `loyalty`…). The translator writes them by the rules of
-feature 22.
+**Studio's**, in the Studio layer:
+
+| Studio | Words |
+|---|---|
+| `$actors` | `actors`: `at(i)` for `$actors[i]` (from the end below 0; null past it), `empty()`, `size()`, `any(func)`, `find(func)`, `index(func)`, `count(func)`; each Pokémon as Studio's view of it |
+| `$pokemon_party` | `pokemon_party`: `heal_party()`, `pokemon_alive(max := size)`, `size()`, `empty()`, `full()` |
+| a Pokémon (`PFM::Pokemon`) | Studio's view of a `WgPokemon` (`pokemon` gives it): `id` (its species' number), `db_symbol`, `form` (set: only to a form its species has, its ability following), `level`, `loyalty` (0 to 255), `shiny`, `hp`, `max_hp`, `name` (its species' name, in the language shown), `given_name` (its nickname, else `name`; set to `name`, it has none), `egg()`, `dead()`, `cure()` |
+| `PFM::Pokemon.generate_from_hash(…)` | `pokemon_from_hash({…})`: made by `Wildgrass.pokemon.make()` from Studio's keys: `id`, `level`, `shiny` (true: shiny), `no_shiny` (not shiny), `form`, `given_name`, `captured_with` or `ball`, `captured_at`, `captured_level`, `trainer_name`, `trainer_id`, `gender`, `nature` (a symbol or a number), `stats` (IVs) and `bonus` (EVs), each a list in Studio's order of the stats (HP, attack, defense, speed, special attack, special defense), `conditions`, `item`, `ability`, `moves`, `loyalty`; `captured_in` given as a zone's number, `rareness`, `memo_text`, the egg's and the Pokérus's keys: not handled yet, logged once |
+| `add_pokemon(id_or_pokemon, level = 5, shiny = false)` | made (`shiny`: true always, 0 never, n one chance in n, false by the draws) and added; its switch "stored" (9) off; null and logged if the party is full (no PC yet) |
+| `add_specific_pokemon({…})`, `add_rename_pokemon(…)` | `pokemon_from_hash` then added; renaming waits for the naming screen: added, logged once |
+| `choice(variable, cancel, choices…)` | `next_message_asks`: the choice taken, from 1, into the variable; `cancel` from 1, -1 or 0 not allowed; the choices as a list, or one after another; a choice `"19, 168 …"` is line 168 of Studio's file 19, as Studio reads it; Studio's colors (`\c[18]`) in a script's own text left out, logged once |
+| `ext_text(file, line)` | the text of Studio's file `file`, line `line`, in the language shown: the key `dialogs.<file>.<line>` an imported game has, else Studio's text itself |
+
+**The translator** (feature 22's rules): `$actors` is `actors`,
+`$actors[i]` is `actors.at(i)`; `$pokemon_party` is `pokemon_party`;
+`PFM::Pokemon.generate_from_hash(id: …)` is `pokemon_from_hash({id = …})`;
+on a Pokémon, its members above read (`form`, `loyalty`…), `form`,
+`loyalty`, `given_name` and `hp` written, `egg?`, `dead?` and `cure`
+called; on `actors`, `empty?` and `size` called; on `pokemon_party`, its
+words called. A Ruby block (`{ |pokemon| … }`) stays to translate by hand.
+The importer gives each `ext_text(file, line)` of a script it writes (its
+own translation or the project's), and each of its texts naming a line
+(`"19, 168 …"`), its key in `dialogs.csv`. After importing every map, it
+removes the files to translate of scripts no longer waiting (now
+translated, or gone), unless someone wrote in them.
+
+**Not handled yet**, logged once: the PC (a full party), the naming screen,
+`$user_data` (Studio's saved hash).
 
 ## In steps
 
@@ -201,15 +237,22 @@ written apart in Python (`tools/judge/data.py`); every species and type,
 each field and text, each picture and cry the same bytes as Studio's and
 loading (`species.py`); Pokémon of every species at five levels, with
 options and with the shiny charm, each draw written down and what Studio's
-rules make of them computed apart (`pokemon.py`); Pokémon made with a seed, their stats and moves against the reference's
-formulas ported apart in Python on Studio's data; played headless: the
-tower gives a team, the guardian stops a player with none and lets one
-with a team pass.
+rules make of them computed apart (`pokemon.py`), their stats and moves
+too; the scripts with the party's words, written by the importer, against
+a translation written apart (`scripts.py`, `conditions.py`); played
+headless (`play.gd`): the guardian stops a player with no Pokémon and sends
+the player back; the tower's team choice, its third team taken, gives its three
+Pokémon, named in the message in English and in French, and the map; the
+guardian then lets the player pass.
 
 ## Tests
 
 Data and Pokémon built by the tests: each formula (stats, experience of
 each curve), each draw (shiny rate, charm, nature from the code, IV range,
 ability chances, gender rate, genderless, held items), the options winning,
-the moves learnt and their order, `learn` past four, `heal`; the party full,
-removed, swapped, saved and loaded; each word.
+the moves learnt and their order, `learn` past four, `heal`, `set_form`;
+the party full, removed, swapped, saved and loaded through JSON, the
+Pokédex told once; the followers walking its first alive; a script's
+choices asked by the next message; each word, the engine's and Studio's
+(the hash's keys, the shiny chances, the choice into its variable, Studio's
+texts), and each translation rule.

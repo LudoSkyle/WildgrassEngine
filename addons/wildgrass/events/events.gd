@@ -62,6 +62,12 @@ var _locked: WgEvent
 var _hold: Array = []
 ## The texts service, for scripts' words (feature 22); null without one.
 var texts: Object
+## The party, the Pokémon maker and the trainer, for scripts' words
+## (feature 23); null without them.
+var party: Object
+var pokemon: Object
+var trainer: Object
+var species: Object
 ## A common event to run first as soon as no list holds the player.
 var _common_wanted := 0
 

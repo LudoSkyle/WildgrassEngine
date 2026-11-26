@@ -46,6 +46,9 @@ var _map_id: StringName
 var _branches: Dictionary[int, bool] = {}
 ## Its scripts' memory (feature 22): what one leaves for the next.
 var _memory: Dictionary = {}
+## Choices a script prepared for the next message: `choices`, `answered`,
+## `cancel`; empty: none.
+var _prepared: Dictionary = {}
 var _map: WgMap
 
 
@@ -287,19 +290,50 @@ func say(text: String) -> void:
 ## Asks `question` and `choices`; the answer is kept for the `WgEventWhen`
 ## at `at`. `cancel_answer`: what cancel answers, -1 nothing.
 func ask(question: String, choices: Array[String], cancel_answer: int, at: int) -> void:
+	var answer: Variant = await _ask(question, choices, cancel_answer)
+	if answer != null:
+		_answers[at] = answer
+
+
+## Makes the next message ask `choices` (texts or keys), `answered` given
+## the index taken; `cancel`: what cancelling answers, -1 not allowed.
+func prepare_choices(choices: Array, answered: Callable, cancel: int) -> void:
+	var texts: Array[String] = []
+	for choice: Variant in choices:
+		texts.append(str(choice))
+	_prepared = {"choices": texts, "answered": answered, "cancel": cancel}
+
+
+## True if a script prepared choices for the next message.
+func has_prepared_choices() -> bool:
+	return not _prepared.is_empty()
+
+
+## Asks `question` with the choices a script prepared.
+func ask_prepared(question: String) -> void:
+	var prepared := _prepared
+	_prepared = {}
+	var answer: Variant = await _ask(question, prepared["choices"], prepared["cancel"])
+	if answer != null:
+		(prepared["answered"] as Callable).call(answer)
+
+
+## Asks; the answer (`cancel_answer` on cancel), or null without a
+## dialogue or if the wait was cut short.
+func _ask(question: String, choices: Array[String], cancel_answer: int) -> Variant:
 	var dialogue: Object = events.get(&"dialogue")
 	if dialogue == null:
 		unsupported("messages (no dialogue)")
-		return
+		return null
 	var options: Dictionary = events.call(&"message_options")
 	options["cancel"] = cancel_answer if cancel_answer < choices.size() else choices.size()
 	var mine := _start_wait()
 	var answer := int(await dialogue.call(&"ask", question, choices, options))
 	if answer == choices.size():
 		answer = cancel_answer
-	if mine == _wait_number:
-		_answers[at] = answer
+	var kept: Variant = answer if mine == _wait_number else null
 	_end_wait(mine)
+	return kept
 
 
 ## Asks a number from 0 to `top` into variable `variable`.

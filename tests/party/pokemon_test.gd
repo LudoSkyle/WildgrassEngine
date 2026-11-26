@@ -244,6 +244,23 @@ func test_a_form_the_species_has_not_is_form_0() -> void:
 	assert_array(_world.logged).is_empty()
 
 
+func test_set_form_to_one_its_species_has_its_ability_following() -> void:
+	var rotom := _species(&"rotom", -1.0, 3)
+	rotom.forms[2].abilities.assign([&"levitate", &"motor_drive", &"heatproof"])
+	_maker.rolls = _rolls(0, 0, [31, 30, 29, 28, 27, 26], 99, 60)
+	var made := _maker.make(&"rotom", 5)
+	assert_that(made.ability).is_equal(&"static")
+	assert_bool(made.set_form(2)).is_true()
+	assert_int(made.form).is_equal(2)
+	assert_that(made.ability).is_equal(&"motor_drive")
+	assert_bool(made.set_form(7)).is_false()
+	assert_int(made.form).is_equal(2)
+	_maker.rolls = _rolls(0)
+	var given := _maker.make(&"rotom", 5, {"ability": "pressure"})
+	assert_bool(given.set_form(2)).is_true()
+	assert_that(given.ability).is_equal(&"pressure")
+
+
 func test_unown_s_form_follows_its_code_meowstic_s_its_gender() -> void:
 	_species(&"unown", -1.0, 28)
 	_maker.rolls = _rolls(30)

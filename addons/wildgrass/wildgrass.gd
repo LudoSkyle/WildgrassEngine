@@ -46,6 +46,7 @@ const _EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
 const _Events := preload("res://addons/wildgrass/events/events.gd")
 const _Trainer := preload("res://addons/wildgrass/party/trainer.gd")
 const _PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
+const _Party := preload("res://addons/wildgrass/party/party.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -83,6 +84,8 @@ var natures: _Natures
 var trainer: _Trainer
 ## Makes Pokémon and binds them to the game's data.
 var pokemon: _PokemonMaker
+## The player's Pokémon.
+var party: _Party
 var pokedex: _Pokedex
 var encounters: _Encounters
 var audio: _Audio
@@ -143,6 +146,7 @@ func _init() -> void:
 	bag = _service(&"bag", _Bag, [log, hooks, items, quests])
 	trainer = _service(&"trainer", _Trainer, [log, texts])
 	pokemon = _service(&"pokemon", _PokemonMaker, [log, config, species, natures, moves, bag, trainer, zones])
+	party = _service(&"party", _Party, [log, config, pokemon, pokedex])
 	walkers = _service(&"walkers", _Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", _Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
@@ -154,7 +158,12 @@ func _init() -> void:
 	events.bag = bag
 	events.dialogue = dialogue
 	events.texts = texts
+	events.party = party
+	events.pokemon = pokemon
+	events.trainer = trainer
+	events.species = species
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
+	followers.watch_party(party)
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", _Footprints, [paths, config, maps, walkers, tiles])
 	reflections = _service(&"reflections", _Reflections, [config, walkers, tiles])
@@ -194,6 +203,7 @@ func _init() -> void:
 	config.register(&"studio", WgStudioConfig, "studio")
 	config.register(&"title", WgTitleConfig, "title")
 	config.register(&"pokemon", WgPokemonConfig, "pokemon")
+	config.register(&"party", WgPartyConfig, "party")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
@@ -240,6 +250,7 @@ func _add_parts() -> void:
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
 	save.add_part(&"trainer", trainer.state, trainer.restore, trainer.reset)
 	save.add_part(&"pokemon", pokemon.state, pokemon.restore, pokemon.reset)
+	save.add_part(&"party", party.state, party.restore, party.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
 	save.add_part(&"daytime", daytime.state, daytime.restore, daytime.reset)
 	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)

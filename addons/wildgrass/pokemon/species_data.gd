@@ -62,6 +62,14 @@ func ids() -> Array[StringName]:
 	return _catalog.ids()
 
 
+## The first species of national number `number`; null if none.
+func of_number(number: int) -> WgSpecies:
+	for species in all():
+		if species.number == number:
+			return species
+	return null
+
+
 ## Every species, read, by national number then id.
 func all() -> Array[WgSpecies]:
 	var found: Array[WgSpecies] = []

@@ -151,6 +151,12 @@ static func _keep_words_as_written(import_path: String) -> bool:
 	return settings.save(import_path) == OK
 
 
+## The key of line `at` of Studio's text file `file`, its words written
+## with the others (`ext_text()` in a script).
+func text_key(file: int, at: int) -> String:
+	return _key(file, at)
+
+
 func _key(file: int, at: int) -> String:
 	var key := "dialogs.%d.%d" % [file, at]
 	if not translations.has(key):

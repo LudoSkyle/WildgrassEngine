@@ -7,9 +7,27 @@ extends WgScriptContext
 
 const _StudioCharacter := preload("res://addons/wildgrass/studio/studio_character.gd")
 const _StudioText := preload("res://addons/wildgrass/studio/studio_text.gd")
+const _StudioPokemon := preload("res://addons/wildgrass/studio/studio_pokemon.gd")
+const _StudioActors := preload("res://addons/wildgrass/studio/studio_actors.gd")
+const _StudioParty := preload("res://addons/wildgrass/studio/studio_party.gd")
 
 ## Studio's common event shown as a trainer appears (a player seen in a band).
 const APPEARANCE := 2
+## Studio's switch on when a Pokémon given went to the PC, off when it
+## joined the party.
+const STORED_SWITCH := 9
+## Studio's order of the stats in a Pokémon's hash (`stats`, `bonus`).
+const HASH_STATS: Array[StringName] = [&"hp", &"attack", &"defense", &"speed", &"special_attack", &"special_defense"]
+## Studio's order of the contest conditions in a Pokémon's hash.
+const HASH_CONDITIONS: Array[StringName] = [&"cool", &"beautiful", &"cute", &"clever", &"tough", &"sheen"]
+## A Pokémon's hash's keys read as they are: Studio's key, the option's.
+const HASH_OPTIONS: Dictionary[String, String] = {
+	"given_name": "nickname", "captured_at": "caught_at", "captured_level": "caught_level", "trainer_name": "trainer_name",
+	"trainer_id": "trainer_id", "gender": "gender", "nature": "nature", "item": "held_item", "ability": "ability",
+	"loyalty": "friendship",
+}
+## A text naming a line of Studio's files, as Studio reads it: `19, 168 …`.
+const TEXT_REFERENCE := "^([0-9]+),( |)([0-9]+)"
 ## Studio's names of the directions.
 const NAMED_DIRECTIONS: Dictionary[StringName, int] = {&"down": 2, &"left": 4, &"right": 6, &"up": 8}
 
@@ -24,6 +42,16 @@ var text: _StudioText:
 		if not events.has_meta(&"studio_text"):
 			events.set_meta(&"studio_text", _StudioText.new(events.get(&"texts")))
 		return events.get_meta(&"studio_text")
+
+
+## The party, as Studio's scripts see it (`$actors`).
+var actors: _StudioActors:
+	get:
+		return _StudioActors.new(party, _events().get(&"texts"))
+## The party's words, as Studio's scripts call them (`$pokemon_party`).
+var pokemon_party: _StudioParty:
+	get:
+		return _StudioParty.new(party)
 
 
 ## Variable `number` (`gv[number]`, `$game_variables[number]`): 0 if never set.
@@ -167,3 +195,150 @@ func _map_named(map_id: int) -> StringName:
 	if named.is_empty():
 		_events().get(&"log").error(&"events", "no map numbered %d: give it in the map config's numbers" % map_id)
 	return named
+
+
+## A Pokémon made from Studio's hash (`PFM::Pokemon.generate_from_hash`):
+## `id` (a symbol or a national number), `level`, `shiny`, `no_shiny`,
+## `form`, and the keys the design lists; null if its species is unknown.
+func pokemon_from_hash(hash: Dictionary) -> _StudioPokemon:
+	var made := _make(_option(hash, "id", null), int(_option(hash, "level", 0)), _hash_options(hash))
+	return _StudioPokemon.new(made, _events().get(&"texts")) if made != null else null
+
+
+## Adds a Pokémon to the party: one given, else species `pokemon_or_id` at
+## `level`, `shiny` true always, 0 never, n one chance in n, false by the
+## draws. Null, logged, if it cannot be made or the party is full (no PC
+## yet).
+func add_pokemon(pokemon_or_id: Variant, level := 5, shiny: Variant = false) -> _StudioPokemon:
+	var given := _StudioPokemon.engine_of(pokemon_or_id)
+	if given == null:
+		var maker: Object = _events().get(&"pokemon")
+		if level < 1 or maker == null or level > int(maker.get(&"level_limit")):
+			_events().get(&"log").error(&"events", "add_pokemon: level %d is out of bounds" % level)
+			return null
+		var options := {}
+		if shiny is bool and shiny:
+			options["shiny"] = true
+		elif shiny is int and shiny == 0:
+			options["shiny"] = false
+		elif shiny is int and shiny > 0 and int(maker.call(&"draw", 0, shiny - 1)) == 0:
+			options["shiny"] = true
+		given = _make(pokemon_or_id, level, options)
+	if given == null or party == null or not bool(party.call(&"add", given)):
+		return null
+	set_gs(STORED_SWITCH, false)
+	return _StudioPokemon.new(given, _events().get(&"texts"))
+
+
+## Adds the Pokémon Studio's hash describes (see `pokemon_from_hash`).
+func add_specific_pokemon(hash: Dictionary) -> _StudioPokemon:
+	var made := pokemon_from_hash(hash)
+	return add_pokemon(made) if made != null else null
+
+
+## Adds a Pokémon as `add_pokemon`, then would show the naming screen: not
+## handled yet, logged once.
+func add_rename_pokemon(pokemon_or_id: Variant, level := 5, shiny: Variant = false, _letters := 12) -> _StudioPokemon:
+	var added := add_pokemon(pokemon_or_id, level, shiny)
+	if added != null:
+		_unsupported("the naming screen (add_rename_pokemon)")
+	return added
+
+
+## The next message asks `choices` (texts, one after another or as a list;
+## `"19, 168 Morning"` is line 168 of Studio's file 19, as Studio reads it);
+## the one taken, from 1, goes into variable `variable_id`. `cancel_type`:
+## the choice cancelling takes, from 1; -1 or 0: not allowed.
+func choice(variable_id: int, cancel_type: int, ...choices: Array) -> void:
+	var listed: Array = choices[0] if choices.size() == 1 and choices[0] is Array else choices
+	var shown := listed.map(func(text: Variant) -> String: return _studio_text(str(text)))
+	next_message_asks(shown, func(answer: int) -> void: set_gv(variable_id, answer + 1), cancel_type - 1 if cancel_type > 0 else -1)
+
+
+## Line `line` of Studio's text file `file`, in the language shown: the key
+## `dialogs.<file>.<line>` an imported game has, else Studio's text itself.
+func ext_text(file: int, line: int) -> String:
+	var texts: Object = _events().get(&"texts")
+	if texts == null:
+		return ""
+	var key := "dialogs.%d.%d" % [file, line]
+	var shown := str(texts.call(&"label", key))
+	return shown if shown != key else str(texts.call(&"label", "{text:%d:%d}" % [file, line]))
+
+
+## `text`, or the line of Studio's file it names (`"19, 168 …"`). Its
+## colors (`\c[18]`) are left out: a script's own text has no palette
+## (logged once).
+func _studio_text(text: String) -> String:
+	var found := RegEx.create_from_string(TEXT_REFERENCE).search(text)
+	if found != null:
+		return ext_text(found.get_string(1).to_int(), found.get_string(3).to_int())
+	var plain := RegEx.create_from_string("\\\\[cC]\\[[0-9]+\\]").sub(text, "", true)
+	if plain != text:
+		_unsupported("Studio's colors in a script's text")
+	return plain
+
+
+## The engine's options from Studio's hash.
+func _hash_options(hash: Dictionary) -> Dictionary:
+	var options := {}
+	for key: Variant in hash:
+		var name := str(key)
+		var value: Variant = hash[key]
+		if value == null or name in ["id", "level"]:
+			continue
+		if HASH_OPTIONS.has(name):
+			options[HASH_OPTIONS[name]] = value
+			continue
+		match name:
+			"form":
+				options["form"] = int(value)
+			"shiny":
+				if value:
+					options["shiny"] = true
+			"no_shiny":
+				pass
+			"captured_with", "ball":
+				if name == "captured_with" or not _has_option(hash, "captured_with"):
+					options["ball"] = value
+			"stats", "bonus", "conditions":
+				var order := HASH_CONDITIONS if name == "conditions" else HASH_STATS
+				var by_name := {}
+				for index in mini((value as Array).size() if value is Array else 0, order.size()):
+					if value[index] != null:
+						by_name[order[index]] = int(value[index])
+				options[{"stats": "ivs", "bonus": "evs", "conditions": "conditions"}[name]] = by_name
+			"moves":
+				var moves := []
+				for move: Variant in (value as Array if value is Array else []):
+					if move is StringName and not move in [&"__undef__", &"__remove__"]:
+						moves.append(move)
+					else:
+						if move is StringName and move == &"__remove__":
+							_unsupported("a move removed by a Pokémon's hash (__remove__)")
+						moves.append(null)
+				options["moves"] = moves
+			_:
+				_unsupported("the key '%s' of a Pokémon's hash" % name)
+	if _has_option(hash, "no_shiny") and _option(hash, "no_shiny", false):
+		options["shiny"] = false
+	return options
+
+
+## A Pokémon of species `id` (a symbol or a national number); null, logged,
+## if there is no such species.
+func _make(id: Variant, level: int, options: Dictionary) -> WgPokemon:
+	var maker: Object = _events().get(&"pokemon")
+	var species: Object = _events().get(&"species")
+	if maker == null or species == null:
+		_unsupported("Pokémon (no party)")
+		return null
+	var found: WgSpecies = species.call(&"of_number", id) if id is int else species.call(&"find", StringName(str(id)))
+	if found == null:
+		_events().get(&"log").error(&"events", "no species '%s' to make" % id)
+		return null
+	return maker.call(&"make", found.id, level, options)
+
+
+static func _has_option(options: Dictionary, key: String) -> bool:
+	return options.has(key) or options.has(StringName(key))

@@ -246,3 +246,42 @@ func test_a_message_waiting_its_turn_is_not_kept_when_its_list_is_dropped() -> v
 	assert_bool(_flag(1)).is_true()
 	assert_bool(_world.dialogue.is_busy()).is_false()
 	assert_bool(_flag(2)).is_false()
+
+
+static func _script(source: String) -> WgEventScript:
+	var made := WgEventScript.new()
+	made.source = source
+	return made
+
+
+func test_a_script_prepares_choices_the_next_message_asks() -> void:
+	_event([
+		_script("next_message_asks([\"A\", \"B\", \"C\"], func(taken: int) -> void: set_value(&\"variable_5\", taken))"),
+		say("Which?"), Events.switch_on(),
+		_script("next_message_asks([\"A\", \"B\"], func(taken: int) -> void: set_value(&\"variable_6\", taken), 1)"),
+		say("Again?"), Events.switch_on(2), say("Done."), Events.switch_on(3),
+	])
+	_world.walkers.interact(_player)
+	_advance(3)
+	_written()
+	assert_str(_world.dialogue.box.shown_text()).is_equal("Which?")
+	_press("ui_cancel")
+	_advance()
+	assert_bool(_flag()).is_false()
+	_press("ui_down")
+	_press("ui_accept")
+	_advance(3)
+	assert_int(int(_world.story.value(&"variable_5"))).is_equal(1)
+	assert_bool(_flag()).is_true()
+	_written()
+	assert_str(_world.dialogue.box.shown_text()).is_equal("Again?")
+	_press("ui_cancel")
+	_advance(3)
+	assert_int(int(_world.story.value(&"variable_6"))).is_equal(1)
+	assert_bool(_flag(2)).is_true()
+	_written()
+	assert_str(_world.dialogue.box.shown_text()).is_equal("Done.")
+	assert_int(_world.dialogue.box.state).is_not_equal(WgMessageBox.State.CHOOSING)
+	_press("ui_accept")
+	_advance(3)
+	assert_bool(_flag(3)).is_true()

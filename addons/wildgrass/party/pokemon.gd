@@ -179,6 +179,19 @@ func forget(move: StringName) -> void:
 	moves = moves.filter(func(slot: WgMoveSlot) -> bool: return slot.move != move)
 
 
+## Takes form `value` if its species has it, its ability following the
+## form's (the same of its abilities); false, unchanged, otherwise.
+func set_form(value: int) -> bool:
+	var found := species_data()
+	if found == null or found.find_form(value) == null:
+		return false
+	form = value
+	var data := form_data()
+	if ability_index >= 0 and data != null and ability_index < data.abilities.size():
+		ability = data.abilities[ability_index]
+	return true
+
+
 ## Its level, within 1 and the level limit; its experience that level's.
 func set_level(value: int) -> void:
 	if value == level or not _bound():
@@ -192,6 +205,82 @@ func set_level(value: int) -> void:
 func cry() -> AudioStream:
 	var data := form_data()
 	return data.cry() if data != null else null
+
+
+## Everything it is, as a Dictionary JSON holds: each field by name, its
+## moves as `[move, pp, max_pp]`.
+func to_data() -> Dictionary:
+	var data := {}
+	for property in _fields():
+		var field: String = property["name"]
+		if field == "moves":
+			data[field] = moves.map(func(slot: WgMoveSlot) -> Array: return [String(slot.move), slot.pp, slot.max_pp])
+		else:
+			data[field] = _plain(get(field))
+	return data
+
+
+## A Pokémon from `to_data()`'s, through JSON: its numbers whole again, its
+## names StringNames. Not bound; a field missing keeps its default.
+static func from_data(data: Dictionary) -> WgPokemon:
+	var pokemon := WgPokemon.new()
+	for property in pokemon._fields():
+		var field: String = property["name"]
+		if not data.has(field):
+			continue
+		var value: Variant = data[field]
+		match int(property["type"]):
+			TYPE_INT:
+				pokemon.set(field, int(value) if value is float or value is int else 0)
+			TYPE_BOOL:
+				pokemon.set(field, bool(value))
+			TYPE_STRING:
+				pokemon.set(field, str(value))
+			TYPE_STRING_NAME:
+				pokemon.set(field, StringName(str(value)))
+			TYPE_DICTIONARY:
+				var kept: Dictionary = pokemon.get(field)
+				kept.clear()
+				for key: Variant in (value as Dictionary if value is Dictionary else {}):
+					kept[StringName(str(key))] = int(value[key])
+			TYPE_ARRAY:
+				if field == "moves":
+					for slot: Variant in (value as Array if value is Array else []):
+						if slot is Array and slot.size() == 3:
+							var made := WgMoveSlot.of(StringName(str(slot[0])), int(slot[2]))
+							made.pp = int(slot[1])
+							pokemon.moves.append(made)
+				else:
+					var listed: Array = pokemon.get(field)
+					for item: Variant in (value as Array if value is Array else []):
+						listed.append(StringName(str(item)))
+	return pokemon
+
+
+## Its fields kept: the exported ones.
+func _fields() -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	for property in get_property_list():
+		if property["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE and property["usage"] & PROPERTY_USAGE_STORAGE:
+			found.append(property)
+	return found
+
+
+## `value` with its names as Strings, for JSON.
+static func _plain(value: Variant) -> Variant:
+	if value is StringName:
+		return String(value)
+	if value is Dictionary:
+		var plain := {}
+		for key: Variant in value:
+			plain[str(key)] = _plain(value[key])
+		return plain
+	if value is Array:
+		var listed := []
+		for item: Variant in value:
+			listed.append(_plain(item))
+		return listed
+	return value
 
 
 func _bound() -> bool:

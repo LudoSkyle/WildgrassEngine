@@ -29,8 +29,9 @@ Signal `line_changed`.
   joining waits on the traveller's cell, hidden, the others walking on;
   one removed ends its step and shows, not freed; one freed leaves the
   line, which closes up.
-- **Which Pokémon**: the one the game names. There is no party yet; when
-  there is, a game names its first Pokémon able to fight there.
+- **Which Pokémon**: the one the game names, or, with `follow_party` on
+  (feature 23), the party's first able to fight, followed again as the
+  party changes.
 - **On every map**, unless the filter hook `followers_shown(shown, map)`
   says no: the line waits off that map (a big Pokémon indoors, a gym).
 - A follower is `through` (feature 3): it blocks no one and walks into
@@ -145,7 +146,6 @@ through a seam; a follower may rustle grass and show its reflection.
 
 ## Later
 
-- The party's first Pokémon, fainted ones left out: with the party.
 - Surfing, biking, flying: the line hidden or riding along, with them.
 - Studio's follower switch and variables: with the event importer.
 
