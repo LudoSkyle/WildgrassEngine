@@ -8,7 +8,7 @@ key with no Studio line is the game's to give, in a Studio project too.
 
 A text may hold placeholders, filled when shown: `{item}`, `{count}`,
 `{slot}`, `{place}`, `{time}`, `{name}`, `{dex}`, `{seen}`, `{caught}`,
-`{height}`, `{weight}`, `{key:action}`; the debug tools add `{quest}`,
+`{height}`, `{weight}`, `{key:action}`, `{player}` (the trainer's name); the debug tools add `{quest}`,
 `{moment}`, `{speed}`, `{count}`, `{missing}`.
 
 ## Choices
@@ -19,6 +19,13 @@ A text may hold placeholders, filled when shown: `{item}`, `{count}`,
 | `wg.no` | No | `100011:28` |
 | `wg.cancel` | Cancel | `100022:7` |
 | `wg.back` | Back | — |
+
+## The trainer
+
+| Key | English | Studio line |
+|---|---|---|
+| `wg.trainer.boy` | the boy's name at a new game | `9000:2` |
+| `wg.trainer.girl` | the girl's name at a new game | `9000:3` |
 
 ## Pause menu
 

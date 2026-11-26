@@ -44,6 +44,8 @@ const _Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const _Debug := preload("res://addons/wildgrass/debug/debug.gd")
 const _EngineTools := preload("res://addons/wildgrass/debug/engine_tools.gd")
 const _Events := preload("res://addons/wildgrass/events/events.gd")
+const _Trainer := preload("res://addons/wildgrass/party/trainer.gd")
+const _PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -77,6 +79,10 @@ var types: _Types
 var moves: _Moves
 var abilities: _Abilities
 var natures: _Natures
+## The player as a trainer.
+var trainer: _Trainer
+## Makes Pokémon and binds them to the game's data.
+var pokemon: _PokemonMaker
 var pokedex: _Pokedex
 var encounters: _Encounters
 var audio: _Audio
@@ -135,6 +141,8 @@ func _init() -> void:
 	natures = _service(&"natures", _Natures, [paths, log])
 	pokedex = _service(&"pokedex", _Pokedex, [paths, log, config, species])
 	bag = _service(&"bag", _Bag, [log, hooks, items, quests])
+	trainer = _service(&"trainer", _Trainer, [log, texts])
+	pokemon = _service(&"pokemon", _PokemonMaker, [log, config, species, natures, moves, bag, trainer, zones])
 	walkers = _service(&"walkers", _Walkers, [log, config, hooks, screens, maps, tiles])
 	dialogue = _service(&"dialogue", _Dialogue, [log, config, hooks, screens, maps, texts])
 	walkers.dialogue = dialogue
@@ -230,6 +238,8 @@ func _add_parts() -> void:
 	save.add_part(&"story", story.state, story.restore, story.reset)
 	save.add_part(&"quests", quests.state, quests.restore, quests.reset)
 	save.add_part(&"bag", bag.state, bag.restore, bag.reset)
+	save.add_part(&"trainer", trainer.state, trainer.restore, trainer.reset)
+	save.add_part(&"pokemon", pokemon.state, pokemon.restore, pokemon.reset)
 	save.add_part(&"clock", clock.state, clock.restore, clock.reset)
 	save.add_part(&"daytime", daytime.state, daytime.restore, daytime.reset)
 	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)

@@ -1,8 +1,11 @@
 ## A Studio project's data written as a Godot project's own, so that the
-## game reads no Studio file: its moves, abilities and natures as resources
-## in the engine's folders (`res://moves/<id>.tres`…), each text a key
-## (`move.<id>.name`) whose words in each language go into one translation
-## file; its highest level as the `pokemon` config. Run by `import_data.gd`.
+## game reads no Studio file: its species, types, moves, abilities and
+## natures as resources in the engine's folders (`res://pokemon/<id>.tres`,
+## `res://moves/<id>.tres`…), each text a key (`move.<id>.name`) whose words
+## in each language go into one translation file; the species' pictures
+## copied into the game's `graphics/` as Studio places them, their cries
+## into `audio/cries/`; its highest level as the `pokemon` config. Run by
+## `import_data.gd`.
 extends RefCounted
 
 const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -15,21 +18,33 @@ const TEXT_FIELDS: Dictionary[StringName, Array] = {
 	&"move": [&"name", &"description", &"contest_description"],
 	&"ability": [&"name", &"description"],
 	&"nature": [&"name"],
+	&"type": [&"name"],
+	&"species": [&"name", &"genus", &"description"],
 }
+## Where the cries go, in the game's `audio` folder.
+const CRIES := "cries/"
 
 
-## Paths whose `data` folder is the Studio project's, the others the game's.
+## Paths whose `data`, `graphics` and `audio` folders are the Studio
+## project's, the others the game's.
 class _StudioPaths extends _Paths:
 	var data := ""
 
 	func root(kind: StringName) -> String:
-		return data if kind == &"data" else super(kind)
+		match kind:
+			&"data":
+				return data
+			&"graphics", &"audio":
+				return data.get_base_dir().get_base_dir() + "/%s/" % kind
+		return super(kind)
 
 
 ## The Studio project's `Data` folder.
 var data_folder := ""
 ## The translation file written.
 var texts_file := "res://locale/data.csv"
+## How many pictures and cries were copied.
+var copied := 0
 ## What went wrong, to show.
 var problems: Array[String] = []
 
@@ -48,6 +63,16 @@ func _init(data: String) -> void:
 	logger.logged.connect(func(_level: _Log.Level, _channel: StringName, message: String) -> void: found.append(message))
 	_reader = _StudioSpecies.new(_paths, logger)
 	_words = _StudioMessages.new(data)
+
+
+## Writes every species, its pictures and cries copied; returns how many.
+func write_species() -> int:
+	return _write(&"pokemon", &"species", _reader.species_ids(), _species_with_files)
+
+
+## Writes every type; returns how many.
+func write_types() -> int:
+	return _write(&"types", &"type", _reader.type_ids(), _reader.read_type)
 
 
 ## Writes every move; returns how many.
@@ -106,6 +131,44 @@ func _write(kind: StringName, what: StringName, ids: Array[StringName], read: Ca
 			continue
 		written += 1
 	return written
+
+
+## The species of `id`, its forms' texts as keys, their pictures and cry
+## copied into the game; a file Studio names but has not is left out.
+func _species_with_files(id: StringName) -> WgSpecies:
+	var species := _reader.read_species(id)
+	if species == null:
+		return null
+	var graphics := _paths.root(&"graphics")
+	var audio := _paths.root(&"audio")
+	var game := _Paths.new(false)
+	for form in species.forms:
+		var prefix := "species.%s.form_%d." % [id, form.form]
+		form.name = _keyed(form.name, prefix + "name")
+		form.description = _keyed(form.description, prefix + "description")
+		for key: StringName in form.pictures.keys():
+			var source := str(form.pictures[key])
+			var target := game.resolve(&"audio", CRIES + source.get_file()) if key == &"cry" else game.resolve(&"graphics", source.trim_prefix(graphics))
+			if key != &"cry" and not source.begins_with(graphics) or key == &"cry" and not source.begins_with(audio) or not _copy(source, target):
+				form.pictures.erase(key)
+			else:
+				form.pictures[key] = target
+	return species
+
+
+## Copies `source` to `target`, unless it is there already the same; false
+## if `source` is not there.
+func _copy(source: String, target: String) -> bool:
+	if not FileAccess.file_exists(source):
+		return false
+	if FileAccess.file_exists(target) and FileAccess.get_md5(target) == FileAccess.get_md5(source):
+		return true
+	DirAccess.make_dir_recursive_absolute(target.get_base_dir())
+	if DirAccess.copy_absolute(source, target) != OK:
+		problems.append("%s: cannot be written" % target)
+		return false
+	copied += 1
+	return true
 
 
 ## `label`, a line of Studio's files, as `key`, its words kept for each

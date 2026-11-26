@@ -44,6 +44,8 @@ const SOUND_KINDS: Dictionary[String, String] = {
 ## The others (a line with Studio's own variables, or none) are the game's.
 const LABELS: Dictionary[String, String] = {
 	"wg.yes": "100011:27",
+	"wg.trainer.boy": "9000:2",
+	"wg.trainer.girl": "9000:3",
 	"wg.no": "100011:28",
 	"wg.cancel": "100022:7",
 	"wg.menu.pokedex": "100014:1",

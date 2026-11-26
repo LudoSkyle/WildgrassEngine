@@ -27,6 +27,8 @@ const Types := preload("res://addons/wildgrass/pokemon/types.gd")
 const Moves := preload("res://addons/wildgrass/pokemon/moves.gd")
 const Abilities := preload("res://addons/wildgrass/pokemon/abilities.gd")
 const Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
+const Trainer := preload("res://addons/wildgrass/party/trainer.gd")
+const PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
@@ -71,6 +73,8 @@ var types: Types
 var moves: Moves
 var abilities: Abilities
 var natures: Natures
+var trainer: Trainer
+var pokemon: PokemonMaker
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
 var encounters: Encounters
@@ -169,6 +173,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	natures = Natures.new(paths, logger)
 	pokedex = Pokedex.new(paths, logger, config, species)
 	bag = Bag.new(logger, hooks, items, quests)
+	trainer = Trainer.new(logger, texts)
+	pokemon = PokemonMaker.new(logger, config, species, natures, moves, bag, trainer, zones)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story

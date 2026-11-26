@@ -18,6 +18,12 @@ msgstr "Cancel"
 msgid "wg.menu.pokedex"
 msgstr "Pokédex"
 
+msgid "wg.trainer.boy"
+msgstr "Alex"
+
+msgid "wg.trainer.girl"
+msgstr "Sam"
+
 msgid "wg.menu.bag"
 msgstr "Bag"
 

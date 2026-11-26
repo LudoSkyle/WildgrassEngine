@@ -1,6 +1,7 @@
 # Feature 23 — Pokémon and the party
 
-Status: step 1 (the data) done; steps 2 and 3 to come.
+Status: steps 1 (the data) and 2 (the trainer, a Pokémon) done; step 3 to
+come.
 
 The player's Pokémon: each one as the reference makes it (its level and
 experience, nature, IVs and EVs, stats, gender, shininess, ability, moves,
@@ -69,54 +70,92 @@ godot --headless --path <game> -s res://addons/wildgrass/studio/import_data.gd -
 
 ## The trainer
 
-`Wildgrass.trainer`: the player's `name` and `id` (a number drawn at a new
-game, 0 to 65535, kept by the save). A Pokémon remembers the trainer who
-caught it; one caught by the player counts as such.
+`Wildgrass.trainer`, as the reference's: a boy's and a girl's identity, the
+one played (`girl`) giving `name` and `id`. At a new game the boy's id is
+drawn below 2^30 (`0x3FFFFFFF`), the girl's is it `xor 0x28F4AB4C`; the
+names are the engine's words `wg.trainer.boy` and `wg.trainer.girl`, in
+the language shown. `shown_id()` is `id % 100000`. Kept by the save. The
+`{player}` placeholder says `name`.
 
 ## A Pokémon: `WgPokemon`
 
 A `Resource`: a game writes one in the inspector (a gift, a trainer's
-team) or makes one in code; the save keeps the party's as data.
+team) or has one made; the save keeps the party's as data.
 
-**Made** by `WgPokemon.generate(species, level, options)`, as the
+**Made** by `Wildgrass.pokemon.make(species, level, options)`, as the
 reference does, in its order:
 
-1. A 32-bit `code`, drawn again up to 3 times with the bag's shiny charm,
-   until shiny: shiny when its low 16 bits are below 16 (1 in 4096);
-   `shiny` and `no_shiny` force it.
-2. Level clamped from 1 to `max_level`.
-3. Form (given, else the species' first); experience: its level's.
-4. Caught: with a Poké Ball (or the ball given), at that time, its level,
-   in the zone shown, by the trainer; gender: given, else female by the
-   species' rate (genderless: none).
-5. Friendship: the species' base; EVs 0; IVs drawn 0 to 31 each; nature:
-   given, else the `code`'s high 16 bits modulo the natures' count; HP full.
-6. Moves: those learnt by level up to its level, the last four, in the
-   order learnt; PP full.
-7. Held item: given, else drawn by the species' chances.
-8. Ability: given, else the species' first (49 in 100), second (49), or
-   hidden (2).
+1. A 32-bit `code`, drawn below `0xFFFFFFFF`, again up to 3 times with
+   the shiny charm in the bag, until shiny: shiny when its low 16 bits are
+   below 16 (1 in 4096). `shiny: true` or `false` forces it, by setting
+   those bits to 0 or `0xFFFF`.
+2. Level: at least 1.
+3. Form: given, else the species' own rule (Unown: `code % 28`; Meowstic:
+   1 if female, decided once its gender is; the others 0), a form the
+   species does not have giving 0. Experience: its level's.
+4. Caught: with a Poké Ball (or the `ball` given), now (`caught_at`,
+   seconds), at its level, in the current zone, by the trainer (each can
+   be given); caught by the player when that trainer is the player.
+   Gender: given, else female when a draw from 0 to 99 is below the
+   species' `female_rate`; a rate of -1 makes it genderless, 0 male and
+   100 female, even given.
+5. Friendship: given, else the species' base (0 to 255); EVs given, else
+   0; IVs given, else drawn from 0 to 31 each; contest conditions given,
+   else 0. Nature: the number given (or a nature's id), else the code's
+   high 16 bits, modulo the natures' count, then the nature of that
+   number. HP full.
+6. Moves: those the species learns by level from 0 to its level, the
+   highest levels first, each once, until four, then in level order
+   (moves of the same level in the order the species lists them; a move
+   the game does not have left out, logged); each with its full PP; `moves`
+   given replace them from the first.
+7. Held item: given, else a draw from 0 to 99 walking down the species'
+   chances; none past them.
+8. Ability: given, else a draw from 0 to 99: below 49 the species' first,
+   below 98 its second, else its third (hidden).
 
-Every one of them can be given instead (`options`), as the reference's.
+Every draw goes through `Wildgrass.pokemon.draw(from, to)`, on its
+`random` (a `RandomNumberGenerator`, which a test or a judge seeds; a span
+past 31 bits drawn on 32).
 
 **Stats**, as the reference: HP `((IV + 2 base + EV/4) × level) / 100 +
-level + 10` (Shedinja 1); the others `(((2 base + EV/4 + IV) × level / 100)
-+ 5) × nature / 100`, floored at each step.
+10 + level` (Shedinja 1); the others `(((2 base + EV/4 + IV) × level /
+100) + 5) × nature / 100`, each division rounded down.
 
 **Fields**: `species`, `form`, `nickname` (empty: the species' name),
-`level`, `experience`, `code`, `nature`, `ivs`, `evs`, `hp`, `status`
-(none, poison, paralysis, burn, sleep, freeze, toxic) and its count,
-`friendship`, `ability`, `gender`, `held_item`, `moves` (up to four
-`WgMoveSlot`: `move`, `pp`, `pp_ups`), the moves it knew
-(`learnt_moves`), the catch (`ball`, `caught_at`, `caught_level`,
-`caught_in`, `trainer_name`, `trainer_id`), egg fields (`is_egg`,
-`steps_left`), and the reference's others kept as they are (Pokérus,
-contest conditions, ribbons) for the features to come.
+`level`, `experience`, `code`, `nature` (a number), `ivs`, `evs`
+(`{hp, attack, defense, speed, special_attack, special_defense}`), `hp`,
+`status` (empty, `poison`, `paralysis`, `burn`, `sleep`, `freeze`,
+`toxic`) and `status_count`, `friendship`, `ability` and
+`ability_index`, `gender` (`NONE`, `MALE`, `FEMALE`), `held_item`,
+`moves` (up to four `WgMoveSlot`: `move`, `pp`, `max_pp`),
+`learnt_moves` (every move it has known), the catch (`ball`,
+`caught_at`, `caught_level`, `caught_in`, `trainer_name`, `trainer_id`,
+`caught_by_player`), `steps_left` (an egg until 0), `pokerus`,
+`conditions` (`{cool, beautiful, cute, clever, tough, sheen}`),
+`ribbons`.
 
-**Words** on it: `is_shiny()`, `stat(&"attack")`…, `max_hp()`, `is_alive()`,
-`heal()` (HP, status, PP), `display_name()`, `learn(move)` (the oldest
-forgotten past four), `forget(move)`, `knows(move)`, `set_level()` (its
-experience follows), `cry()`.
+**Bound** to its data (its species' form, its nature, the moves) by
+`Wildgrass.pokemon.bind(pokemon)`: done when made, given or restored; a
+Pokémon written in the inspector is bound when the engine first takes it.
+A word that needs the data on a Pokémon not bound logs it once.
+
+**Words** on it: `is_shiny()`, `is_egg()`, `stat(&"attack")`…,
+`max_hp()`, `is_alive()`, `set_hp()` (0 clears the status), `heal()` (HP,
+status, PP), `display_name()`, `knows(move)`, `learn(move)` (as when it
+grows: the oldest forgotten past four), `forget(move)`, `set_level()`
+(within 1 and the level limit; its experience that level's), `cry()`.
+The level limit is `Wildgrass.pokemon.level_limit`: the `pokemon`
+config's `max_level`, which a game may lower or raise during play (kept
+by the save).
+
+**A Godot project made from a Studio project** gets its species and types
+too from `import_data.gd`: resources in `pokemon/` and `types/`, their
+texts as keys in `locale/data.csv` (`species.<id>.name`,
+`species.<id>.form_<n>.name`, `type.<id>.name`…), their pictures copied
+into the game's `graphics/` where Studio keeps them (`pokedex/pokefront/`,
+`characters/`…) and their cries into `audio/cries/`, a file already there
+the same not copied again; then Godot imports them.
 
 ## The party: `Wildgrass.party`
 
@@ -145,7 +184,9 @@ feature 22.
 ## In steps
 
 1. The data: moves, abilities, natures, experience; their Studio sources.
-2. The trainer; `WgPokemon`: made, stats, experience, moves, the words on it.
+2. The trainer; `WgPokemon`: made, stats, experience, moves, the words on
+   it; the sample's species and types imported, with their pictures and
+   cries.
 3. The party, saved; the engine's and Studio's words; the sample's tower:
    its team choice translated by hand (credit to its authors), the arch's
    guardian then letting the player through.
@@ -156,7 +197,11 @@ On the sample project, imported: every move, ability and nature, each
 field and each text in English and French, against Studio's files, a key
 of theirs neither read nor named as left out failing; the experience of
 each curve up to five levels past the highest, against the formulas
-written apart in Python (`tools/judge/data.py`); Pokémon made with a seed, their stats and moves against the reference's
+written apart in Python (`tools/judge/data.py`); every species and type,
+each field and text, each picture and cry the same bytes as Studio's and
+loading (`species.py`); Pokémon of every species at five levels, with
+options and with the shiny charm, each draw written down and what Studio's
+rules make of them computed apart (`pokemon.py`); Pokémon made with a seed, their stats and moves against the reference's
 formulas ported apart in Python on Studio's data; played headless: the
 tower gives a team, the guardian stops a player with none and lets one
 with a team pass.
