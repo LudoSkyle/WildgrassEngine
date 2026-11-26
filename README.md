@@ -7,7 +7,8 @@ GDScript only, ships no assets.
 
 In development: the foundation, maps and doors, linked maps, tiles, walking,
 dialogue, texts, characters, story, bag, save, menu and options, the Studio
-layer, the title screen, Pokémon species and types, the Pokédex, wild
+layer, the title screen, Pokémon species and types, moves, abilities and
+natures, the Pokédex, wild
 encounters, sound, day and night, weather, life on the maps, followers, and
 the debug tools.
 
@@ -41,7 +42,8 @@ stand):
 
 **Folders** default to `res://config/`, `res://graphics/`, `res://audio/`,
 `res://maps/`, `res://items/`, `res://quests/`, `res://pokemon/`,
-`res://types/`, `res://dex/` and `res://encounters/`. Change them in *Project
+`res://types/`, `res://moves/`, `res://abilities/`, `res://natures/`,
+`res://dex/` and `res://encounters/`. Change them in *Project
 Settings → wildgrass/paths*.
 
 **Studio projects**: a project with a `project.studio` file runs as it is.
@@ -55,6 +57,13 @@ passages and tags as Studio reads them, with their links, music and events
 
 ```bash
 godot --headless --path <game> -s res://addons/wildgrass/studio/import_maps.gd -- <Studio Data folder>
+```
+
+Its moves, abilities and natures likewise become the game's resources, their
+texts translation keys in `locale/data.csv` ([feature 23](docs/design/23-party.md)):
+
+```bash
+godot --headless --path <game> -s res://addons/wildgrass/studio/import_data.gd -- <Studio Data folder>
 ```
 
 **Hooks**:
@@ -232,6 +241,18 @@ from the Studio layer.
 var form := Wildgrass.species.form(&"rattata", 1)
 form.picture(&"front", true)                        # shiny, a Texture2D
 Wildgrass.types.factor(&"fire", form.types)         # how hard fire hits it
+```
+
+**Moves, abilities, natures**: `WgMove` (type, category, power, accuracy, PP,
+priority, flags, effects, contests), `WgAbility` and `WgNature` resources in
+`res://moves/`, `res://abilities/`, `res://natures/`, or registered; the
+engine ships none. The experience of each curve by `WgExperience`, up to
+`config/pokemon.json`'s `max_level` (100).
+
+```gdscript
+Wildgrass.moves.find(&"thunder_punch").has_flag(&"punch")
+Wildgrass.natures.of_number(3).factor(&"attack")    # 110: adamant
+WgExperience.total(form.growth_rate, 50)
 ```
 
 **Pokédex**: what is seen and caught, form by form, saved with the game;

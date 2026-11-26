@@ -20,6 +20,9 @@ const _Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const _Zones := preload("res://addons/wildgrass/maps/zones.gd")
 const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const _Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const _Moves := preload("res://addons/wildgrass/pokemon/moves.gd")
+const _Abilities := preload("res://addons/wildgrass/pokemon/abilities.gd")
+const _Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
 const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 
 ## Studio's words for events' scripts (feature 22).
@@ -120,9 +123,10 @@ func is_project() -> bool:
 
 
 ## Plugs the project into the engine: its configs as sources, its texts, its
-## items, pockets, quests, species, types, Pokédexes, wild groups and
-## zones, its words for events' scripts. Done once.
-func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _SpeciesData, types: _Types, pokedex: _Pokedex, encounters: _Encounters, zones: _Zones) -> void:
+## items, pockets, quests, species, types, moves, abilities, natures,
+## Pokédexes, wild groups and zones, its words for events' scripts. Done
+## once.
+func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _SpeciesData, types: _Types, moves: _Moves, abilities: _Abilities, natures: _Natures, pokedex: _Pokedex, encounters: _Encounters, zones: _Zones) -> void:
 	if installed:
 		return
 	installed = true
@@ -134,6 +138,7 @@ func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _Spe
 	_config.add_source(&"options", _options)
 	_config.add_source(&"bag", _bag)
 	_config.add_source(&"title", _title)
+	_config.add_source(&"pokemon", _pokemon)
 	_config.add_source(&"pokedex", _pokedex)
 	_config.add_source(&"audio", _audio)
 	engine_texts.add_placeholder("text", texts.text_reference, texts.text_given)
@@ -143,6 +148,9 @@ func install(engine_texts: _Texts, items: _Items, quests: _Quests, species: _Spe
 	quests.add_source(_quests.read_all)
 	species.add_source(_species.read_species, _species.species_ids)
 	types.add_source(_species.read_type, _species.type_ids)
+	moves.add_source(_species.read_move, _species.move_ids)
+	abilities.add_source(_species.read_ability, _species.ability_ids)
+	natures.add_source(_species.read_nature, _species.nature_ids)
 	pokedex.add_source(_species.read_dex, _species.dex_ids)
 	encounters.add_source(_encounters.read, _encounters.ids)
 	zones.add_source(_zones.read, _zones.ids)
@@ -249,6 +257,10 @@ func _audio() -> Dictionary:
 	if not sounds.is_empty():
 		given["sounds"] = sounds
 	return given
+
+
+func _pokemon() -> Dictionary:
+	return _fields("settings_config", {"pokemonMaxLevel": "max_level"})
 
 
 func _pokedex() -> Dictionary:

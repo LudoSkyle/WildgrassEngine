@@ -139,6 +139,7 @@ var rate := Wildgrass.hooks.filter(&"encounter_rate", 10, [map])
 | `saves` | `user://` (feature 9) |
 | `items`, `quests` | `res://items/`, `res://quests/` (features 8, 7) |
 | `pokemon`, `types` | `res://pokemon/`, `res://types/` (feature 12) |
+| `moves`, `abilities`, `natures` | `res://moves/`, `res://abilities/`, `res://natures/` (feature 23) |
 | `dex` | `res://dex/` (feature 13) |
 | `encounters` | `res://encounters/` (feature 14) |
 | `weather` | `res://weather/` (feature 17) |
