@@ -244,15 +244,19 @@ form.picture(&"front", true)                        # shiny, a Texture2D
 Wildgrass.types.factor(&"fire", form.types)         # how hard fire hits it
 ```
 
-**Trainer and Pokémon**: `Wildgrass.trainer` (name, id, boy or girl;
+**Trainer, Pokémon and party**: `Wildgrass.trainer` (name, id, boy or girl;
 `{player}` in a text) and `WgPokemon`, made by `Wildgrass.pokemon.make()`
 as the reference makes them: code and shininess, form, gender, IVs, nature,
 moves by level, held item, ability; stats, HP, `learn()`, `heal()`.
+`Wildgrass.party` carries up to six (`config/party.json`), saved with the
+game, the Pokédex told of each one added; the followers can walk its first
+one (`follow_party`). Events' scripts say `give_pokemon(&"eevee", 5)`.
 
 ```gdscript
 var pikachu := Wildgrass.pokemon.make(&"pikachu", 5, {"shiny": true})
 pikachu.stat(&"speed")
-pikachu.learn(&"thunderbolt")
+Wildgrass.party.add(pikachu)
+Wildgrass.followers.follow_party = true
 ```
 
 **Moves, abilities, natures**: `WgMove` (type, category, power, accuracy, PP,

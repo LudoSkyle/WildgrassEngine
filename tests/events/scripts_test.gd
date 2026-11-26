@@ -149,3 +149,23 @@ func test_a_route_step_runs_its_script_one_not_translated_is_reported() -> void:
 	assert_bool(_world.story.has(&"switch_6")).is_true()
 	assert_int(int(_world.story.value(&"variable_6"))).is_equal(7)
 	assert_array(_logged("a route's call")).has_size(1)
+
+
+func test_the_party_s_words_give_a_pokemon_and_name_the_trainer() -> void:
+	var pichu := WgSpecies.new()
+	pichu.id = &"pichu"
+	pichu.forms.append(WgSpeciesForm.new())
+	_world.species.register(pichu)
+	_world.trainer.reset()
+	_world.pokemon.reset()
+	_autorun([_script("set_flag(&\"switch_1\", give_pokemon(&\"pichu\", 7, {nickname = \"Zap\"}))\n"
+		+ "set_flag(&\"switch_2\", give_pokemon(&\"mew\", 5))\n"
+		+ "set_value(&\"variable_1\", party.size())\nset_value(&\"variable_2\", trainer.id)")] as Array[WgEventCommand])
+	await _run(3)
+	assert_bool(_world.story.has(&"switch_1")).is_true()
+	assert_bool(_world.story.has(&"switch_2")).is_false()
+	assert_int(int(_world.story.value(&"variable_1"))).is_equal(1)
+	assert_int(int(_world.story.value(&"variable_2"))).is_equal(_world.trainer.id)
+	var given := _world.party.at(0)
+	assert_array([given.species, given.level, given.nickname]).is_equal([&"pichu", 7, "Zap"])
+	assert_bool(_world.pokedex.is_caught(&"pichu")).is_true()

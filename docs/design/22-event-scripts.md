@@ -74,6 +74,8 @@ The first set:
 | `player_in_circle(distance_squared)` | as feature 21's condition |
 | `memory`, `this`, `player` | the list's memory, its event, the player |
 | `erase(event)`, `erase_forever(event)` | this event, or `event`, removed until its map is built again, or for good (feature 21) |
+| `party`, `trainer`, `give_pokemon(species, level, options := {})` | the party and the trainer; a Pokémon made and added (feature 23) |
+| `next_message_asks(choices, answered, cancel := -1)` | the list's next message asks `choices`, `answered` given the index taken (feature 23) |
 | `engine` | `Wildgrass`: every service, for what has no word yet |
 
 ## A tool's words: a module
@@ -96,10 +98,12 @@ first: `gv`, `set_gv`, `gs`, `set_gs`; `gp`, `ge()`, `get_character()`
 `trainer_spotted_rect`, `player_spotted_directional`, `detect_player`,
 `detect_player_rect`, `detect_player_circle`; `delete_this_event_forever`,
 `delete_event_forever`, `delete_event`; `text.set_variable`,
-`text.unset_variable`, `text.reset_variables`; `cry_pokemon`. Next, with
-their features: the items with their messages (`give_item`, `add_item`,
-`pick_item`), `choice`, the following Pokémon, the party, the sheets'
-animations, emotions…
+`text.unset_variable`, `text.reset_variables`; `cry_pokemon`. With the
+party (feature 23): `actors`, `pokemon_party`, a Pokémon's members,
+`pokemon_from_hash`, `add_pokemon`, `add_specific_pokemon`,
+`add_rename_pokemon`, `choice`, `ext_text`. Next, with their features: the
+items with their messages (`give_item`, `add_item`, `pick_item`), the
+following Pokémon, the sheets' animations, emotions…
 
 **From Ruby to GDScript**, the rules an importer and a developer follow:
 

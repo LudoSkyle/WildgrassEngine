@@ -62,6 +62,11 @@ var messages: _StudioMessages
 var scripts_folder := ""
 ## The scripts not translated, by their hash: their files to translate.
 var to_translate: Dictionary[String, bool] = {}
+
+## A script's `ext_text(file, line)`.
+var _ext_text := RegEx.create_from_string("ext_text\\((\\d+), *(\\d+)\\)")
+## A script's text naming a line of Studio's files: `"19, 168 …"`.
+var _text_reference := RegEx.create_from_string("\"([0-9]+),( |)([0-9]+)")
 ## Each Studio map's id (its RPG Maker number) and its dbSymbol, the engine's
 ## map id: where a transfer goes.
 var map_symbols: Dictionary[int, StringName] = {}
@@ -426,13 +431,25 @@ func translated(ruby: String, condition: bool) -> String:
 	if not scripts_folder.is_empty() and FileAccess.file_exists(own):
 		var body := body_of(FileAccess.get_file_as_string(own), condition)
 		if not body.is_empty():
+			_keep_texts_of(body)
 			return body
 		problems.append("%s: no %s() to take" % [own, "check" if condition else "run"])
 	var made := _ruby.condition(ruby) if condition else _ruby.statements(ruby)
 	if not made.is_empty():
+		_keep_texts_of(made)
 		return made
 	_write_to_translate(name, ruby, condition)
 	return ""
+
+
+## Gives each `ext_text(file, line)` of `script`, and each of its texts
+## naming a line of Studio's files (`"19, 168 …"`), its key in the messages'
+## words.
+func _keep_texts_of(script: String) -> void:
+	for found in _ext_text.search_all(script):
+		messages.text_key(found.get_string(1).to_int(), found.get_string(2).to_int())
+	for found in _text_reference.search_all(script):
+		messages.text_key(found.get_string(1).to_int(), found.get_string(3).to_int())
 
 
 ## The name of the translation of `ruby`: the first 12 hex of its SHA-1.

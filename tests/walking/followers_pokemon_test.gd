@@ -146,7 +146,7 @@ func test_the_part_saves_the_line_and_puts_it_back_hidden() -> void:
 	_world.followers.follow_pokemon(&"vulpix", 1, true, true)
 	_world.followers.enabled = false
 	var saved := _world.followers.state()
-	assert_dict(saved).is_equal({"enabled": false, "people": [friend_path], "pokemon": {"species": "vulpix", "form": 1, "shiny": true, "female": true}})
+	assert_dict(saved).is_equal({"enabled": false, "people": [friend_path], "party": false, "pokemon": {"species": "vulpix", "form": 1, "shiny": true, "female": true}})
 	assert_str(_world.logged.back()).contains("Coded was made in code: it is not saved")
 	_world.followers.restore(JSON.parse_string(JSON.stringify(saved)))
 	assert_bool(_world.followers.enabled).is_false()
@@ -177,3 +177,52 @@ func test_a_new_game_empties_the_line_and_turns_following_on() -> void:
 	_world.followers.restore({"people": ["res://nowhere.tscn"]})
 	assert_array(_world.followers.line).is_empty()
 	assert_str(_world.logged.back()).contains("the saved follower 'res://nowhere.tscn' is not a WgFollower scene")
+
+
+## A Pokémon of the party, written by hand.
+func _member(form := 0, shiny := false, female := false) -> WgPokemon:
+	var made := WgPokemon.new()
+	made.species = &"vulpix"
+	made.form = form
+	made.set_shiny(shiny)
+	made.gender = WgPokemon.Gender.FEMALE if female else WgPokemon.Gender.MALE
+	made.level = 5
+	made.hp = 10
+	return made
+
+
+func test_following_the_party_s_first_alive_off_by_default_and_saved() -> void:
+	var plain := _member()
+	_world.party.add(plain)
+	assert_bool(_world.followers.follow_party).is_false()
+	assert_object(_world.followers.pokemon).is_null()
+	_world.followers.follow_party = true
+	var first := _world.followers.pokemon
+	assert_that(first.species).is_equal(&"vulpix")
+	assert_object(_sheet(first)).is_same(_plain)
+	_world.party.add(_member(0, true, true))
+	assert_object(_world.followers.pokemon).is_same(first)
+	_world.party.swap(0, 1)
+	assert_object(_sheet(_world.followers.pokemon)).is_same(_shiny_female)
+	_world.party.at(0).steps_left = 5
+	_world.party.at(1).set_hp(0)
+	_world.party.add(_member(1))
+	assert_object(_sheet(_world.followers.pokemon)).is_same(_alolan)
+	_world.party.remove(2)
+	assert_object(_world.followers.pokemon).is_null()
+	_world.party.heal()
+	assert_object(_sheet(_world.followers.pokemon)).is_same(_plain)
+	plain.gender = WgPokemon.Gender.FEMALE
+	_world.party.swap(1, 1)
+	assert_bool(_world.followers.pokemon.female).is_true()
+	var saved: Variant = JSON.parse_string(JSON.stringify(_world.followers.state()))
+	assert_bool(saved["party"]).is_true()
+	_world.followers.reset()
+	assert_bool(_world.followers.follow_party).is_false()
+	assert_object(_world.followers.pokemon).is_null()
+	_world.followers.restore(saved)
+	assert_bool(_world.followers.follow_party).is_true()
+	assert_object(_sheet(_world.followers.pokemon)).is_same(_plain)
+	_world.followers.follow_party = false
+	_world.party.reset()
+	assert_object(_sheet(_world.followers.pokemon)).is_same(_plain)

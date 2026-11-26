@@ -19,6 +19,14 @@ var memory: Dictionary = {}
 var player: WgWalker:
 	get:
 		return _events().get(&"maps").get(&"traveller") as WgWalker if _events() != null else null
+## The player's party (feature 23); null without one.
+var party: Object:
+	get:
+		return _events().get(&"party") if _events() != null else null
+## The player as a trainer (feature 23); null without one.
+var trainer: Object:
+	get:
+		return _events().get(&"trainer") if _events() != null else null
 ## Wildgrass, every service, for what has no word yet; null outside the
 ## game (in tests).
 var engine: Node:
@@ -116,6 +124,30 @@ func has_item(id: StringName, at_least := 1) -> bool:
 
 func item_count(id: StringName) -> int:
 	return int(_events().call(&"item_count", id))
+
+
+## Makes a Pokémon of `species` at `level` (`options` as
+## `Wildgrass.pokemon.make()`'s) and adds it to the party, the Pokédex told;
+## false if it cannot be made or the party is full.
+func give_pokemon(species: StringName, level: int, options := {}) -> bool:
+	var maker: Object = _events().get(&"pokemon")
+	var found: Object = party
+	if maker == null or found == null:
+		_unsupported("Pokémon (no party)")
+		return false
+	var made: WgPokemon = maker.call(&"make", species, level, options)
+	return made != null and bool(found.call(&"add", made))
+
+
+## The list's next message asks `choices` (texts or keys): `answered` is
+## given the index taken. `cancel`: what cancelling answers, -1 not
+## allowed. RPG Maker's way of preparing a choice the next message shows.
+func next_message_asks(choices: Array, answered: Callable, cancel := -1) -> void:
+	var run := _run()
+	if run == null:
+		_unsupported("choices outside a list")
+		return
+	run.call(&"prepare_choices", choices, answered, cancel)
 
 
 ## True if `watcher` (this event by default) sees the player within `reach`

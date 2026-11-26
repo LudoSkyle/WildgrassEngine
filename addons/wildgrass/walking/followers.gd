@@ -43,12 +43,23 @@ var species: _SpeciesData
 ## The scene of the line's Pokémon, a WgFollower; empty: the engine's, made
 ## in code. The project setting `wildgrass/followers/pokemon_scene` sets it.
 var pokemon_scene := ""
+## True: the line's Pokémon is the party's first alive, not an egg,
+## followed again each time the party changes (`watch_party()`); none
+## alive, none follows. Off by default; kept by the save.
+var follow_party := false:
+	set(value):
+		if follow_party == value:
+			return
+		follow_party = value
+		_follow_party_first()
 ## The line's Pokémon, or null.
 var pokemon: WgFollower:
 	get:
 		return _pokemon[0] if not _pokemon.is_empty() and is_instance_valid(_pokemon[0]) else null
 
 var _people: Array[WgFollower] = []
+## The party watched, held weakly: it outlives no one.
+var _party: WeakRef
 ## The Pokémon, if one follows: none or one.
 var _pokemon: Array[WgFollower] = []
 
@@ -120,6 +131,13 @@ func follow_pokemon(species_id: StringName, form := 0, shiny := false, female :=
 	return follower
 
 
+## Watches `party` (the party service) for `follow_party`.
+func watch_party(party: Object) -> void:
+	_party = weakref(party)
+	party.connect(&"changed", _follow_party_first)
+	_follow_party_first()
+
+
 ## No Pokémon follows any more.
 func stop_pokemon() -> void:
 	var following := pokemon
@@ -167,7 +185,7 @@ func state() -> Dictionary:
 			log.warn(&"followers", "%s was made in code: it is not saved" % (follower as Node).name)
 			continue
 		people.append(path)
-	var saved := {"enabled": enabled, "people": people}
+	var saved := {"enabled": enabled, "people": people, "party": follow_party}
 	var following := pokemon
 	if following != null:
 		saved["pokemon"] = {"species": str(following.species), "form": following.form, "shiny": following.shiny, "female": following.female}
@@ -189,8 +207,9 @@ func restore(saved: Dictionary) -> void:
 			if made != null:
 				made.free()
 			log.error(&"followers", "the saved follower '%s' is not a WgFollower scene" % path)
+	follow_party = bool(saved.get("party", false))
 	var following: Variant = saved.get("pokemon")
-	if following is Dictionary:
+	if following is Dictionary and not follow_party:
 		follow_pokemon(StringName(str(following.get("species", ""))), int(following.get("form", 0)), bool(following.get("shiny", false)), bool(following.get("female", false)))
 
 
@@ -202,7 +221,26 @@ func reset() -> void:
 	_people.clear()
 	_pokemon.clear()
 	enabled = true
+	follow_party = false
 	line_changed.emit()
+
+
+## With `follow_party`: the party's first alive follows, unless it already
+## does; none alive, none follows.
+func _follow_party_first() -> void:
+	var party: Object = _party.get_ref() if _party != null else null
+	if not follow_party or party == null:
+		return
+	var first: WgPokemon = party.call(&"first_alive")
+	if first == null:
+		stop_pokemon()
+		return
+	var female := first.gender == WgPokemon.Gender.FEMALE
+	var following := pokemon
+	if following != null and following.species == first.species and following.form == first.form \
+			and following.shiny == first.is_shiny() and following.female == female:
+		return
+	follow_pokemon(first.species, first.form, first.is_shiny(), female)
 
 
 func _joined(follower: WgFollower) -> void:

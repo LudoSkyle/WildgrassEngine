@@ -878,6 +878,26 @@ func _set_sounds(root: WgMap, symbol: String, record: Dictionary) -> void:
 		root.set("keep_" + kind, found.is_empty())
 
 
+## Removes from `folder` the files to translate of scripts no longer
+## waiting (not in `waiting`: translated by the importer or by the project,
+## or gone from the project), as long as nobody wrote in them: their
+## function still `pass` or `return false`. A `.uid` left alone goes too.
+static func prune_to_translate(folder: String, waiting: Dictionary[String, bool]) -> int:
+	var removed := 0
+	for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+		if not file.ends_with(".gd") or waiting.has(file.get_basename()):
+			continue
+		var text := FileAccess.get_file_as_string(folder.path_join(file))
+		if _StudioEvents.body_of(text, false) != "pass" and _StudioEvents.body_of(text, true) != "false":
+			continue
+		DirAccess.remove_absolute(folder.path_join(file))
+		removed += 1
+	for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+		if file.ends_with(".gd.uid") and not FileAccess.file_exists(folder.path_join(file.trim_suffix(".uid"))):
+			DirAccess.remove_absolute(folder.path_join(file))
+	return removed
+
+
 ## The events of the maps `symbols`, written into their scenes by
 ## `import_map`; here the report, `events.txt` beside the maps: how many events
 ## and commands, and each command the engine has no class for yet, with its
@@ -897,6 +917,9 @@ func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
 			for page: Dictionary in event.get("pages", []):
 				var built := events.build_commands(page.get("list", []))
 				counts["commands"] += built.size()
+				# Its own route's scripts, waiting or not, as `build_page` reads them.
+				if int(page.get("move_type", 0)) == WgEventPage.MoveType.ROUTE and page.get("move_route") is Dictionary:
+					events.build_route(page["move_route"])
 		for what: String in events.raw_counts:
 			raw[what] = raw.get(what, 0) + events.raw_counts[what]
 		events.raw_counts = before
@@ -911,6 +934,10 @@ func write_event_report(symbols: Array[String]) -> Dictionary[String, int]:
 		counts["raw"] += raw[what]
 		lines.append("  %d %s" % [raw[what], what])
 	var waiting := scripts_folder.path_join("to_translate") if not scripts_folder.is_empty() else ""
+	if not waiting.is_empty() and symbols.size() == map_symbols().size():
+		for common: Dictionary in events.common_events().values():
+			events.build_commands(common.get("list", []))
+		prune_to_translate(waiting, events.to_translate)
 	if not waiting.is_empty():
 		var to_translate := Array(DirAccess.get_files_at(waiting)).filter(func(file: String) -> bool: return file.ends_with(".gd")) if DirAccess.dir_exists_absolute(waiting) else []
 		counts["to_translate"] = to_translate.size()

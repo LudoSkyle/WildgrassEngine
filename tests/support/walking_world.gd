@@ -29,6 +29,7 @@ const Abilities := preload("res://addons/wildgrass/pokemon/abilities.gd")
 const Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
 const Trainer := preload("res://addons/wildgrass/party/trainer.gd")
 const PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
+const Party := preload("res://addons/wildgrass/party/party.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
@@ -75,6 +76,7 @@ var abilities: Abilities
 var natures: Natures
 var trainer: Trainer
 var pokemon: PokemonMaker
+var party: Party
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
 var encounters: Encounters
@@ -124,6 +126,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"options", WgOptionsConfig, "options")
 	config.register(&"title", WgTitleConfig, "title")
 	config.register(&"pokemon", WgPokemonConfig, "pokemon")
+	config.register(&"party", WgPartyConfig, "party")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
@@ -175,6 +178,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	bag = Bag.new(logger, hooks, items, quests)
 	trainer = Trainer.new(logger, texts)
 	pokemon = PokemonMaker.new(logger, config, species, natures, moves, bag, trainer, zones)
+	party = Party.new(logger, config, pokemon, pokedex)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)
 	walkers.dialogue = dialogue
 	walkers.story = story
@@ -185,7 +189,12 @@ func _init(parent: Node, map_config := {}) -> void:
 	events.bag = bag
 	events.dialogue = dialogue
 	events.texts = texts
+	events.party = party
+	events.pokemon = pokemon
+	events.trainer = trainer
+	events.species = species
 	followers = Followers.new(logger, hooks, maps, walkers, species)
+	followers.watch_party(party)
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
 	reflections = Reflections.new(config, walkers, tiles)

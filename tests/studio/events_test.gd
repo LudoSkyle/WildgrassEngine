@@ -204,9 +204,56 @@ func test_a_script_condition_is_written_as_a_gdscript_expression() -> void:
 		var made := _built(111, [12, ruby]) as WgEventIf
 		assert_int(made.kind).override_failure_message(ruby).is_equal(WgEventIf.Kind.SCRIPT)
 		assert_str(made.source).override_failure_message(ruby).is_equal(cases[ruby])
-	for ruby: String in ["player_spotted?(3) && $actors.empty?", "$bag.contain_item?(:coin_case)", "gv[1] == 2 == true", "x ? 1 : 2"]:
+	for ruby: String in ["$bag.contain_item?(:coin_case)", "gv[1] == 2 == true", "x ? 1 : 2"]:
 		assert_int((_built(111, [12, ruby]) as WgEventIf).kind).override_failure_message(ruby).is_equal(WgEventIf.Kind.UNSUPPORTED)
 	assert_int(_events.raw_counts.get("condition: script contain_item?", 0)).is_equal(1)
+
+
+func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void:
+	var conditions := {
+		"player_spotted?(3) && $actors.empty?": "player_spotted(3) and actors.empty()",
+		"$actors.size < 6": "actors.size() < 6",
+		"$actors[gv[43]].form == 5": "actors.at(gv(43)).form == 5",
+		"gv[43] >= 0 && $actors[gv[43]].db_symbol == :rotom": "gv(43) >= 0 and actors.at(gv(43)).db_symbol == &\"rotom\"",
+		"$actors[0].loyalty < 192": "actors.at(0).loyalty < 192",
+		"$actors[gv[45]].egg?": "actors.at(gv(45)).egg()",
+		"$actors[gv[43]].shiny": "actors.at(gv(43)).shiny",
+		"$pokemon_party.pokemon_alive == 1 && !$actors[gv[45]].dead?": "pokemon_party.pokemon_alive() == 1 and not actors.at(gv(45)).dead()",
+	}
+	for ruby: String in conditions:
+		var made := _built(111, [12, ruby]) as WgEventIf
+		assert_int(made.kind).override_failure_message(ruby).is_equal(WgEventIf.Kind.SCRIPT)
+		assert_str(made.source).override_failure_message(ruby).is_equal(conditions[ruby])
+	var scripts := {
+		"$pokemon_party.heal_party": "pokemon_party.heal_party()",
+		"$actors[gv[43]].form = 4": "actors.at(gv(43)).form = 4",
+		"add_pokemon(:caterpie, 5)": "add_pokemon(&\"caterpie\", 5)",
+		"add_specific_pokemon(id: :heliolisk, level: 35, given_name: \"Smaug\", moves: [:surf], shiny: true)":
+			"add_specific_pokemon({id = &\"heliolisk\", level = 35, given_name = \"Smaug\", moves = [&\"surf\"], shiny = true})",
+		"@froslass = PFM::Pokemon.generate_from_hash(id: :froslass, level: 30)": "memory[\"froslass\"] = pokemon_from_hash({id = &\"froslass\", level = 30})",
+		"PFM::Text.set_variable(\"[POKE]\", $actors[gv[43]].given_name)": "text.set_variable(\"[POKE]\", actors.at(gv(43)).given_name)",
+		"@choices = [ext_text(3, 147),\next_text(3, 148)]": "memory[\"choices\"] = [ext_text(3, 147), ext_text(3, 148)]",
+		"choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")": "choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")",
+	}
+	for ruby: String in scripts:
+		var made := _built(355, [ruby]) as WgEventScript
+		assert_object(made).override_failure_message(ruby).is_not_null()
+		assert_str(made.source).override_failure_message(ruby).is_equal(scripts[ruby])
+	assert_bool(_events.messages.translations.has("dialogs.3.147")).is_true()
+	assert_bool(_events.messages.translations.has("dialogs.3.148")).is_true()
+	assert_bool(_events.messages.translations.has("dialogs.19.168")).is_true()
+	assert_bool(_events.messages.translations.has("dialogs.19.169")).is_true()
+	var kept := _events.build_commands([
+		command(355, ["$actors.any? { |pkm| pkm.db_symbol == :rotom }"]),
+		command(355, ["$actors[0].forget_skill(:surf)"]),
+		command(355, ["@team[0].name"]),
+		command(355, ["$actors[0].level = 5"]),
+		command(355, ["$actors[0].form.to_s"]),
+		command(355, ["$actors.first.form"]),
+		command(355, ["set_gv(1, $actors[0].form.level)"]),
+		command(355, ["choice(26, -1, *@choices)"]),
+	])
+	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true, true, true, true])
 
 
 func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_file() -> void:
@@ -215,12 +262,13 @@ func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_fi
 	DirAccess.make_dir_recursive_absolute(folder + "/to_translate")
 	var ruby := "choice(26, -1, *@choices)"
 	var mine := FileAccess.open("%s/%s.gd" % [folder, StudioEvents.hash_of(ruby)], FileAccess.WRITE)
-	mine.store_string("extends WgScriptContext\n# Ruby: choice(26, -1, *@choices)\n\n\nfunc run() -> void:\n\tvar answer := await ask(\"?\", memory.get(\"choices\"))\n\n\tset_value(&\"variable_26\", answer + 1)\n\n\nfunc other() -> void:\n\tpass\n")
+	mine.store_string("extends WgScriptContext\n# Ruby: choice(26, -1, *@choices)\n\n\nfunc run() -> void:\n\tvar answer := await ask(\"?\", [ext_text(5, 6)])\n\n\tset_value(&\"variable_26\", answer + 1)\n\n\nfunc other() -> void:\n\tpass\n")
 	mine.close()
 	var seen := FileAccess.open("%s/%s.gd" % [folder, StudioEvents.hash_of("seen_by(3)")], FileAccess.WRITE)
 	seen.store_string("extends WgScriptContext\n\nfunc check():\n\treturn sees_player(3)\n")
 	seen.close()
-	assert_str((_built(355, [ruby]) as WgEventScript).source).is_equal("var answer := await ask(\"?\", memory.get(\"choices\"))\n\nset_value(&\"variable_26\", answer + 1)")
+	assert_str((_built(355, [ruby]) as WgEventScript).source).is_equal("var answer := await ask(\"?\", [ext_text(5, 6)])\n\nset_value(&\"variable_26\", answer + 1)")
+	assert_bool(_events.messages.translations.has("dialogs.5.6")).is_true()
 	assert_str((_built(111, [12, "seen_by(3)"]) as WgEventIf).source).is_equal("sees_player(3)")
 	assert_object(_built(355, ["wave(1)\nwave(2)"]) as WgEventRaw).is_not_null()
 	var waiting := "%s/to_translate/%s.gd" % [folder, StudioEvents.hash_of("wave(1)\nwave(2)")]
@@ -238,6 +286,28 @@ func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_fi
 	for file in DirAccess.get_files_at(folder):
 		DirAccess.remove_absolute(folder + "/" + file)
 	DirAccess.remove_absolute(folder + "/to_translate")
+	DirAccess.remove_absolute(folder)
+
+
+func test_files_to_translate_no_longer_waiting_and_untouched_are_removed() -> void:
+	const StudioMaps := preload("res://addons/wildgrass/studio/studio_maps.gd")
+	var folder := "user://studio_prune_test"
+	DirAccess.make_dir_recursive_absolute(folder)
+	var files := {
+		"done.gd": "extends X\n#   ruby\n\n\nfunc run() -> void:\n\tpass\n", "done.gd.uid": "uid://a",
+		"waiting.gd": "extends X\n\n\nfunc run() -> void:\n\tpass\n",
+		"started.gd": "extends X\n\n\nfunc run() -> void:\n\tgive_item(&\"potion\")\n",
+		"seen.gd": "extends X\n\n\nfunc check():\n\treturn false\n", "lost.gd.uid": "uid://b",
+	}
+	for file: String in files:
+		FileAccess.open(folder.path_join(file), FileAccess.WRITE).store_string(files[file])
+	var waiting: Dictionary[String, bool] = {"waiting": true}
+	assert_int(StudioMaps.prune_to_translate(folder, waiting)).is_equal(2)
+	var left := Array(DirAccess.get_files_at(folder))
+	left.sort()
+	assert_array(left).is_equal(["started.gd", "waiting.gd"])
+	for file: String in left:
+		DirAccess.remove_absolute(folder.path_join(file))
 	DirAccess.remove_absolute(folder)
 
 

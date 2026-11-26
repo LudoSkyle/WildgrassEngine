@@ -21,11 +21,20 @@ const PRECEDENCE: Dictionary[String, int] = {
 const CHARACTER_MEMBERS: Array[String] = ["x", "y", "direction"]
 const CHARACTER_METHODS: Array[String] = ["moveto"]
 const TEXT_METHODS: Array[String] = ["set_variable", "unset_variable", "reset_variables"]
+## A Pokémon's (`$actors[i]`, `pokemon_from_hash(…)`): read, written, called.
+const POKEMON_MEMBERS: Array[String] = ["id", "db_symbol", "form", "level", "loyalty", "shiny", "hp", "max_hp", "given_name", "name"]
+const POKEMON_WRITTEN: Array[String] = ["form", "loyalty", "given_name", "hp"]
+const POKEMON_METHODS: Array[String] = ["egg", "dead", "cure"]
+## `$actors`'s and `$pokemon_party`'s, called.
+const ACTORS_METHODS: Array[String] = ["empty", "size"]
+const PARTY_METHODS: Array[String] = ["heal_party", "pokemon_alive", "size", "empty", "full"]
 ## Studio's globals and modules, as Studio's words name them.
 const CHARACTERS: Array[String] = ["gp", "$game_player"]
 const VARIABLES: Array[String] = ["gv", "$game_variables"]
 const SWITCHES: Array[String] = ["gs", "$game_switches"]
 const TEXT_MODULE := "PFM::Text"
+const ACTORS := "$actors"
+const PARTY := "$pokemon_party"
 
 ## The methods of the words (a method of the script context, with its
 ## inherited ones): a call to any other is not translated.
@@ -157,7 +166,7 @@ func _statement() -> String:
 	var made := _expression(0)
 	if _failed:
 		return ""
-	if _peek() == "=" and made[0].ends_with(".direction") and not made[0].begins_with("memory"):
+	if _peek() == "=" and (made[0].ends_with(".direction") and not made[0].begins_with("memory") or _is_pokemon_member(made[0], POKEMON_WRITTEN)):
 		_at += 1
 		var value := _expression(0)
 		return "%s = %s" % [made[0], value[0]] if not _failed else ""
@@ -271,6 +280,18 @@ func _primary() -> Array:
 	if token == "PFM" and _peek() == "::" and _peek(1) == "Text":
 		_at += 2
 		return ["text", 8]
+	if token == "PFM" and _peek() == "::" and _peek(1) == "Pokemon" and _peek(2) == "." and _peek(3) == "generate_from_hash" and _peek(4) == "(":
+		_at += 5
+		return ["pokemon_from_hash(%s)" % ", ".join(_arguments(")")), 8]
+	if token == ACTORS:
+		if not _take("["):
+			return ["actors", 8]
+		var index := _expression(0)
+		if not _take("]"):
+			_fail(token)
+		return ["actors.at(%s)" % index[0], 8]
+	if token == PARTY:
+		return ["pokemon_party", 8]
 	return _call(token)
 
 
@@ -320,14 +341,59 @@ func _postfix(value: Array) -> Array:
 		_at += 2
 		var is_text: bool = value[0] == "text"
 		var is_character: bool = value[0] == "gp" or value[0].begins_with("ge(") or value[0].begins_with("get_character(")
-		if is_text and member in TEXT_METHODS or is_character and member in CHARACTER_METHODS:
-			var listed: Array[String] = _arguments(")") if _take("(") else []
+		var is_pokemon := _is_pokemon(value[0])
+		if is_text and member in TEXT_METHODS or is_character and member in CHARACTER_METHODS \
+				or is_pokemon and member in POKEMON_METHODS or value[0] == "actors" and member in ACTORS_METHODS \
+				or value[0] == "pokemon_party" and member in PARTY_METHODS:
+			var listed: Array[String] = []
+			if _take("("):
+				listed = _arguments(")")
 			value = ["%s.%s(%s)" % [value[0], member, ", ".join(listed)], 8]
-		elif is_character and member in CHARACTER_MEMBERS:
+		elif is_character and member in CHARACTER_MEMBERS or is_pokemon and member in POKEMON_MEMBERS:
 			value = ["%s.%s" % [value[0], member], 8]
 		else:
 			_fail("%s.%s" % [value[0], member])
 	return value
+
+
+## True if `text` is a Pokémon of Studio's words: `actors.at(…)`,
+## `pokemon_from_hash(…)`, nothing after the call.
+func _is_pokemon(text: String) -> bool:
+	for start: String in ["actors.at(", "pokemon_from_hash("]:
+		if text.begins_with(start) and text.ends_with(")") and _closes_at_end(text, start.length() - 1):
+			return true
+	return false
+
+
+## True if `text` is a Pokémon's member among `members`.
+func _is_pokemon_member(text: String, members: Array[String]) -> bool:
+	var dot := text.rfind(".")
+	return dot > 0 and text.substr(dot + 1) in members and _is_pokemon(text.substr(0, dot))
+
+
+## True if the bracket opening at `open` closes at the end of `text`.
+static func _closes_at_end(text: String, open: int) -> bool:
+	var depth := 0
+	var quoted := false
+	var escaped := false
+	for index in range(open, text.length()):
+		var letter := text[index]
+		if quoted:
+			if escaped:
+				escaped = false
+			elif letter == "\\":
+				escaped = true
+			elif letter == "\"":
+				quoted = false
+		elif letter == "\"":
+			quoted = true
+		elif letter in ["(", "[", "{"]:
+			depth += 1
+		elif letter in [")", "]", "}"]:
+			depth -= 1
+			if depth == 0:
+				return index == text.length() - 1
+	return false
 
 
 ## A Ruby string's text: single quotes keep all but `\\` and `\'`.

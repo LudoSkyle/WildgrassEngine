@@ -68,7 +68,7 @@ func config() -> WgPokemonConfig:
 ## `nickname`, `ball`, `caught_at`, `caught_level`, `caught_in`,
 ## `trainer_name`, `trainer_id`, `gender` (`WgPokemon.Gender`), `friendship`,
 ## `evs` and `ivs` (`{stat: value}`), `conditions`, `nature` (a number or a
-## nature's id), `moves` (move ids, replacing from the first), `held_item`
+## nature's id), `moves` (move ids, replacing from the first; null leaves one), `held_item`
 ## (empty: none), `ability`, `pokerus`. Null, logged, if the species is
 ## unknown.
 func make(species_id: StringName, level: int, options := {}) -> WgPokemon:
@@ -117,7 +117,8 @@ func make(species_id: StringName, level: int, options := {}) -> WgPokemon:
 	_learn_by_level(pokemon, data)
 	var given_moves: Array = options.get("moves", [])
 	for index in mini(given_moves.size(), WgPokemon.MOVES):
-		_replace_move(pokemon, index, StringName(str(given_moves[index])))
+		if given_moves[index] != null:
+			_replace_move(pokemon, index, StringName(str(given_moves[index])))
 	# 7. Its held item.
 	pokemon.held_item = StringName(str(options["held_item"])) if options.has("held_item") else _held_item(data)
 	# 8. Its ability.
