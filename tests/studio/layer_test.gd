@@ -160,7 +160,7 @@ func test_the_engine_s_labels_say_studio_s_words_until_uninstalled() -> void:
 func test_installed_once_only() -> void:
 	_world.sandbox.write_json("Data/configs/save_config.json", {"saveKey": 1234})
 	_studio = StudioProject.install(_world)
-	_studio.install(_world.texts, _world.items, _world.quests, _world.species, _world.types, _world.pokedex, _world.encounters, _world.zones)
+	_studio.install(_world.texts, _world.items, _world.quests, _world.species, _world.types, _world.moves, _world.abilities, _world.natures, _world.pokedex, _world.encounters, _world.zones)
 	_world.save.config()
 	assert_bool(_studio.installed).is_true()
 	assert_int(_world.logged.size()).is_equal(1)

@@ -1,7 +1,9 @@
 ## A Studio project's species (`Data/Studio/pokemon/<dbSymbol>.json`), types
-## (`Data/Studio/types/<dbSymbol>.json`) and Pokédexes
-## (`Data/Studio/dex/<dbSymbol>.json`), read as they are the first time they
-## are asked for: sources of the species, types and Pokédex services.
+## (`Data/Studio/types/`), moves (`Data/Studio/moves/`), abilities
+## (`Data/Studio/abilities/`), natures (`Data/Studio/natures/`) and
+## Pokédexes (`Data/Studio/dex/`), read as they are the first time they are
+## asked for: sources of the species, types, moves, abilities, natures and
+## Pokédex services.
 extends RefCounted
 
 const _Paths := preload("res://addons/wildgrass/core/paths/paths.gd")
@@ -10,10 +12,19 @@ const _Log := preload("res://addons/wildgrass/core/log/log.gd")
 const SPECIES := "Studio/pokemon/"
 const TYPES := "Studio/types/"
 const DEXES := "Studio/dex/"
+const MOVES := "Studio/moves/"
+const ABILITIES := "Studio/abilities/"
+const NATURES := "Studio/natures/"
 const NAME_TEXTS := 100000
 const GENUS_TEXTS := 100001
 const DESCRIPTION_TEXTS := 100002
 const TYPE_TEXTS := 100003
+const ABILITY_NAME_TEXTS := 100004
+const ABILITY_DESCRIPTION_TEXTS := 100005
+const MOVE_NAME_TEXTS := 100006
+const MOVE_DESCRIPTION_TEXTS := 100007
+const NATURE_NAME_TEXTS := 100008
+const MOVE_CONTEST_TEXTS := 100072
 const FORM_NAME_TEXTS := 100067
 const FORM_DESCRIPTION_TEXTS := 100068
 ## The last national number of each generation.
@@ -33,6 +44,34 @@ const PICTURES: Dictionary[StringName, Array] = {
 	&"back": ["back", "pokedex/pokeback/", "pokedex/pokebackshiny/"],
 	&"footprint": ["footprint", "pokedex/footprints/", "pokedex/footprints/"],
 	&"character": ["character", "characters/", "characters/"],
+}
+## Studio's move flags, and the engine's. Studio's `isEffectChance` is not
+## read: its runtime has no use for it.
+const MOVE_FLAGS: Dictionary[String, StringName] = {
+	"isDirect": &"contact", "isCharge": &"charge", "isRecharge": &"recharge", "isBlocable": &"protectable",
+	"isSnatchable": &"snatchable", "isMirrorMove": &"mirrorable", "isMagicCoatAffected": &"reflectable",
+	"isPunch": &"punch", "isBite": &"bite", "isPulse": &"pulse", "isSlicingAttack": &"slicing",
+	"isSoundAttack": &"sound", "isWind": &"wind", "isDance": &"dance", "isPowder": &"powder",
+	"isBallistics": &"ballistic", "isMental": &"mental", "isHeal": &"heal", "isGravity": &"gravity",
+	"isUnfreeze": &"thaws", "isDistance": &"distance", "isAuthentic": &"bypasses_substitute",
+	"isNonSkyBattle": &"non_sky_battle", "isKingRockUtility": &"flinch_item",
+}
+## Studio's stages a move changes, and the engine's stats.
+const MOVE_STAGES: Dictionary[String, StringName] = {
+	"ATK_STAGE": &"attack", "DFE_STAGE": &"defense", "SPD_STAGE": &"speed", "ATS_STAGE": &"special_attack",
+	"DFS_STAGE": &"special_defense", "EVA_STAGE": &"evasion", "ACC_STAGE": &"accuracy",
+}
+## Studio's statuses a move gives, and the engine's.
+const MOVE_STATUSES: Dictionary[String, StringName] = {
+	"POISONED": &"poison", "TOXIC": &"toxic", "BURN": &"burn", "PARALYZED": &"paralysis",
+	"ASLEEP": &"sleep", "FROZEN": &"freeze", "CONFUSED": &"confusion", "FLINCH": &"flinch",
+}
+const MOVE_CATEGORIES: Dictionary[String, WgMove.Category] = {
+	"physical": WgMove.Category.PHYSICAL, "special": WgMove.Category.SPECIAL, "status": WgMove.Category.STATUS,
+}
+## Studio's stats of a nature, and the engine's.
+const NATURE_STATS: Dictionary[String, StringName] = {
+	"atk": &"attack", "dfe": &"defense", "spd": &"speed", "ats": &"special_attack", "dfs": &"special_defense",
 }
 ## Studio's way of saying "no type", "no item".
 const NONE: Array[String] = ["__undef__", "none", ""]
@@ -100,6 +139,96 @@ func read_dex(id: StringName) -> WgDex:
 		if creature is Dictionary:
 			dex.creatures.append({"species": StringName(str(creature.get("dbSymbol", ""))), "form": int(creature.get("form", 0))})
 	return dex
+
+
+## The move of `id`, or null if the project has none.
+func read_move(id: StringName) -> WgMove:
+	var data := _file(MOVES, id, "move")
+	if data.is_empty():
+		return null
+	var move := WgMove.new()
+	move.id = id
+	move.number = int(data.get("id", 0))
+	move.name = "{text:%d:%d}" % [MOVE_NAME_TEXTS, move.number]
+	move.description = "{text:%d:%d}" % [MOVE_DESCRIPTION_TEXTS, move.number]
+	move.contest_description = "{text:%d:%d}" % [MOVE_CONTEST_TEXTS, move.number]
+	move.type = StringName(str(data.get("type", "")))
+	move.category = MOVE_CATEGORIES.get(str(data.get("category", "")), WgMove.Category.PHYSICAL)
+	move.power = int(data.get("power", 0))
+	move.accuracy = int(data.get("accuracy", 0))
+	move.pp = int(data.get("pp", 0))
+	move.priority = int(data.get("priority", 0))
+	move.critical_rate = int(data.get("movecriticalRate", 1))
+	move.target = StringName(str(data.get("battleEngineAimedTarget", "adjacent_pokemon")))
+	for key: String in MOVE_FLAGS:
+		if data.get(key, false) == true:
+			move.flags.append(MOVE_FLAGS[key])
+	move.effect = StringName(str(data.get("battleEngineMethod", "")))
+	move.effect_chance = int(data.get("effectChance", 0))
+	for change: Variant in _list(data, "battleStageMod"):
+		if change is Dictionary:
+			var stage := str(change.get("battleStage", ""))
+			move.stat_changes.append({"stat": MOVE_STAGES.get(stage, StringName(stage.to_lower())), "stages": int(change.get("modificator", 0))})
+	for given: Variant in _list(data, "moveStatus"):
+		if given is Dictionary:
+			var status := str(given.get("status", ""))
+			move.statuses.append({"status": MOVE_STATUSES.get(status, StringName(status.to_lower())), "chance": int(given.get("luckRate", 0))})
+	move.map_use = int(data.get("mapUse", 0))
+	move.contest_condition = StringName(str(data.get("condition", "")))
+	move.appeal = int(data.get("appeal", 0))
+	move.jam = int(data.get("jam", 0))
+	for combo: Variant in _list(data, "comboMoves"):
+		move.combo_moves.append(StringName(str(combo)))
+	for effect: Variant in _list(data, "effectTags"):
+		move.contest_effects.append(StringName(str(effect)))
+	return move
+
+
+## The ability of `id`, or null if the project has none. Its texts follow
+## its `textId`, not its number.
+func read_ability(id: StringName) -> WgAbility:
+	var data := _file(ABILITIES, id, "ability")
+	if data.is_empty():
+		return null
+	var ability := WgAbility.new()
+	ability.id = id
+	ability.number = int(data.get("id", 0))
+	var text := int(data.get("textId", ability.number))
+	ability.name = "{text:%d:%d}" % [ABILITY_NAME_TEXTS, text]
+	ability.description = "{text:%d:%d}" % [ABILITY_DESCRIPTION_TEXTS, text]
+	return ability
+
+
+## The nature of `id`, or null if the project has none.
+func read_nature(id: StringName) -> WgNature:
+	var data := _file(NATURES, id, "nature")
+	if data.is_empty():
+		return null
+	var nature := WgNature.new()
+	nature.id = id
+	nature.number = int(data.get("id", 0))
+	nature.name = "{text:%d:%d}" % [NATURE_NAME_TEXTS, nature.number]
+	var stats: Variant = data.get("stats", {})
+	for key: String in NATURE_STATS:
+		nature.stats[NATURE_STATS[key]] = int(stats.get(key, 100)) if stats is Dictionary else 100
+	var flavors: Variant = data.get("flavors", {})
+	if flavors is Dictionary:
+		for side: String in ["liked", "disliked"]:
+			var flavor := str(flavors.get(side, ""))
+			nature.set(side + "_flavor", StringName(flavor) if flavor not in NONE else &"")
+	return nature
+
+
+func move_ids() -> Array[StringName]:
+	return _ids(MOVES)
+
+
+func ability_ids() -> Array[StringName]:
+	return _ids(ABILITIES)
+
+
+func nature_ids() -> Array[StringName]:
+	return _ids(NATURES)
 
 
 func dex_ids() -> Array[StringName]:

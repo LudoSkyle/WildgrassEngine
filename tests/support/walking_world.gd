@@ -24,6 +24,9 @@ const Options := preload("res://addons/wildgrass/options/options.gd")
 const Title := preload("res://addons/wildgrass/title/title.gd")
 const SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const Moves := preload("res://addons/wildgrass/pokemon/moves.gd")
+const Abilities := preload("res://addons/wildgrass/pokemon/abilities.gd")
+const Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
@@ -65,6 +68,9 @@ var options: Options
 var title: Title
 var species: SpeciesData
 var types: Types
+var moves: Moves
+var abilities: Abilities
+var natures: Natures
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
 var encounters: Encounters
@@ -113,6 +119,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	config.register(&"save", WgSaveConfig, "save")
 	config.register(&"options", WgOptionsConfig, "options")
 	config.register(&"title", WgTitleConfig, "title")
+	config.register(&"pokemon", WgPokemonConfig, "pokemon")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
@@ -157,6 +164,9 @@ func _init(parent: Node, map_config := {}) -> void:
 	items = Items.new(paths, logger, config)
 	species = SpeciesData.new(paths, logger)
 	types = Types.new(paths, logger)
+	moves = Moves.new(paths, logger)
+	abilities = Abilities.new(paths, logger)
+	natures = Natures.new(paths, logger)
 	pokedex = Pokedex.new(paths, logger, config, species)
 	bag = Bag.new(logger, hooks, items, quests)
 	dialogue = Dialogue.new(logger, config, hooks, screens, maps, texts)

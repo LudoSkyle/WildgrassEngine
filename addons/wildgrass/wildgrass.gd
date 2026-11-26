@@ -28,6 +28,9 @@ const _Studio := preload("res://addons/wildgrass/studio/studio.gd")
 const _Title := preload("res://addons/wildgrass/title/title.gd")
 const _SpeciesData := preload("res://addons/wildgrass/pokemon/species_data.gd")
 const _Types := preload("res://addons/wildgrass/pokemon/types.gd")
+const _Moves := preload("res://addons/wildgrass/pokemon/moves.gd")
+const _Abilities := preload("res://addons/wildgrass/pokemon/abilities.gd")
+const _Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
 const _Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const _Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const _Audio := preload("res://addons/wildgrass/audio/audio.gd")
@@ -71,6 +74,9 @@ var options: _Options
 var title: _Title
 var species: _SpeciesData
 var types: _Types
+var moves: _Moves
+var abilities: _Abilities
+var natures: _Natures
 var pokedex: _Pokedex
 var encounters: _Encounters
 var audio: _Audio
@@ -124,6 +130,9 @@ func _init() -> void:
 	items = _service(&"items", _Items, [paths, log, config])
 	species = _service(&"species", _SpeciesData, [paths, log])
 	types = _service(&"types", _Types, [paths, log])
+	moves = _service(&"moves", _Moves, [paths, log])
+	abilities = _service(&"abilities", _Abilities, [paths, log])
+	natures = _service(&"natures", _Natures, [paths, log])
 	pokedex = _service(&"pokedex", _Pokedex, [paths, log, config, species])
 	bag = _service(&"bag", _Bag, [log, hooks, items, quests])
 	walkers = _service(&"walkers", _Walkers, [log, config, hooks, screens, maps, tiles])
@@ -176,6 +185,7 @@ func _init() -> void:
 	config.register(&"dialogue", WgDialogueConfig, "dialogue")
 	config.register(&"studio", WgStudioConfig, "studio")
 	config.register(&"title", WgTitleConfig, "title")
+	config.register(&"pokemon", WgPokemonConfig, "pokemon")
 	config.register(&"pokedex", WgPokedexConfig, "pokedex")
 	config.register(&"encounters", WgEncountersConfig, "encounters")
 	config.register(&"audio", WgAudioConfig, "audio")
@@ -184,7 +194,7 @@ func _init() -> void:
 	config.register(&"reflections", WgReflectionsConfig, "reflections")
 	studio = _service(&"studio", _Studio, [paths, log, config, hooks])
 	if studio.is_project():
-		studio.install(texts, items, quests, species, types, pokedex, encounters, zones)
+		studio.install(texts, items, quests, species, types, moves, abilities, natures, pokedex, encounters, zones)
 	menu.services.merge({"pokedex": pokedex, "species": species, "types": types, "screens": screens})
 	menu.add_entry(&"pokedex", "wg.menu.pokedex", _open_pokedex, (config.get_config(&"pokedex") as WgPokedexConfig).condition, &"bag")
 	screens.register(&"transition_none", "res://addons/wildgrass/maps/transitions/none.tscn")
