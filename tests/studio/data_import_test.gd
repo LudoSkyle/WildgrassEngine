@@ -78,3 +78,61 @@ func test_a_broken_file_is_a_problem() -> void:
 	_world.sandbox.write_json("Data/Studio/moves/pound.json", {"klass": "Move", "id": 1, "dbSymbol": "tackle"})
 	assert_int(_importer.write_moves()).is_equal(0)
 	assert_array(_importer.problems).is_equal(["pound.json: not a Studio move"])
+
+
+func _pichu() -> void:
+	_world.sandbox.set_setting("wildgrass/paths/graphics", _world.sandbox.root + "game/graphics/")
+	_world.sandbox.set_setting("wildgrass/paths/audio", _world.sandbox.root + "game/audio/")
+	_world.sandbox.write_json("Data/Studio/pokemon/pichu.json", {"klass": "Specie", "id": 172, "dbSymbol": "pichu", "forms": [
+		{"form": 0, "formTextId": {"name": 0, "description": 0}, "type1": "electric", "type2": "__undef__", "baseHp": 20,
+			"resources": {"front": "0172", "frontShiny": "0172s", "icon": "0172", "cry": "0172.ogg"}},
+		{"form": 1, "formTextId": {"name": 3, "description": 0}, "type1": "electric", "type2": "__undef__"},
+	]})
+	_world.sandbox.write("graphics/pokedex/pokefront/0172.png", "front")
+	_world.sandbox.write("graphics/pokedex/pokefrontshiny/0172s.png", "shiny")
+	_world.sandbox.write("audio/se/cries/0172.ogg", "cry")
+	_texts(100000, {172: "Pichu,Pichu"})
+	_texts(100001, {172: "Tiny Mouse,Minisouris"})
+	_texts(100002, {172: "Small.,Petit."})
+	_texts(100067, {3: "Spiky,Pointu"})
+
+
+func test_species_become_the_game_s_their_pictures_and_cry_copied() -> void:
+	_pichu()
+	assert_int(_importer.write_species()).is_equal(1)
+	var pichu := load(_world.sandbox.root + "pokemon/pichu.tres") as WgSpecies
+	assert_array([pichu.number, pichu.name, pichu.genus, pichu.description]).is_equal([172, "species.pichu.name", "species.pichu.genus", "species.pichu.description"])
+	var form := pichu.forms[0]
+	assert_array([form.name, form.description, form.base_stats[&"hp"]]).is_equal(["", "", 20])
+	var game := _world.sandbox.root + "game/"
+	assert_that(form.pictures).is_equal({
+		&"front": game + "graphics/pokedex/pokefront/0172.png", &"front_shiny": game + "graphics/pokedex/pokefrontshiny/0172s.png",
+		&"cry": game + "audio/cries/0172.ogg",
+	})
+	assert_str(FileAccess.get_file_as_string(game + "graphics/pokedex/pokefrontshiny/0172s.png")).is_equal("shiny")
+	assert_str(FileAccess.get_file_as_string(game + "audio/cries/0172.ogg")).is_equal("cry")
+	assert_int(_importer.copied).is_equal(3)
+	assert_str(pichu.forms[1].name).is_equal("species.pichu.form_1.name")
+	_importer.write_translations()
+	var words := FileAccess.get_file_as_string(_world.sandbox.root + "locale/data.csv")
+	for line: String in ["species.pichu.genus,Tiny Mouse,Minisouris", "species.pichu.form_1.name,Spiky,Pointu"]:
+		assert_str(words).contains(line)
+	assert_array(_importer.problems).is_empty()
+
+
+func test_a_file_copied_already_the_same_is_not_copied_again() -> void:
+	_pichu()
+	_importer.write_species()
+	_importer.copied = 0
+	_world.sandbox.write("audio/se/cries/0172.ogg", "another cry")
+	_importer.write_species()
+	assert_int(_importer.copied).is_equal(1)
+	assert_str(FileAccess.get_file_as_string(_world.sandbox.root + "game/audio/cries/0172.ogg")).is_equal("another cry")
+
+
+func test_types_and_their_names() -> void:
+	_world.sandbox.write_json("Data/Studio/types/fire.json", {"klass": "Type", "id": 2, "dbSymbol": "fire", "textId": 2, "color": "#ff0000", "damageTo": [{"defensiveType": "grass", "factor": 2}]})
+	_texts(100003, {2: "Fire,Feu"})
+	assert_int(_importer.write_types()).is_equal(1)
+	var fire := load(_world.sandbox.root + "types/fire.tres") as WgType
+	assert_array([fire.name, fire.factor_against(&"grass")]).is_equal(["type.fire.name", 2.0])

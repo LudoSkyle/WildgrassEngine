@@ -59,8 +59,9 @@ passages and tags as Studio reads them, with their links, music and events
 godot --headless --path <game> -s res://addons/wildgrass/studio/import_maps.gd -- <Studio Data folder>
 ```
 
-Its moves, abilities and natures likewise become the game's resources, their
-texts translation keys in `locale/data.csv` ([feature 23](docs/design/23-party.md)):
+Its species, types, moves, abilities and natures likewise become the game's
+resources, their texts translation keys in `locale/data.csv`, the species'
+pictures and cries copied in ([feature 23](docs/design/23-party.md)):
 
 ```bash
 godot --headless --path <game> -s res://addons/wildgrass/studio/import_data.gd -- <Studio Data folder>
@@ -241,6 +242,17 @@ from the Studio layer.
 var form := Wildgrass.species.form(&"rattata", 1)
 form.picture(&"front", true)                        # shiny, a Texture2D
 Wildgrass.types.factor(&"fire", form.types)         # how hard fire hits it
+```
+
+**Trainer and Pokémon**: `Wildgrass.trainer` (name, id, boy or girl;
+`{player}` in a text) and `WgPokemon`, made by `Wildgrass.pokemon.make()`
+as the reference makes them: code and shininess, form, gender, IVs, nature,
+moves by level, held item, ability; stats, HP, `learn()`, `heal()`.
+
+```gdscript
+var pikachu := Wildgrass.pokemon.make(&"pikachu", 5, {"shiny": true})
+pikachu.stat(&"speed")
+pikachu.learn(&"thunderbolt")
 ```
 
 **Moves, abilities, natures**: `WgMove` (type, category, power, accuracy, PP,
