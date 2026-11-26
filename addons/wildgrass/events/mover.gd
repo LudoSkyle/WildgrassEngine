@@ -74,11 +74,16 @@ func set_page(page: WgEventPage) -> void:
 	_wait_ticks = 0
 
 
-## Follows `route` now, its own way of moving waiting until it ends.
+## Follows `route` now, its own way of moving waiting until it ends. Its
+## first commands run at once, as the reference's: unless it is moving, it
+## starts its first step, and a route that only changes how it looks ends
+## here.
 func force(route: WgMoveRoute) -> void:
 	forced = route
 	forced_index = 0
 	_wait_ticks = 0
+	if not walker.is_moving:
+		_custom(true)
 
 
 ## True while it needs driving: a route imposed, or a page moving by itself.

@@ -107,6 +107,33 @@ func test_a_list_waits_for_the_routes_it_imposed() -> void:
 	assert_bool(_world.story.has(&"switch_1")).is_true()
 
 
+func test_an_imposed_route_s_first_commands_run_at_once_one_that_only_changes_looks_ends_there() -> void:
+	var event := _event(Vector2i(2, 2), Events.page())
+	_world.events.force_route(event, route([[K.OPACITY, 128]]))
+	assert_float((event.get_node("Sprite") as CanvasItem).modulate.a).is_equal_approx(128 / 255.0, 0.001)
+	assert_bool(_world.events.any_forced_route()).is_false()
+	assert_bool(_world.walkers.is_scripted(event)).is_false()
+	_world.events.force_route(event, route([K.TURN_LEFT, K.MOVE_DOWN]))
+	assert_that(event.facing).is_equal(Vector2i.LEFT)
+
+
+func test_a_parallel_list_imposing_looks_every_frame_does_not_hold_a_wait_for_moves() -> void:
+	var looks := WgEventMoveRoute.new()
+	looks.character = 1
+	looks.route = route([[K.OPACITY, 255]])
+	var door := _event(Vector2i(6, 6), Events.page(), 1)
+	_event(Vector2i(7, 7), Events.page([looks] as Array[WgEventCommand], {"trigger": WgEventPage.Trigger.PARALLEL}), 2)
+	var move := WgEventMoveRoute.new()
+	move.character = 0
+	move.route = route([K.MOVE_DOWN])
+	var event := _event(Vector2i(2, 2), Events.page([move, WgEventWaitForMoves.new(), Events.switch_on(), WgEventSetLocalSwitch.new()] as Array[WgEventCommand], {"trigger": WgEventPage.Trigger.AUTORUN}), 3)
+	event.pages.append(Events.page([], {"condition": "local:A"}))
+	_run(1.0)
+	assert_that(event.cell).is_equal(Vector2i(2, 3))
+	assert_bool(_world.story.has(&"switch_1")).is_true()
+	assert_bool(is_instance_valid(door)).is_true()
+
+
 func test_a_blocked_step_is_tried_again_unless_the_route_is_skippable() -> void:
 	var stuck := _event(Vector2i(8, 3), Events.page(), 1)
 	_world.events.force_route(stuck, route([K.MOVE_RIGHT, K.MOVE_DOWN]))
