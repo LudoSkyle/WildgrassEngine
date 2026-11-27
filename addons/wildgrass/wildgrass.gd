@@ -266,6 +266,7 @@ func _add_parts() -> void:
 	save.add_part(&"followers", followers.state, followers.restore, followers.reset)
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
 	save.add_part(&"screen", screen.state, screen.restore, screen.reset)
+	save.add_part(&"lists", events.lists_state, events.stop_all, events.stop_all)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
 	hooks.add(&"save_summary", &"wildgrass_pokedex", pokedex.save_summary)

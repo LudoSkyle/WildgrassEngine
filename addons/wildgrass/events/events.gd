@@ -503,6 +503,30 @@ func _on_cleared() -> void:
 	_release_player()
 
 
+## Stops every list and every route imposed: a game started or loaded keeps
+## nothing of the one before. The `lists` part of a saved game: nothing is
+## kept, its restore and reset stop all.
+func stop_all(_saved: Dictionary = {}) -> void:
+	if main.is_running():
+		main.finish()
+	main = _Run.new(self)
+	_parallel.clear()
+	_common_parallel.clear()
+	_common_wanted = 0
+	if _locked != null and is_instance_valid(_locked):
+		_locked.unlock()
+	_locked = null
+	_release_player()
+	for walker: Variant in _movers.keys():
+		if is_instance_valid(walker):
+			walkers.undrive(walker)
+	_movers.clear()
+
+
+func lists_state() -> Dictionary:
+	return {}
+
+
 func _collect(node: Node, found: Array[WgEvent]) -> void:
 	for child: Node in node.get_children():
 		if child is WgEvent:

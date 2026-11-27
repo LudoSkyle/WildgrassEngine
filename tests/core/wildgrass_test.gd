@@ -40,7 +40,7 @@ func test_the_autoload_provides_every_service() -> void:
 	var driver := engine.get_node("Reflections")
 	assert_object(driver.get(&"reflections")).is_same(engine.reflections)
 	assert_int(driver.process_priority).is_greater(0)
-	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"trainer", &"pokemon", &"party", &"clock", &"daytime", &"pokedex", &"followers", &"map", &"screen"])
+	assert_array(engine.save.part_names()).is_equal([&"story", &"quests", &"bag", &"trainer", &"pokemon", &"party", &"clock", &"daytime", &"pokedex", &"followers", &"map", &"screen", &"lists"])
 	assert_array(engine.hooks.names(&"save_summary")).is_equal([&"wildgrass_clock", &"wildgrass_map", &"wildgrass_pokedex"])
 	# The tests run in a debug build: the Debug entry shows.
 	assert_array(engine.menu.entries()).is_equal([&"pokedex", &"bag", &"options", &"save", &"debug", &"exit"])
