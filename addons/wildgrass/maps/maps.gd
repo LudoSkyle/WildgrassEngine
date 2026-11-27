@@ -486,6 +486,11 @@ func _uncover(screen: WgTransition) -> void:
 	screen.close()
 
 
+## A cell's side, in game pixels: the map config's `tile_size`.
+func tile_size() -> int:
+	return _tile_size()
+
+
 func _tile_size() -> int:
 	return (_config.get_config(&"map") as WgMapConfig).tile_size
 

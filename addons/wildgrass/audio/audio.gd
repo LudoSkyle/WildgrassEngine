@@ -32,6 +32,8 @@ var _species: _SpeciesData
 var _host: Node
 var _streams: Dictionary[String, AudioStream] = {}
 var _warned: Dictionary[String, bool] = {}
+## What `memorize()` kept: the music and the ambience, `{name, volume, pitch}`.
+var _memorized := {}
 ## The music asked for during a jingle, and the jingle playing.
 var _pending_music := {}
 var _jingle: StringName = &""
@@ -216,6 +218,43 @@ func stop_music() -> void:
 func music_name() -> StringName:
 	setup()
 	return _pending_music.get("name", music.name) if not _jingle.is_empty() and not _pending_music.is_empty() else music.name
+
+
+## Fades the music out over `seconds` (0: at once); nothing plays after.
+func fade_music(seconds: float) -> void:
+	setup()
+	_pending_music = {}
+	music.fade_out(seconds)
+
+
+func fade_ambience(seconds: float) -> void:
+	setup()
+	ambience.fade_out(seconds)
+
+
+## Stops every effect playing.
+func stop_effects() -> void:
+	setup()
+	for voice in voices:
+		voice.stop()
+
+
+## Keeps the music and ambience playing, for `restore()`.
+func memorize() -> void:
+	setup()
+	_memorized = {"music": music.playing(), "ambience": ambience.playing()}
+	if not _jingle.is_empty() and not _pending_music.is_empty():
+		_memorized["music"] = _pending_music.duplicate()
+
+
+## Plays again the music and ambience `memorize()` kept; nothing kept:
+## silence.
+func restore() -> void:
+	setup()
+	var kept_music: Dictionary = _memorized.get("music", {"name": &""})
+	var kept_ambience: Dictionary = _memorized.get("ambience", {"name": &""})
+	play_music(StringName(kept_music["name"]), kept_music.get("volume", 1.0), kept_music.get("pitch", 1.0))
+	play_ambience(StringName(kept_ambience["name"]), kept_ambience.get("volume", 1.0), kept_ambience.get("pitch", 1.0))
 
 
 func play_ambience(sound_name: StringName, volume := 1.0, pitch := 1.0) -> void:

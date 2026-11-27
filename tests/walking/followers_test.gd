@@ -402,8 +402,9 @@ func test_the_line_off_the_map_is_freed_with_the_service() -> void:
 	_field()
 	var follower := _follower()
 	_world.followers.enabled = false
-	# The debug tools hold the services too.
+	# The debug tools and the events' scripts hold the services too.
 	_world.debug_tools = null
+	_world.events.followers = null
 	_world.followers = null
 	assert_bool(is_instance_valid(follower)).is_false()
 

@@ -276,6 +276,13 @@ func is_shown() -> bool:
 	return bool(hooks.filter(&"followers_shown", true, [maps.current]))
 
 
+## The line back on the traveller's cell, hidden, as when `enabled`
+## changes; off the map where it does not show.
+func put_back() -> void:
+	if maps.traveller != null:
+		_put_back()
+
+
 ## Puts the line back beside the traveller, on its cell, hidden; or off the
 ## map if it does not show there. `all` false: only those off the map.
 func _put_back(all := true) -> void:

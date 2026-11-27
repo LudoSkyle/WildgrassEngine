@@ -337,6 +337,31 @@ func test_a_command_with_no_class_yet_is_told_once_and_the_list_goes_on() -> voi
 	assert_array(_world.logged.filter(func(line: String) -> bool: return line.contains("command 999"))).has_size(1)
 
 
+func test_a_game_started_or_loaded_keeps_no_list_nor_route_of_the_one_before() -> void:
+	var loop := WgEventLoop.new()
+	var moving := WgEventMoveRoute.new()
+	moving.character = 0
+	moving.route = WgMoveRoute.new()
+	moving.route.repeat = true
+	var step := WgMoveStep.new()
+	step.kind = WgMoveStep.Kind.TURN_LEFT
+	moving.route.steps.append(step)
+	var wait := WgEventWait.new()
+	wait.seconds = 0.1
+	var event := _event(Vector2i(5, 4), [page([moving, loop, at(wait, 1), at(WgEventRepeat.new(), 0)])])
+	_world.walkers.interact(_player)
+	_advance(3)
+	assert_bool(_world.events.main.is_running()).is_true()
+	assert_bool(_world.events.any_forced_route()).is_true()
+	_world.events.stop_all()
+	assert_bool(_world.events.main.is_running()).is_false()
+	assert_bool(_world.events.any_forced_route()).is_false()
+	assert_bool(_world.walkers.is_scripted(event)).is_false()
+	assert_bool(event.is_locked()).is_false()
+	assert_bool(_world.walkers.is_busy(_player)).is_false()
+	assert_dict(_world.events.lists_state()).is_empty()
+
+
 func test_a_list_goes_on_after_a_warp_frees_its_map() -> void:
 	var wait := WgEventWait.new()
 	wait.seconds = 0.2

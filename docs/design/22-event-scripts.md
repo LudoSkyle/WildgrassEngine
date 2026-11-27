@@ -122,6 +122,50 @@ following Pokémon, the sheets' animations, emotions…
 | `list.map { \|x\| … }`, `.each`, `do … end` | `list.map(func(x): …)`, `for x in list:` |
 | keyword arguments `f(1, volume: 80)` | a Dictionary last: `f(1, {volume = 80})` |
 
+## Characters lifted and the view nudged (step 4)
+
+The sample's elevators, its teleporters and its library's scene lift a
+character pixel by pixel (Studio's `offset_screen_y`), loop until it is
+high enough, and nudge the view along (`gm.scroll_up(16)`). Without these
+words a loop never ends and the game stands still: 37 of the sample's 59
+doors.
+
+**The engine's**, for any game:
+
+| Word | Does |
+|---|---|
+| `WgWalker.look_offset` (`Vector2`, game pixels) | moves what the walker shows, its cell unchanged |
+| `WgWalker.shadow_offset`, `WgWalker.shadow_shown` | moves its shadow, hides it |
+| `Wildgrass.screen.scroll_by(pixels)` | moves the view at once, held within the map, as a scroll does (step 2 of feature 21) |
+| `Wildgrass.followers.put_back()` | the line back on the traveller's cell, hidden (what `enabled` does when it changes) |
+
+The player's look offset, shadow offset and shadow are kept by the save,
+with where it stands (the `map` part), as the reference keeps its player.
+
+**Studio's**, in the Studio layer:
+
+| Studio | Words |
+|---|---|
+| a character's `offset_screen_x`, `offset_screen_y` | its `look_offset`, in Studio's screen units: 32 a cell, so a game pixel is `tile_size / 32` of one; `nil` is 0 |
+| `offset_shadow_screen_x`, `offset_shadow_screen_y` | its `shadow_offset`, the same units |
+| `shadow_disabled` | not `shadow_shown` |
+| `reset_follower` | on the player, its line put back (Studio lets go of the characters following it); on an event, nothing: no event leads a line yet |
+| `leave_cycling_state` | nothing: the engine has no bike yet, the player never rides |
+| `gm` (`$game_map`): `scroll_up`, `scroll_down`, `scroll_left`, `scroll_right(distance)` | `Wildgrass.screen.scroll_by()`, Studio's distance in its map units: 128 a cell |
+| `follow_me`: `smart_disable()` | the followers' line off if it is on, remembered (kept by the save) |
+| `follow_me`: `smart_enable()` | the line on if a `smart_disable()` once found it on (remembered as the reference's, never forgotten), else off |
+| `follow_me`: `update()`, `reset_position()` | nothing to do (the line follows by itself); the line put back |
+
+**The translator** (the rules above): a character's `offset_screen_x`,
+`offset_screen_y`, `offset_shadow_screen_x`, `offset_shadow_screen_y` and
+`shadow_disabled` read and written, `+=` and `-=` on them; Ruby's
+`a = b = value` as two lines (`b = value`, then `a = b`); `reset_follower`
+and `leave_cycling_state` called on a character; `gm`'s scrolls; a
+module's `FollowMe` as `follow_me`.
+
+**Checked** on the sample: every door gone through (`doors.gd`) leads to its
+map with the screen as it should be, the scenes given a minute to play.
+
 ## The Studio importer
 
 A script command (355 and its 655 lines), a script condition, a route's
@@ -177,6 +221,8 @@ function. The Studio importer writes scripts in their place.
    GDScript.
 3. Then each feature adds its words (the party next, and the tower's team
    choice written by hand in the sample).
+4. Characters lifted and the view nudged: the look and shadow offsets,
+   the view scrolled by pixels, the followers' line; their Studio words.
 
 ## Tests
 

@@ -226,3 +226,12 @@ func test_following_the_party_s_first_alive_off_by_default_and_saved() -> void:
 	_world.followers.follow_party = false
 	_world.party.reset()
 	assert_object(_sheet(_world.followers.pokemon)).is_same(_plain)
+
+
+func test_the_line_is_put_back_on_the_player_s_cell_hidden() -> void:
+	var pokemon := _world.followers.follow_pokemon(&"vulpix")
+	pokemon.place_at(Vector2i(9, 9))
+	pokemon.show()
+	_world.followers.put_back()
+	assert_that(pokemon.cell).is_equal(_player.cell)
+	assert_bool(pokemon.visible).is_false()

@@ -33,6 +33,13 @@ const COMMANDS: Dictionary[int, String] = {
 ## The lines that go on a command before them: text, choices' and branches'
 ## ends, comments, move routes, scripts.
 const CONTINUATIONS: Array[int] = [401, 402, 403, 408, 509, 601, 602, 603, 655]
+## The sound commands: the engine's kind, its folder, Studio's folder.
+const EVENT_SOUNDS: Dictionary[int, Array] = {
+	241: [WgEventSound.Kind.MUSIC, "music", "bgm"], 245: [WgEventSound.Kind.AMBIENCE, "ambience", "bgs"],
+	249: [WgEventSound.Kind.JINGLE, "jingles", "me"], 250: [WgEventSound.Kind.EFFECT, "effects", "se"],
+}
+## RPG Maker's weathers by number.
+const WEATHERS: Array[StringName] = [&"none", &"rain", &"storm", &"snow"]
 ## RPG Maker's directions.
 const DIRECTIONS: Dictionary[int, Vector2i] = {2: Vector2i.DOWN, 4: Vector2i.LEFT, 6: Vector2i.RIGHT, 8: Vector2i.UP}
 ## RPG Maker's buttons, as Godot's input actions.
@@ -52,6 +59,9 @@ var data_folder := ""
 var texture_of := Callable()
 ## Where character sheets go in the game.
 var sheets_folder := "res://graphics/characters"
+## Where the pictures and transition pictures the events show go.
+var pictures_folder := "res://graphics/pictures"
+var transitions_folder := "res://graphics/transitions"
 ## The commands kept raw, by what they are: "Show Text", "script give_item".
 var raw_counts: Dictionary[String, int] = {}
 ## The words of messages and choices.
@@ -151,6 +161,36 @@ static func effects_of(lists: Array) -> Array[String]:
 	return found
 
 
+## The sounds the sound commands of `lists` play: `[Studio's folder, name]`
+## each, once.
+static func event_sounds_of(lists: Array) -> Array[Array]:
+	var found: Array[Array] = []
+	for list: Variant in lists:
+		for command: Variant in list if list is Array else []:
+			if command is Dictionary and EVENT_SOUNDS.has(int(command.get("code", 0))):
+				var sound: Variant = (command.get("parameters", [{}]) as Array)[0]
+				var name := str((sound as Dictionary).get("name", "")) if sound is Dictionary else ""
+				var entry := [EVENT_SOUNDS[int(command["code"])][2], name]
+				if not name.is_empty() and not entry in found:
+					found.append(entry)
+	return found
+
+
+## The pictures (231) and transition pictures (222) the commands of `lists`
+## show: `[kind, name]` each (`pictures`, `transitions`), once.
+static func pictures_of(lists: Array) -> Array[Array]:
+	var found: Array[Array] = []
+	for list: Variant in lists:
+		for command: Variant in list if list is Array else []:
+			if not command is Dictionary or int(command.get("code", 0)) not in [222, 231]:
+				continue
+			var p: Array = command.get("parameters", [])
+			var entry := ["transitions" if int(command["code"]) == 222 else "pictures", str(p[0] if int(command["code"]) == 222 else p[1])]
+			if not entry[1].is_empty() and not entry in found:
+				found.append(entry)
+	return found
+
+
 ## The route commands of `code` in the routes the commands of `lists` set.
 static func _route_steps(lists: Array, code: int) -> Array[Dictionary]:
 	var found: Array[Dictionary] = []
@@ -176,6 +216,78 @@ static func sound_file(data: String, folder: String, name: String) -> String:
 		if files.has(candidate.to_lower()):
 			return path.path_join(files[candidate.to_lower()])
 	return ""
+
+
+## Picture `name` of `kind` (`pictures`, `transitions`) where the game has
+## it; null, reported, if it has none.
+func _picture(kind: String, name: String) -> Texture2D:
+	var path := (pictures_folder if kind == "pictures" else transitions_folder).path_join(name + ".png")
+	var found: Texture2D = texture_of.call(path) if texture_of.is_valid() else null
+	if found == null:
+		problems.append("no picture %s" % path)
+	return found
+
+
+## A picture command (231 to 235) as `WgEventPicture`.
+func _picture_command(code: int, p: Array) -> WgEventPicture:
+	var made := WgEventPicture.new()
+	made.number = clampi(int(p[0]), 1, 50)
+	match code:
+		231, 232:
+			made.action = WgEventPicture.Action.SHOW if code == 231 else WgEventPicture.Action.MOVE
+			if code == 231:
+				made.texture = _picture("pictures", str(p[1])) if not str(p[1]).is_empty() else null
+			else:
+				made.seconds = int(p[1]) / 30.0
+			made.origin = clampi(int(p[2]), 0, 1) as WgEventPicture._Screen.Origin
+			made.by_variables = int(p[3]) != 0
+			if made.by_variables:
+				made.x_variable = int(p[4])
+				made.y_variable = int(p[5])
+			else:
+				made.position = Vector2(float(p[4]), float(p[5]))
+			made.zoom = Vector2(float(p[6]), float(p[7]))
+			made.opacity = float(p[8])
+			made.blend = clampi(int(p[9]), 0, 2) as WgEventPicture._Screen.Blend
+		233:
+			made.action = WgEventPicture.Action.ROTATE
+			made.speed = float(p[1])
+		234:
+			made.action = WgEventPicture.Action.TONE
+			var tone := _four(p[1])
+			made.tone = Vector4(tone[0], tone[1], tone[2], tone[3])
+			made.seconds = int(p[2]) / 30.0
+		235:
+			made.action = WgEventPicture.Action.ERASE
+	return made
+
+
+## A sound command as `WgEventSound`, its file as the game has it; null
+## (the command kept raw, counted) if no file Godot plays has its name.
+func _sound_command(code: int, sound: Dictionary) -> WgEventSound:
+	var made := WgEventSound.new()
+	made.kind = EVENT_SOUNDS[code][0]
+	made.volume = int(sound.get("volume", 100)) / 100.0
+	made.pitch = int(sound.get("pitch", 100)) / 100.0
+	var name := str(sound.get("name", ""))
+	if name.is_empty():
+		return made
+	var source := sound_file(data_folder, EVENT_SOUNDS[code][2], name)
+	if source.is_empty() or source.get_extension().to_lower() not in PLAYED_FORMATS:
+		var what := "%s: a sound with no file Godot plays" % COMMANDS[code]
+		raw_counts[what] = raw_counts.get(what, 0) + 1
+		return null
+	made.sound = StringName(source.get_file())
+	return made
+
+
+## RPG Maker's tone or colour: its four numbers (red, green, blue, gray or
+## alpha), as Studio keeps them.
+static func _four(value: Variant) -> Array[float]:
+	var data: Variant = (value as Dictionary).get("data") if value is Dictionary else null
+	if data is PackedByteArray and (data as PackedByteArray).size() >= 32:
+		return [data.decode_double(0), data.decode_double(8), data.decode_double(16), data.decode_double(24)]
+	return [0.0, 0.0, 0.0, 0.0]
 
 
 ## Where the sheet `name` goes in the game.
@@ -390,6 +502,65 @@ func build_command(command: Dictionary) -> WgEventCommand:
 					place.other = int(p[2])
 			place.direction = DIRECTIONS.get(int(p[4]), Vector2i.ZERO)
 			return place
+		203:
+			var scrolled := WgEventScrollMap.new()
+			scrolled.direction = DIRECTIONS.get(int(p[0]), Vector2i.DOWN)
+			scrolled.cells = int(p[1])
+			scrolled.speed = clampi(int(p[2]), 1, 6)
+			return scrolled
+		221:
+			return WgEventFreezeScreen.new()
+		222:
+			var shown := WgEventScreenTransition.new()
+			if not str(p[0]).is_empty():
+				shown.texture = _picture("transitions", str(p[0]))
+			return shown
+		223:
+			var toned := WgEventScreenTone.new()
+			var tone := _four(p[0])
+			toned.tone = Vector4(tone[0], tone[1], tone[2], tone[3])
+			toned.seconds = int(p[1]) / 30.0
+			return toned
+		224:
+			var flashed := WgEventScreenFlash.new()
+			var color := _four(p[0])
+			flashed.color = Color(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, color[3] / 255.0)
+			flashed.seconds = int(p[1]) / 30.0
+			return flashed
+		225:
+			var shaken := WgEventScreenShake.new()
+			shaken.power = clampi(int(p[0]), 1, 9)
+			shaken.speed = clampi(int(p[1]), 1, 9)
+			shaken.seconds = int(p[2]) / 30.0
+			return shaken
+		231, 232, 233, 234, 235:
+			return _picture_command(code, p)
+		236:
+			var weather := WgEventWeather.new()
+			weather.weather = WEATHERS[clampi(int(p[0]), 0, WEATHERS.size() - 1)]
+			weather.power = int(p[1])
+			weather.seconds = int(p[2]) / 30.0
+			return weather
+		241, 245, 249, 250:
+			var sound := _sound_command(code, p[0] if p[0] is Dictionary else {})
+			if sound != null:
+				return sound
+			# Counted by what it lacks.
+			var kept := WgEventRaw.new()
+			kept.code = code
+			kept.parameters = p
+			return kept
+		242, 246:
+			var faded := WgEventFadeSound.new()
+			faded.kind = WgEventFadeSound.Kind.MUSIC if code == 242 else WgEventFadeSound.Kind.AMBIENCE
+			faded.seconds = float(p[0])
+			return faded
+		247:
+			return WgEventMemorizeSound.new()
+		248:
+			return WgEventRestoreSound.new()
+		251:
+			return WgEventStopEffects.new()
 		123:
 			var local := WgEventSetLocalSwitch.new()
 			local.letter = str(p[0])

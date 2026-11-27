@@ -14,6 +14,8 @@ var leaving_name: StringName = &""
 
 var _volume := 1.0
 var _leaving_volume := 1.0
+## How long the one leaving takes to fade out; below 0: the crossfade's.
+var _leaving_seconds := -1.0
 
 
 func _init(host: Node, bus: StringName) -> void:
@@ -26,6 +28,7 @@ func _init(host: Node, bus: StringName) -> void:
 func change(sound_name: StringName, stream: AudioStream, volume := 1.0, pitch := 1.0) -> void:
 	if sound_name == name:
 		return
+	_leaving_seconds = -1.0
 	if not sound_name.is_empty() and sound_name == leaving_name and leaving.playing:
 		var back := leaving
 		leaving = current
@@ -59,14 +62,34 @@ func change(sound_name: StringName, stream: AudioStream, volume := 1.0, pitch :=
 ## Moves the crossfade on by `delta` seconds over `seconds`.
 func advance(delta: float, seconds: float) -> void:
 	var step := delta / seconds if seconds > 0.0 else 1.0
+	var leaving_step := delta / _leaving_seconds if _leaving_seconds > 0.0 else step
 	if current.playing:
 		level = minf(level + step, 1.0)
 	if leaving.playing:
-		leaving_level = maxf(leaving_level - step, 0.0)
+		leaving_level = maxf(leaving_level - leaving_step, 0.0)
 		if leaving_level <= 0.0:
 			leaving.stop()
 			leaving_name = &""
 	_apply()
+
+
+## Fades the sound out over `seconds`: nothing plays after; 0: at once.
+func fade_out(seconds: float) -> void:
+	if seconds <= 0.0:
+		current.stop()
+		leaving.stop()
+		name = &""
+		leaving_name = &""
+		level = 0.0
+		leaving_level = 0.0
+		return
+	change(&"", null)
+	_leaving_seconds = seconds
+
+
+## What plays: `name`, `volume`, `pitch`.
+func playing() -> Dictionary:
+	return {"name": name, "volume": _volume, "pitch": current.pitch_scale}
 
 
 ## Stops the one leaving at once.

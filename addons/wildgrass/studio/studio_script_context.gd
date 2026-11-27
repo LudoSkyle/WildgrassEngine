@@ -10,6 +10,8 @@ const _StudioText := preload("res://addons/wildgrass/studio/studio_text.gd")
 const _StudioPokemon := preload("res://addons/wildgrass/studio/studio_pokemon.gd")
 const _StudioActors := preload("res://addons/wildgrass/studio/studio_actors.gd")
 const _StudioParty := preload("res://addons/wildgrass/studio/studio_party.gd")
+const _StudioMap := preload("res://addons/wildgrass/studio/studio_map.gd")
+const _StudioFollowMe := preload("res://addons/wildgrass/studio/studio_follow_me.gd")
 
 ## Studio's common event shown as a trainer appears (a player seen in a band).
 const APPEARANCE := 2
@@ -44,6 +46,14 @@ var text: _StudioText:
 		return events.get_meta(&"studio_text")
 
 
+## The map's view, as Studio's scripts nudge it (`gm`, `$game_map`).
+var gm: _StudioMap:
+	get:
+		return _StudioMap.new(_events())
+## The followers' line, as Studio's scripts turn it off and back.
+var follow_me: _StudioFollowMe:
+	get:
+		return _StudioFollowMe.new(_events())
 ## The party, as Studio's scripts see it (`$actors`).
 var actors: _StudioActors:
 	get:

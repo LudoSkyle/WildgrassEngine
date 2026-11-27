@@ -230,3 +230,45 @@ func test_a_message_s_cry_tag_plays_the_cry() -> void:
 	assert_bool(_world.audio.cry_player.playing).is_true()
 	_world.audio.cry_player.stop()
 	_world.dialogue.close()
+
+
+func test_music_and_ambience_fade_out_over_their_own_time_or_at_once() -> void:
+	var audio := _world.audio
+	audio.play_music(&"a")
+	audio.advance(1.0)
+	audio.fade_music(4.0)
+	audio.advance(1.0)
+	assert_str(_levels()).is_equal(" 0.00 / a 0.75")
+	audio.advance(3.0)
+	assert_str(_levels()).is_equal(" 0.00 /  0.00")
+	assert_bool(audio.music.leaving.playing).is_false()
+	audio.play_music(&"b")
+	audio.advance(0.5)
+	audio.play_music(&"c")
+	audio.advance(0.25)
+	assert_str(_levels()).is_equal("c 0.25 / b 0.25")
+	audio.play_ambience(&"a")
+	audio.fade_ambience(0.0)
+	audio.fade_music(0.0)
+	assert_str(_levels()).is_equal(" 0.00 /  0.00")
+	assert_bool(audio.music.current.playing or audio.music.leaving.playing or audio.ambience.current.playing).is_false()
+
+
+func test_the_music_and_ambience_memorized_come_back_and_effects_stop() -> void:
+	var audio := _world.audio
+	audio.play_music(&"a", 0.5, 1.5)
+	audio.play_ambience(&"b")
+	audio.memorize()
+	audio.play_music(&"c")
+	audio.fade_ambience(0.0)
+	audio.restore()
+	assert_array([audio.music.name, audio.ambience.name, audio.music.playing()["volume"], audio.music.current.pitch_scale]).is_equal([&"a", &"b", 0.5, 1.5])
+	audio.effect(&"a")
+	audio.effect(&"b")
+	assert_int(audio.voices.filter(func(voice: AudioStreamPlayer) -> bool: return voice.playing).size()).is_equal(2)
+	audio.stop_effects()
+	assert_int(audio.voices.filter(func(voice: AudioStreamPlayer) -> bool: return voice.playing).size()).is_equal(0)
+	var fresh := World.Audio.new(_world.paths, _world.logger, _world.config, _world.species, _world.root)
+	fresh.play_music(&"a")
+	fresh.restore()
+	assert_str(String(fresh.music.name)).is_empty()

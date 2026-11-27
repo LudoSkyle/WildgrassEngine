@@ -334,3 +334,62 @@ func test_add_pokemon_s_shiny_chances_as_studio_draws_them() -> void:
 	maker.rolls.assign([0xFFFF])
 	await _script("add_pokemon(&\"eevee\", 5, true)")
 	assert_array(_world.party.all().map(func(made: WgPokemon) -> bool: return made.is_shiny())).is_equal([false, true, false, true])
+
+
+func test_a_character_lifted_and_its_shadow_in_studio_s_screen_units() -> void:
+	var event := _event(Vector2i(2, 3), 4)
+	_player.add_child(_shadow_of())
+	await _script("gp.offset_screen_y -= 16\ngp.offset_shadow_screen_y = gp.offset_screen_y\nget_character(4).offset_screen_x = 6\ngp.shadow_disabled = true", event)
+	assert_array([_player.look_offset, _player.shadow_offset, _player.shadow_shown, event.look_offset]).is_equal([Vector2(0, -8), Vector2(0, -8), false, Vector2(3, 0)])
+	assert_bool(_holds("gp.offset_screen_y == -16 and gp.offset_shadow_screen_y == -16 and ge(4).offset_screen_x == 6 and gp.shadow_disabled", event)).is_true()
+	assert_bool(_holds("ge(4).offset_screen_y == 0 and ge(4).offset_shadow_screen_x == 0 and not ge(4).shadow_disabled", event)).is_true()
+	await _script("gp.offset_screen_y = null\ngp.offset_shadow_screen_x = 3\ngp.leave_cycling_state()", event)
+	assert_array([_player.look_offset, _player.shadow_offset]).is_equal([Vector2.ZERO, Vector2(1.5, -8)])
+
+
+func test_reset_follower_puts_the_player_s_line_back() -> void:
+	var vulpix := WgSpecies.new()
+	vulpix.id = &"vulpix"
+	vulpix.forms.append(WgSpeciesForm.new())
+	vulpix.forms[0].pictures[&"character"] = _sheet
+	_world.species.register(vulpix)
+	var pokemon := _world.followers.follow_pokemon(&"vulpix")
+	pokemon.place_at(Vector2i(9, 9))
+	var event := _event(Vector2i(2, 3), 4)
+	await _script("ge(4).reset_follower()", event)
+	assert_that(pokemon.cell).is_equal(Vector2i(9, 9))
+	await _script("gp.reset_follower()", event)
+	assert_that(pokemon.cell).is_equal(_player.cell)
+	_world.followers.reset()
+
+
+func test_gm_nudges_the_view_in_studio_s_map_units() -> void:
+	await _script("gm.scroll_up(16)\ngm.scroll_left(256)\ngm.scroll_right(64)\ngm.scroll_down(8)")
+	assert_that(_world.screen.scroll_offset).is_equal(Vector2(-24, -1))
+
+
+func test_follow_me_turns_the_line_off_and_back_as_it_was() -> void:
+	await _script("follow_me.smart_disable()")
+	assert_bool(_world.followers.enabled).is_false()
+	await _script("follow_me.smart_enable()")
+	assert_bool(_world.followers.enabled).is_true()
+	# As the reference's, what was remembered stays: the line comes back on.
+	_world.followers.enabled = false
+	await _script("follow_me.smart_disable()\nfollow_me.smart_enable()")
+	assert_bool(_world.followers.enabled).is_true()
+	_world.story.clear_flag(&"follow_me_was_on")
+	_world.followers.enabled = false
+	await _script("follow_me.smart_disable()\nfollow_me.smart_enable()")
+	assert_bool(_world.followers.enabled).is_false()
+	_world.followers.enabled = true
+	await _script("follow_me.smart_disable()")
+	assert_bool(_world.story.has(&"follow_me_was_on")).is_true()
+	_world.followers.enabled = false
+	await _script("follow_me.update()\nfollow_me.reset_position()\nfollow_me.smart_enable()")
+	assert_bool(_world.followers.enabled).is_true()
+
+
+func _shadow_of() -> Sprite2D:
+	var shadow := Sprite2D.new()
+	shadow.name = "Shadow"
+	return shadow

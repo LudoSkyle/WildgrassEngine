@@ -117,16 +117,16 @@ func test_variables_take_their_operand_as_rpg_maker_says() -> void:
 
 func test_a_command_with_no_class_is_kept_raw_and_counted_by_what_it_is() -> void:
 	var list := [
-		command(231, [1, "picture"]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
-		command(203, [2, 3, 4]), command(111, [12, "$bag.contain_item?(:potion)"]), command(111, [4, 1, 0]),
+		command(207, [1, 5]), command(355, ["Mod::Follow.smart_disable"]), command(655, ["more"]),
+		command(204, [0, "panorama", 0]), command(111, [12, "$bag.contain_item?(:potion)"]), command(111, [4, 1, 0]),
 	]
 	var built := _events.build_commands(list)
-	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([231, 355, 655, 203])
-	assert_array((built[3] as WgEventRaw).parameters).is_equal([2, 3, 4])
+	assert_array(built.slice(0, 4).map(func(made: WgEventCommand) -> int: return (made as WgEventRaw).code)).is_equal([207, 355, 655, 204])
+	assert_array((built[3] as WgEventRaw).parameters).is_equal([0, "panorama", 0])
 	assert_array([(built[4] as WgEventIf).kind, (built[4] as WgEventIf).about, (built[5] as WgEventIf).about]).is_equal([WgEventIf.Kind.UNSUPPORTED, "script contain_item?", "actor condition"])
 	var counts := {}
 	counts.merge(_events.raw_counts)
-	assert_dict(counts).is_equal({"Show Picture": 1, "script smart_disable": 1, "Scroll Map": 1, "condition: script contain_item?": 1, "condition: actor condition": 1})
+	assert_dict(counts).is_equal({"Show Animation": 1, "script smart_disable": 1, "Change Map Settings": 1, "condition: script contain_item?": 1, "condition: actor condition": 1})
 
 
 func test_a_transfer_goes_to_the_map_of_studio_s_number_or_by_variables() -> void:
@@ -219,6 +219,8 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		"$actors[gv[45]].egg?": "actors.at(gv(45)).egg()",
 		"$actors[gv[43]].shiny": "actors.at(gv(43)).shiny",
 		"$pokemon_party.pokemon_alive == 1 && !$actors[gv[45]].dead?": "pokemon_party.pokemon_alive() == 1 and not actors.at(gv(45)).dead()",
+		"gp.offset_screen_y == -256": "gp.offset_screen_y == -256",
+		"get_character(10).offset_screen_y % 3 == 0": "get_character(10).offset_screen_y % 3 == 0",
 	}
 	for ruby: String in conditions:
 		var made := _built(111, [12, ruby]) as WgEventIf
@@ -233,6 +235,13 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		"@froslass = PFM::Pokemon.generate_from_hash(id: :froslass, level: 30)": "memory[\"froslass\"] = pokemon_from_hash({id = &\"froslass\", level = 30})",
 		"PFM::Text.set_variable(\"[POKE]\", $actors[gv[43]].given_name)": "text.set_variable(\"[POKE]\", actors.at(gv(43)).given_name)",
 		"@choices = [ext_text(3, 147),\next_text(3, 148)]": "memory[\"choices\"] = [ext_text(3, 147), ext_text(3, 148)]",
+		"gp.offset_screen_y = gp.offset_shadow_screen_y = 0": "gp.offset_shadow_screen_y = 0\ngp.offset_screen_y = gp.offset_shadow_screen_y",
+		"gp.offset_screen_y -= 16\ngp.offset_shadow_screen_y = gp.offset_screen_y": "gp.offset_screen_y -= 16\ngp.offset_shadow_screen_y = gp.offset_screen_y",
+		"get_character(10).offset_screen_y += 24": "get_character(10).offset_screen_y += 24",
+		"gp.offset_screen_y = gp.offset_shadow_screen_y = nil": "gp.offset_shadow_screen_y = null\ngp.offset_screen_y = gp.offset_shadow_screen_y",
+		"Mod::FollowMe.smart_disable\ngp.shadow_disabled = true\ngp.leave_cycling_state": "follow_me.smart_disable()\ngp.shadow_disabled = true\ngp.leave_cycling_state()",
+		"gp.reset_follower\nOther::Mod::FollowMe.update": "gp.reset_follower()\nfollow_me.update()",
+		"gm.scroll_up(16)\n$game_map.scroll_down(8)": "gm.scroll_up(16)\ngm.scroll_down(8)",
 		"choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")": "choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")",
 	}
 	for ruby: String in scripts:
@@ -252,8 +261,12 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		command(355, ["$actors.first.form"]),
 		command(355, ["set_gv(1, $actors[0].form.level)"]),
 		command(355, ["choice(26, -1, *@choices)"]),
+		command(355, ["Mod::Elsewhere.smart_disable"]),
+		command(355, ["gp.x = 3"]),
+		command(355, ["gp.offset_screen_y = gp.x = 3"]),
+		command(355, ["gm.scroll_far(3)"]),
 	])
-	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true, true, true, true])
+	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true, true, true, true, true, true, true, true])
 
 
 func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_file() -> void:
@@ -309,6 +322,74 @@ func test_files_to_translate_no_longer_waiting_and_untouched_are_removed() -> vo
 	for file: String in left:
 		DirAccess.remove_absolute(folder.path_join(file))
 	DirAccess.remove_absolute(folder)
+
+
+## RPG Maker's tone or colour as the reader gives it: four doubles.
+static func _four(a: float, b: float, c: float, d: float) -> Dictionary:
+	var data := PackedByteArray()
+	data.resize(32)
+	for index in 4:
+		data.encode_double(index * 8, [a, b, c, d][index])
+	return {"class": "Tone", "data": data}
+
+
+func test_the_screen_and_sound_commands_are_written_as_the_engine_s() -> void:
+	var root := "user://studio_screen_test"
+	for file: String in ["audio/bgm/Town.ogg", "audio/me/Fanfare.ogg", "audio/se/door.wav", "audio/se/Old.mid", "Data/x"]:
+		DirAccess.make_dir_recursive_absolute(root.path_join(file).get_base_dir())
+		FileAccess.open(root.path_join(file), FileAccess.WRITE).store_string("x")
+	_events = StudioEvents.new(root.path_join("Data"))
+	var picture := ImageTexture.create_from_image(Image.create(2, 2, false, Image.FORMAT_RGBA8))
+	_events.texture_of = func(path: String) -> Texture2D: return picture if path == "res://graphics/pictures/intro.png" or path == "res://graphics/transitions/swirl.png" else null
+	var scrolled := _built(203, [6, 3, 5]) as WgEventScrollMap
+	assert_array([scrolled.direction, scrolled.cells, scrolled.speed]).is_equal([Vector2i.RIGHT, 3, 5])
+	assert_object(_built(221, []) as WgEventFreezeScreen).is_not_null()
+	assert_object((_built(222, [""]) as WgEventScreenTransition).texture).is_null()
+	assert_object((_built(222, ["swirl"]) as WgEventScreenTransition).texture).is_same(picture)
+	var toned := _built(223, [_four(-255, 0, 34, 255), 20]) as WgEventScreenTone
+	assert_array([toned.tone, toned.seconds]).is_equal([Vector4(-255, 0, 34, 255), 20 / 30.0])
+	var flashed := _built(224, [_four(255, 128, 0, 51), 6]) as WgEventScreenFlash
+	assert_array([flashed.color, flashed.seconds]).is_equal([Color(1, 128 / 255.0, 0, 0.2), 0.2])
+	var shaken := _built(225, [4, 7, 15]) as WgEventScreenShake
+	assert_array([shaken.power, shaken.speed, shaken.seconds]).is_equal([4, 7, 0.5])
+	var shown := _built(231, [2, "intro", 1, 0, 40, 50, 150, 80, 128, 2]) as WgEventPicture
+	assert_array([shown.action, shown.number, shown.texture, shown.origin, shown.by_variables, shown.position, shown.zoom, shown.opacity, shown.blend]) \
+		.is_equal([WgEventPicture.Action.SHOW, 2, picture, 1, false, Vector2(40, 50), Vector2(150, 80), 128.0, 2])
+	var moved := _built(232, [2, 15, 0, 1, 7, 8, 100, 100, 255, 0]) as WgEventPicture
+	assert_array([moved.action, moved.seconds, moved.by_variables, moved.x_variable, moved.y_variable]).is_equal([WgEventPicture.Action.MOVE, 0.5, true, 7, 8])
+	var turned := _built(233, [2, -6]) as WgEventPicture
+	assert_array([turned.action, turned.speed]).is_equal([WgEventPicture.Action.ROTATE, -6.0])
+	var tinted := _built(234, [2, _four(0, 0, 0, 255), 30]) as WgEventPicture
+	assert_array([tinted.action, tinted.tone, tinted.seconds]).is_equal([WgEventPicture.Action.TONE, Vector4(0, 0, 0, 255), 1.0])
+	assert_int((_built(235, [2]) as WgEventPicture).action).is_equal(WgEventPicture.Action.ERASE)
+	assert_object((_built(231, [3, "lost", 0, 0, 0, 0, 100, 100, 255, 0]) as WgEventPicture).texture).is_null()
+	assert_bool(_events.problems.has("no picture res://graphics/pictures/lost.png")).is_true()
+	var weather := _built(236, [3, 5, 40]) as WgEventWeather
+	assert_array([weather.weather, weather.power, weather.seconds]).is_equal([&"snow", 5, 40 / 30.0])
+	var music := _built(241, [{"name": "town", "volume": 80, "pitch": 150}]) as WgEventSound
+	assert_array([music.kind, music.sound, music.volume, music.pitch]).is_equal([WgEventSound.Kind.MUSIC, &"Town.ogg", 0.8, 1.5])
+	assert_that((_built(249, [{"name": "Fanfare", "volume": 100, "pitch": 100}]) as WgEventSound).sound).is_equal(&"Fanfare.ogg")
+	assert_that((_built(250, [{"name": "door", "volume": 100, "pitch": 100}]) as WgEventSound).sound).is_equal(&"door.wav")
+	assert_that((_built(245, [{"name": "", "volume": 100, "pitch": 100}]) as WgEventSound).sound).is_equal(&"")
+	assert_object(_built(250, [{"name": "Old", "volume": 100, "pitch": 100}]) as WgEventRaw).is_not_null()
+	assert_object(_built(249, [{"name": "nowhere", "volume": 100, "pitch": 100}]) as WgEventRaw).is_not_null()
+	assert_int(_events.raw_counts.get("Play SE: a sound with no file Godot plays", 0)).is_equal(1)
+	assert_int(_events.raw_counts.get("Play ME: a sound with no file Godot plays", 0)).is_equal(1)
+	assert_int(_events.raw_counts.get("Play SE", 0)).is_equal(0)
+	var faded := _built(246, [3]) as WgEventFadeSound
+	assert_array([faded.kind, faded.seconds]).is_equal([WgEventFadeSound.Kind.AMBIENCE, 3.0])
+	assert_int((_built(242, [0]) as WgEventFadeSound).kind).is_equal(WgEventFadeSound.Kind.MUSIC)
+	assert_object(_built(247, []) as WgEventMemorizeSound).is_not_null()
+	assert_object(_built(248, []) as WgEventRestoreSound).is_not_null()
+	assert_object(_built(251, []) as WgEventStopEffects).is_not_null()
+	var lists := [[command(231, [1, "intro", 0, 0, 0, 0, 100, 100, 255, 0]), command(222, ["swirl"]), command(222, [""]), command(241, [{"name": "Town"}]),
+		command(250, [{"name": "door"}]), command(250, [{"name": "door"}]), command(231, [2, "intro", 0, 0, 0, 0, 100, 100, 255, 0])]]
+	assert_array(StudioEvents.pictures_of(lists)).is_equal([["pictures", "intro"], ["transitions", "swirl"]])
+	assert_array(StudioEvents.event_sounds_of(lists)).is_equal([["bgm", "Town"], ["se", "door"]])
+	for file: String in ["audio/bgm/Town.ogg", "audio/me/Fanfare.ogg", "audio/se/door.wav", "audio/se/Old.mid", "Data/x"]:
+		DirAccess.remove_absolute(root.path_join(file))
+	for folder: String in ["audio/bgm", "audio/me", "audio/se", "audio", "Data", ""]:
+		DirAccess.remove_absolute(root.path_join(folder))
 
 
 func test_a_script_s_method_drops_its_modules_and_receivers() -> void:

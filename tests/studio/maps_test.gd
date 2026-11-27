@@ -547,7 +547,7 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 	var talker := Events.event([Events.page([Events.command(101, ["Hi"]), Events.command(401, ["there"]), has_potion], {"graphic": "npc"})], "Talker")
 	talker["x"] = 2
 	talker["y"] = 1
-	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2), Events.command(203, [2, 3, 4])], {"trigger": 1})], "Door")
+	var door := Events.event([Events.page([Events.transfer(2, Vector2i(3, 1), 2), Events.command(207, [1, 5])], {"trigger": 1})], "Door")
 	door["id"] = 2
 	var file := FileAccess.open(_data + "Map001.rxdata", FileAccess.WRITE)
 	file.store_buffer(Writer.bytes_of({"class": "RPG::Map", "events": {1: talker, 2: door}}))
@@ -578,6 +578,31 @@ func test_a_map_s_events_are_written_in_its_scene_their_sheets_and_common_events
 		"Studio events, as the importer writes them.",
 		"2 events on 2 maps, 6 commands.",
 		"What the engine does not run yet, by count:",
-		"  1 Scroll Map",
+		"  1 Show Animation",
 		"",
 	])
+
+
+func test_the_pictures_and_sounds_events_use_are_copied_once() -> void:
+	const Events := preload("res://tests/studio/events_test.gd")
+	const Writer := preload("res://tests/support/marshal_writer.gd")
+	for file: String in ["graphics/pictures/Intro.png", "graphics/transitions/swirl.png", "audio/se/door.ogg", "audio/bgm/Town.ogg", "audio/me/Old.mid"]:
+		_world.sandbox.write(file, "x")
+	var shows := Events.event([Events.page([
+		Events.command(231, [1, "intro", 0, 0, 0, 0, 100, 100, 255, 0]), Events.command(222, ["swirl"]), Events.command(231, [2, "lost", 0, 0, 0, 0, 100, 100, 255, 0]),
+		Events.command(250, [{"name": "door"}]), Events.command(241, [{"name": "Town"}]), Events.command(249, [{"name": "Old"}]),
+	])])
+	var file := FileAccess.open(_data + "Map001.rxdata", FileAccess.WRITE)
+	file.store_buffer(Writer.bytes_of({"class": "RPG::Map", "events": {1: shows}}))
+	file.close()
+	_importer.audio_folder = _world.sandbox.root + "game_audio"
+	_importer._events_reader().pictures_folder = _world.sandbox.root + "game_pictures"
+	_importer._events_reader().transitions_folder = _world.sandbox.root + "game_transitions"
+	var written := _importer.write_media(["map001"])
+	written.sort()
+	assert_array(written).is_equal([
+		_world.sandbox.root + "game_audio/effects/door.ogg", _world.sandbox.root + "game_audio/music/Town.ogg",
+		_world.sandbox.root + "game_pictures/intro.png", _world.sandbox.root + "game_transitions/swirl.png",
+	])
+	assert_bool(_importer.problems.has("no picture graphics/pictures/lost.png")).is_true()
+	assert_array(_importer.write_media(["map001"])).is_empty()
