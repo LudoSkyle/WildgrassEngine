@@ -222,8 +222,8 @@ func force_route(walker: WgWalker, route: WgMoveRoute) -> void:
 	if mover == null:
 		mover = _Mover.new(self, walker)
 		_movers[walker] = mover
-	mover.force(route)
 	walkers.drive(walker, mover.drive)
+	mover.force(route)
 
 
 ## True while a walker follows a route a command imposed.
