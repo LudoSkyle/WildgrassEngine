@@ -30,6 +30,7 @@ const Natures := preload("res://addons/wildgrass/pokemon/natures.gd")
 const Trainer := preload("res://addons/wildgrass/party/trainer.gd")
 const PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
 const Party := preload("res://addons/wildgrass/party/party.gd")
+const Screen := preload("res://addons/wildgrass/screen/screen.gd")
 const Pokedex := preload("res://addons/wildgrass/pokedex/pokedex.gd")
 const Encounters := preload("res://addons/wildgrass/wild/encounters.gd")
 const Audio := preload("res://addons/wildgrass/audio/audio.gd")
@@ -77,6 +78,7 @@ var natures: Natures
 var trainer: Trainer
 var pokemon: PokemonMaker
 var party: Party
+var screen: Screen
 ## Its save part and summary are added by the tests that need them.
 var pokedex: Pokedex
 var encounters: Encounters
@@ -193,6 +195,8 @@ func _init(parent: Node, map_config := {}) -> void:
 	events.pokemon = pokemon
 	events.trainer = trainer
 	events.species = species
+	screen = Screen.new(logger, config)
+	events.screen = screen
 	followers = Followers.new(logger, hooks, maps, walkers, species)
 	followers.watch_party(party)
 	grass = TallGrass.new(hooks, walkers, tiles)
@@ -205,6 +209,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	weather = Weather.new(paths, logger)
 	weather.daytime = daytime
 	weather.follow(maps)
+	events.weather = weather
 	audio.follow(maps)
 	story.add_tags(dialogue)
 	bag.add_tags(dialogue, screens)

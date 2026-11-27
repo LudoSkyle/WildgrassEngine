@@ -47,6 +47,8 @@ const _Events := preload("res://addons/wildgrass/events/events.gd")
 const _Trainer := preload("res://addons/wildgrass/party/trainer.gd")
 const _PokemonMaker := preload("res://addons/wildgrass/party/pokemon_maker.gd")
 const _Party := preload("res://addons/wildgrass/party/party.gd")
+const _Screen := preload("res://addons/wildgrass/screen/screen.gd")
+const _ScreenView := preload("res://addons/wildgrass/screen/screen_view.gd")
 
 ## A project setting here names a subclass to use instead of a service.
 const SERVICE_SETTING_PREFIX := "wildgrass/services/"
@@ -86,6 +88,8 @@ var trainer: _Trainer
 var pokemon: _PokemonMaker
 ## The player's Pokémon.
 var party: _Party
+## What scenes do to the screen: tone, flash, shake, scroll, pictures.
+var screen: _Screen
 var pokedex: _Pokedex
 var encounters: _Encounters
 var audio: _Audio
@@ -129,6 +133,9 @@ func _init() -> void:
 	daytime.follow(maps)
 	zones = _service(&"zones", _Zones, [paths, log, maps, screens, texts, screen_layer])
 	weather = _service(&"weather", _Weather, [paths, log])
+	screen = _service(&"screen", _Screen, [log, config])
+	add_child(_ScreenView.new(screen))
+	maps.traveller_arrived.connect(func(_direction: Vector2i, _point: Node2D) -> void: screen.reset_scroll())
 	weather.daytime = daytime
 	weather.follow(maps)
 	tiles = _service(&"tiles", _Tiles, [log, config, hooks, maps])
@@ -162,6 +169,8 @@ func _init() -> void:
 	events.pokemon = pokemon
 	events.trainer = trainer
 	events.species = species
+	events.screen = screen
+	events.weather = weather
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
 	followers.watch_party(party)
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
@@ -256,6 +265,7 @@ func _add_parts() -> void:
 	save.add_part(&"pokedex", pokedex.state, pokedex.restore, pokedex.reset)
 	save.add_part(&"followers", followers.state, followers.restore, followers.reset)
 	save.add_part(&"map", walkers.map_state, walkers.restore_map, walkers.reset_map, walkers.check_map)
+	save.add_part(&"screen", screen.state, screen.restore, screen.reset)
 	hooks.add(&"save_summary", &"wildgrass_clock", clock.save_summary)
 	hooks.add(&"save_summary", &"wildgrass_map", walkers.map_summary)
 	hooks.add(&"save_summary", &"wildgrass_pokedex", pokedex.save_summary)
@@ -311,6 +321,8 @@ func _notification(what: int) -> void:
 func _process(delta: float) -> void:
 	clock.advance(delta)
 	events.advance(delta)
+	screen.advance(delta)
+	daytime.tint_share = screen.day_share
 	daytime.advance(delta)
 	grass.advance(delta)
 	footprints.advance(delta)

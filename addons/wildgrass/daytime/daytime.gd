@@ -17,6 +17,9 @@ signal moment_changed(old: StringName, new: StringName)
 var log: _Log
 ## An hour that wins over the others, 0 to 24; -1: none. Not saved.
 var forced_hour := -1.0
+## How much of the tint and light show, 0 to 1: a scene's tone of the screen
+## replaces them while it lasts (`Wildgrass.screen`).
+var tint_share := 1.0
 ## Keeps `day_tint` and `night_light` up to date; set once they are declared.
 var updates_shader_globals := false
 ## What tints the maps outside, under the maps' host.
@@ -85,13 +88,13 @@ func map_tint() -> Color:
 	var map: WgMap = _maps.current if _maps != null else null
 	if map == null or not map.outside:
 		return Color.WHITE
-	return tint() * map.shade
+	return Color.WHITE.lerp(tint() * map.shade, clampf(tint_share, 0.0, 1.0))
 
 
 ## The light of lights now: the moment's outside, 0 inside.
 func map_light() -> float:
 	var map: WgMap = _maps.current if _maps != null else null
-	return light() if map != null and map.outside else 0.0
+	return light() * clampf(tint_share, 0.0, 1.0) if map != null and map.outside else 0.0
 
 
 ## Moves the game's own hour on by `delta` seconds of the game clock, tints

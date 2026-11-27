@@ -250,6 +250,49 @@ func write_effects(symbols: Array[String]) -> Array[String]:
 	return written
 
 
+## Copies what the events of the maps `symbols` and the common events play
+## and show into the game, once each: their music, ambiences, jingles and
+## effects, their pictures and transition pictures. Returns the files
+## written.
+func write_media(symbols: Array[String]) -> Array[String]:
+	var written: Array[String] = []
+	var lists := _all_lists(symbols)
+	var events := _events_reader()
+	var kinds := {}
+	for code: int in _StudioEvents.EVENT_SOUNDS:
+		kinds[_StudioEvents.EVENT_SOUNDS[code][2]] = _StudioEvents.EVENT_SOUNDS[code][1]
+	var copies: Array[Array] = []
+	for entry: Array in _StudioEvents.event_sounds_of(lists):
+		var source := _StudioEvents.sound_file(data_folder, entry[0], entry[1])
+		if not source.is_empty() and source.get_extension().to_lower() in PLAYED_FORMATS:
+			copies.append([source, audio_folder.path_join(kinds[entry[0]]).path_join(source.get_file())])
+	for entry: Array in _StudioEvents.pictures_of(lists):
+		var source := _picture_file(entry[0], entry[1])
+		if source.is_empty():
+			problems.append("no picture graphics/%s/%s.png" % entry)
+			continue
+		var folder: String = events.pictures_folder if entry[0] == "pictures" else events.transitions_folder
+		copies.append([source, folder.path_join(entry[1] + ".png")])
+	for copy: Array in copies:
+		if _is_fresh(copy[1], FileAccess.get_modified_time(copy[0])):
+			continue
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(str(copy[1]).get_base_dir()))
+		if DirAccess.copy_absolute(copy[0], ProjectSettings.globalize_path(copy[1])) == OK:
+			written.append(copy[1])
+	return written
+
+
+## Studio's picture `name` of `kind` (`pictures`, `transitions`), a PNG as
+## Studio finds it (its name in any case); "" if none.
+func _picture_file(kind: String, name: String) -> String:
+	var folder := data_folder.path_join("../graphics").simplify_path().path_join(kind).path_join(name.get_base_dir())
+	var wanted := (name.get_file() + ".png").to_lower()
+	for file in DirAccess.get_files_at(folder) if DirAccess.dir_exists_absolute(folder) else PackedStringArray():
+		if file.to_lower() == wanted:
+			return folder.path_join(file)
+	return ""
+
+
 ## Where the sound effect copied from `source` goes in the game.
 func effect_path(source: String) -> String:
 	return audio_folder.path_join(EFFECTS[0]).path_join(source.get_file())

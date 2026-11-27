@@ -3,9 +3,8 @@
 Status: in progress. Done: events, pages and their conditions, how events
 start, the lists and their flow and story commands, common events, messages,
 choices and numbers, moving by oneself and routes imposed, transfers,
-events placed, local switches of other events. Being done: the screen and
-sound commands (step 2, designed below). Then script calls (see *In
-steps*).
+events placed, local switches of other events, the screen and sound
+commands (step 2). Next: script calls (see *In steps*).
 
 What a map does as the player goes: characters that talk, doors that open,
 scenes that play. An event stands on a cell with pages; the page shown is the
@@ -261,7 +260,7 @@ pauses the music as the engine's jingles do; the list does not wait for it.
 | `WgEventScreenShake` | `power`, `speed`, `seconds`; the list goes on |
 | `WgEventScrollMap` | `direction`, `cells`, `speed`; waits for a scroll under way first, then goes on |
 | `WgEventPicture` | `action` (`SHOW`, `MOVE`, `ROTATE`, `TONE`, `ERASE`), `number`, `texture`, `origin`, `position` (or two variables), `zoom`, `opacity`, `blend`, `seconds`, `speed`, `tone`; the list goes on |
-| `WgEventFreezeScreen`, `WgEventTransition` | the screen held still; then shown again, `texture` (none: a dissolve) over `seconds`; the list waits until the transition starts |
+| `WgEventFreezeScreen`, `WgEventScreenTransition` | the screen held still (after a message under way); then shown again, `texture` (none: a dissolve) over `seconds`; the list waits until the transition ends, as RPG Maker's game does |
 | `WgEventWeather` | `weather`, `power`, `seconds` |
 | `WgEventSound` | `kind` (`MUSIC`, `AMBIENCE`, `JINGLE`, `EFFECT`), `sound`, `volume`, `pitch` |
 | `WgEventFadeSound` | `kind` (`MUSIC`, `AMBIENCE`), `seconds` (0: at once) |
@@ -272,7 +271,9 @@ pauses the music as the engine's jingles do; the list does not wait for it.
 them; an `RPG::AudioFile`: its name, volume and pitch), and copies the
 pictures, transition pictures, music, jingles and effects the events name
 into the game (`graphics/pictures/`, `graphics/transitions/`, `audio/…`),
-as it does sheets and sounds already.
+as it does sheets and sounds already. A sound with no file Godot plays
+stays raw, counted by what it lacks; a picture that is no PNG (a GIF)
+shows nothing, reported.
 
 ## Script calls
 

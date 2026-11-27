@@ -303,6 +303,20 @@ volumes in the options: music, effects, cries.
 Wildgrass.audio.play_music(&"route_1")
 await Wildgrass.audio.jingle(&"key_item")
 Wildgrass.audio.cry(&"pikachu")
+Wildgrass.audio.fade_music(2.0)                     # memorize(), restore(), stop_effects()
+```
+
+**The screen in scenes**: `Wildgrass.screen` tones the map (red, green,
+blue added, gray; neutral: back to the day's tint), flashes, shakes,
+scrolls the view away from the player, shows pictures 1 to 50 over the map
+(moved, turned, toned), holds the screen still then shows it again through
+a transition; in RPG Maker's ticks, kept by the save. Events say it with
+`WgEventScreenTone`, `WgEventPicture`, `WgEventScrollMap`, `WgEventSound`…
+
+```gdscript
+Wildgrass.screen.tone_to(Vector4(-255, -255, -255, 0), 0.5)   # to black
+Wildgrass.screen.show_picture(1, load("res://graphics/pictures/oak.png"), {"position": Vector2(80, 40)})
+Wildgrass.screen.scroll(Vector2i.UP, 5, 4)
 ```
 
 **Day and night**: the hour is the player's clock, or the game's own

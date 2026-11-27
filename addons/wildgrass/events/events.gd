@@ -68,6 +68,9 @@ var party: Object
 var pokemon: Object
 var trainer: Object
 var species: Object
+## The screen's effects and the weather, for the screen's commands.
+var screen: Object
+var weather: Object
 ## A common event to run first as soon as no list holds the player.
 var _common_wanted := 0
 

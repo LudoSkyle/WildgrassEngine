@@ -33,6 +33,20 @@ func test_a_map_outside_is_tinted_by_the_moment_and_its_shade() -> void:
 	assert_str(_color(_world.daytime.canvas_modulate.color)).is_equal("0.50 0.50 0.50")
 
 
+func test_a_screen_tone_takes_the_tint_s_place_by_its_share() -> void:
+	var map := _world.map()
+	map.outside = true
+	_world.daytime.tint_share = 0.5
+	_world.daytime.advance(0.0)
+	assert_str(_color(_world.daytime.canvas_modulate.color)).is_equal("0.69 0.72 0.89")
+	var night := _world.daytime.light()
+	assert_float(_world.daytime.map_light()).is_equal_approx(night * 0.5, 0.0001)
+	_world.daytime.tint_share = 0.0
+	_world.daytime.advance(0.0)
+	assert_str(_color(_world.daytime.canvas_modulate.color)).is_equal("1.00 1.00 1.00")
+	assert_float(_world.daytime.map_light()).is_equal(0.0)
+
+
 func test_a_map_inside_or_no_map_is_never_tinted() -> void:
 	_world.daytime.advance(0.0)
 	assert_str(_color(_world.daytime.canvas_modulate.color)).is_equal("1.00 1.00 1.00")
