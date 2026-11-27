@@ -3,8 +3,9 @@
 Status: in progress. Done: events, pages and their conditions, how events
 start, the lists and their flow and story commands, common events, messages,
 choices and numbers, moving by oneself and routes imposed, transfers,
-events placed, local switches of other events. Next: the screen and sound
-commands (step 2), then script calls (see *In steps*).
+events placed, local switches of other events. Being done: the screen and
+sound commands (step 2, designed below). Then script calls (see *In
+steps*).
 
 What a map does as the player goes: characters that talk, doors that open,
 scenes that play. An event stands on a cell with pages; the page shown is the
@@ -221,6 +222,57 @@ mode, and a spotted player made to walk.
 `common_events`): a list called by number, or run by itself (`AUTORUN`,
 `PARALLEL`) while its `switch` (a flag) is on. Calls nest up to 100 deep; a
 missing one is logged once.
+
+## The screen and the sound (step 2)
+
+What a scene does to the screen and the sound around its messages and
+moves, as the reference does, in RPG Maker's ticks (60 a second; a
+command's `n` frames last `n / 30` s, as `WgEventWait`'s).
+
+**`Wildgrass.screen`**, a service the commands and a game's own code use,
+kept by the save (part `screen`, after `map`), as the reference keeps its
+screen:
+
+| Effect | As the reference | Drawn |
+|---|---|---|
+| **Tone** `tone(Vector4(red, green, blue, gray), seconds)`, each -255 to 255 (gray 0 to 255) | each tick a share of the way left (`(now × (d - 1) + target) / d`) | the map and its characters, under the pictures and the screens: red, green, blue added, gray the colours toward grey |
+| **Neutral tone** `tone(Vector4.ZERO, seconds)` | the reference goes back to its day and night tone | back to the day's tint (feature 16): while a tone is set, the day's tint is not applied; it fades back in as the tone fades out |
+| **Flash** `flash(Color, seconds)` | its alpha down to 0 | over the map and the pictures |
+| **Shake** `shake(power, speed, seconds)`, 1 to 9 | RPG Maker's sideways swing, back to 0 at the end | the map and its characters move sideways; the pictures and the screens stay |
+| **Scroll** `scroll(direction, cells, speed)`, speed 1 to 6 (`2^speed / 128` cells a tick) | `start_scroll`: the view slides away from the player and stays there until a scroll brings it back; held within the map as the camera is | the camera's offset; `is_scrolling()` |
+| **Pictures** 1 to 50: `show_picture(n, texture, options)`, `move_picture(n, seconds, options)`, `rotate_picture(n, speed)`, `tone_picture(n, tone, seconds)`, `erase_picture(n)`; options: `origin` (top-left or centre), `position`, `zoom` (%), `opacity` (0 to 255), `blend` (normal, add, subtract) | `Game_Picture`: moving a share of the way each tick; rotating `speed / 2` degrees a tick | above the map, under the messages and screens, in game pixels from the screen's top-left; number `n` over `n - 1`; not toned by the screen's tone |
+| **Freeze** `freeze()`, then `transition(texture, seconds)` | `Graphics.freeze` and `transition`: what shows stays still until the transition; then 20 ticks of dissolve, or 60 through a transition picture (its dark parts first) | a still of the screen over everything but the screens |
+
+Weather (`236`) is feature 17's: `Wildgrass.weather.current`, `none`,
+`rain`, `storm` or `snow` by RPG Maker's number (the reference turns storm
+into rain), its power and fade kept as the weather's.
+
+**Sound**: the audio service (feature 15) gains `fade_music(seconds)`,
+`fade_ambience(seconds)`, `stop_effects()`, `memorize()` and `restore()`
+(the music and ambience playing, and back). A jingle (RPG Maker's ME)
+pauses the music as the engine's jingles do; the list does not wait for it.
+
+**Commands**, each a resource a game edits in the inspector:
+
+| Command | Does |
+|---|---|
+| `WgEventScreenTone` | `tone` (a `Vector4`), `seconds`; the list goes on |
+| `WgEventScreenFlash` | `color`, `seconds`; the list goes on |
+| `WgEventScreenShake` | `power`, `speed`, `seconds`; the list goes on |
+| `WgEventScrollMap` | `direction`, `cells`, `speed`; waits for a scroll under way first, then goes on |
+| `WgEventPicture` | `action` (`SHOW`, `MOVE`, `ROTATE`, `TONE`, `ERASE`), `number`, `texture`, `origin`, `position` (or two variables), `zoom`, `opacity`, `blend`, `seconds`, `speed`, `tone`; the list goes on |
+| `WgEventFreezeScreen`, `WgEventTransition` | the screen held still; then shown again, `texture` (none: a dissolve) over `seconds`; the list waits until the transition starts |
+| `WgEventWeather` | `weather`, `power`, `seconds` |
+| `WgEventSound` | `kind` (`MUSIC`, `AMBIENCE`, `JINGLE`, `EFFECT`), `sound`, `volume`, `pitch` |
+| `WgEventFadeSound` | `kind` (`MUSIC`, `AMBIENCE`), `seconds` (0: at once) |
+| `WgEventStopEffects`, `WgEventMemorizeSound`, `WgEventRestoreSound` | as their names |
+
+**The Studio importer** writes them from codes 203, 221 to 225, 231 to
+236, 241 to 251 (a tone, a colour: four numbers each, as Studio keeps
+them; an `RPG::AudioFile`: its name, volume and pitch), and copies the
+pictures, transition pictures, music, jingles and effects the events name
+into the game (`graphics/pictures/`, `graphics/transitions/`, `audio/…`),
+as it does sheets and sounds already.
 
 ## Script calls
 
