@@ -137,8 +137,17 @@ func test_a_frozen_screen_comes_back_in_20_ticks_or_60_through_a_picture() -> vo
 	_screen.freeze()
 	assert_bool(_screen.frozen).is_true()
 	assert_bool(_screen.is_transitioning()).is_false()
-	_ticks(30)
+	_ticks(9)
+	assert_array([_screen.frozen, _screen.is_transitioning()]).is_equal([true, false])
+	# Frozen too long: it comes back by itself, as the reference's.
+	_ticks(1)
+	assert_bool(_screen.is_transitioning()).is_true()
+	_ticks(7)
 	assert_bool(_screen.frozen).is_true()
+	_ticks(1)
+	assert_bool(_screen.frozen).is_false()
+	_screen.freeze()
+	_ticks(5)
 	_screen.transition()
 	_ticks(10)
 	assert_float(_screen.transition_progress).is_equal_approx(0.5, 0.0001)
@@ -220,6 +229,21 @@ func test_the_view_draws_the_tone_pictures_and_flash_and_moves_the_camera() -> v
 	_screen.erase_picture(4)
 	view.draw()
 	assert_bool(is_instance_valid(sprite) and not sprite.is_queued_for_deletion()).is_false()
+
+
+func test_a_frozen_still_is_drawn_at_the_screen_s_size_whatever_its_own() -> void:
+	var view := ScreenView.new(_screen)
+	view.capture = func() -> Texture2D: return ImageTexture.create_from_image(Image.create(1280, 960, false, Image.FORMAT_RGBA8))
+	_world.root.add_child(view)
+	_screen.freeze()
+	view.draw()
+	var still := view.get_node("Still").get_child(0) as TextureRect
+	assert_bool(still.visible).is_true()
+	assert_that(still.size).is_equal(view.get_viewport().get_visible_rect().size)
+	_screen.transition(null, TICK)
+	_screen.advance(TICK)
+	view.draw()
+	assert_bool(still.visible).is_false()
 
 
 func test_the_view_holds_a_scroll_within_the_camera_s_limits() -> void:

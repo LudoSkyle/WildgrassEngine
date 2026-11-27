@@ -15,6 +15,8 @@ const FLASH_LAYER := 30
 const STILL_LAYER := 90
 
 var screen: _Screen
+## Takes what shows, for a frozen screen; a test gives its own.
+var capture := Callable()
 
 var _tone: ColorRect
 var _pictures: Node2D
@@ -41,6 +43,8 @@ func _init(shown: _Screen) -> void:
 	_flash = _full_rect(ColorRect.new())
 	_layer(FLASH_LAYER, "Flash").add_child(_flash)
 	_still = _full_rect(TextureRect.new())
+	# The still is the window's size: it is drawn at the screen's, never its own.
+	_still.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_still.stretch_mode = TextureRect.STRETCH_SCALE
 	var still_material := ShaderMaterial.new()
 	still_material.shader = _TransitionShader
@@ -105,7 +109,7 @@ func _blend_shader(blend: int) -> Shader:
 
 func _draw_still() -> void:
 	if screen.frozen and not _was_frozen:
-		_still.texture = _capture()
+		_still.texture = capture.call() if capture.is_valid() else _capture()
 	_was_frozen = screen.frozen
 	_still.visible = screen.frozen and _still.texture != null
 	if not _still.visible:

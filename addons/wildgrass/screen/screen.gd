@@ -16,6 +16,10 @@ const PICTURES := 50
 ## picture this many, as the reference's.
 const DISSOLVE_TICKS := 20
 const PICTURE_TRANSITION_TICKS := 60
+## The reference holds a frozen screen this many ticks at most, then shows
+## it again by itself through a dissolve of `LATE_TRANSITION_TICKS`.
+const FREEZE_TICKS := 10
+const LATE_TRANSITION_TICKS := 8
 enum Origin { TOP_LEFT, CENTER }
 enum Blend { NORMAL, ADD, SUBTRACT }
 
@@ -56,6 +60,7 @@ var _scroll_rest := 0.0
 var _scroll_speed := 4
 var _transition_ticks := 0
 var _transition_total := 0
+var _freeze_left := 0
 var _pictures: Dictionary[int, Dictionary] = {}
 
 
@@ -170,11 +175,13 @@ func picture_numbers() -> Array[int]:
 	return numbers
 
 
-## Holds what shows still, until `transition()`.
+## Holds what shows still, until `transition()`; after `FREEZE_TICKS`
+## ticks without one, it comes back by itself, as the reference's.
 func freeze() -> void:
 	frozen = true
 	transition_progress = 0.0
 	_transition_ticks = 0
+	_freeze_left = FREEZE_TICKS
 
 
 ## Shows the screen again: a dissolve of 20 ticks, or through `texture` (its
@@ -295,7 +302,11 @@ func _tick() -> void:
 		_scroll_rest -= distance
 	for number: int in _pictures:
 		_tick_picture(_pictures[number])
-	if is_transitioning():
+	if frozen and _transition_ticks == 0:
+		_freeze_left -= 1
+		if _freeze_left <= 0:
+			transition(null, LATE_TRANSITION_TICKS * TICK)
+	elif is_transitioning():
 		_transition_ticks -= 1
 		transition_progress = 1.0 - float(_transition_ticks) / _transition_total
 		if _transition_ticks == 0:
