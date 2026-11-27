@@ -54,6 +54,25 @@ signal bumped(direction: Vector2i)
 @export var fixed_direction := false
 ## Moves its legs when it walks; else it glides.
 @export var walk_animation := true
+## Moves what it shows, its cell unchanged, in game pixels: a scene lifting
+## it off the ground.
+var look_offset := Vector2.ZERO:
+	set(value):
+		look_offset = value
+		if is_node_ready():
+			_lift()
+## Moves its shadow, in game pixels.
+var shadow_offset := Vector2.ZERO:
+	set(value):
+		shadow_offset = value
+		if is_node_ready():
+			_lift()
+## False: its shadow never shows.
+var shadow_shown := true:
+	set(value):
+		shadow_shown = value
+		if is_node_ready():
+			_lift()
 ## Drawn over the map's tiles and walkers.
 @export var on_top := false:
 	set(value):
@@ -115,6 +134,7 @@ var _shadow: CanvasItem
 ## The top of the jump under way, px; 0: the config's.
 var _jump_height := 0.0
 var _sprite_rest := Vector2.ZERO
+var _shadow_rest := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -132,6 +152,9 @@ func _ready() -> void:
 	_shadow = get_node_or_null(shadow) as CanvasItem
 	if _shadow != null:
 		_shadow.hide()
+		if _shadow is Node2D:
+			_shadow_rest = (_shadow as Node2D).position
+	_lift()
 	if controller == null:
 		for child: Node in get_children():
 			if child is WgWalkerController:
@@ -273,7 +296,7 @@ func _start_step(direction: Vector2i, pace: float, run: bool) -> bool:
 	walkers.hold(self, landing, next_level)
 	if slides and tiles.data(landing, &"ice") == true:
 		is_sliding = true
-	if is_jumping and _shadow != null:
+	if is_jumping and _shadow != null and shadow_shown:
 		_shadow.show()
 	step_started.emit(_cell, landing)
 	return true
@@ -402,7 +425,7 @@ func jump_by(offset: Vector2i, seconds: float, height := 0.0) -> bool:
 	_to_cell = landing
 	_to_level = level
 	walkers.hold(self, landing, level)
-	if _shadow != null:
+	if _shadow != null and shadow_shown:
 		_shadow.show()
 	step_started.emit(_cell, landing)
 	return true
@@ -449,9 +472,12 @@ func _lift() -> void:
 		var height := 0.0
 		if is_jumping:
 			height = (_jump_height if _jump_height > 0.0 else walkers.movement().jump_height) * 4.0 * _progress * (1.0 - _progress)
-		_sprite.position = _sprite_rest - Vector2(0.0, height)
-	if _shadow != null and not is_jumping:
-		_shadow.hide()
+		_sprite.position = _sprite_rest + look_offset - Vector2(0.0, height)
+	if _shadow != null:
+		if _shadow is Node2D:
+			(_shadow as Node2D).position = _shadow_rest + shadow_offset
+		if not is_jumping or not shadow_shown:
+			_shadow.hide()
 
 
 func _animate() -> void:

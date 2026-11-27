@@ -392,3 +392,30 @@ func test_a_fixed_direction_keeps_its_facing_and_no_walk_animation_glides() -> v
 	walker.step(LEFT)
 	walker.advance(0.05)
 	assert_str(String((walker.get_node("Sprite") as AnimatedSprite2D).animation)).is_equal("idle_left")
+
+
+func test_its_looks_and_shadow_move_apart_from_its_cell_and_its_shadow_may_hide() -> void:
+	_world.map({Vector2i(2, 2): T.LEDGE})
+	var walker := _world.walker(Vector2i(2, 1), null, World.frames(["walk_down"]))
+	var sprite := walker.get_node("Sprite") as AnimatedSprite2D
+	var shadow := walker.get_node("Shadow") as Sprite2D
+	var shadow_rest := shadow.position
+	walker.look_offset = Vector2(3, -40)
+	walker.shadow_offset = Vector2(0, -20)
+	assert_that(sprite.position).is_equal(Vector2(3, -40))
+	assert_that(shadow.position).is_equal(shadow_rest + Vector2(0, -20))
+	assert_that(walker.cell).is_equal(Vector2i(2, 1))
+	assert_bool(walker.step(DOWN)).is_true()
+	walker.advance(0.2)
+	assert_that(sprite.position).is_equal(Vector2(3, -48))
+	assert_bool(shadow.visible).is_true()
+	walker.shadow_shown = false
+	assert_bool(shadow.visible).is_false()
+	walker.advance(0.2)
+	assert_that(sprite.position).is_equal(Vector2(3, -40))
+	walker.look_offset = Vector2.ZERO
+	assert_that(sprite.position).is_equal(Vector2.ZERO)
+	walker.shadow_shown = true
+	assert_bool(walker.step(DOWN)).is_true()
+	walker.advance(0.1)
+	assert_bool(shadow.visible).is_false()

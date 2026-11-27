@@ -51,7 +51,8 @@ func test_the_player_and_the_walkers_of_the_map_come_back_where_they_stood() -> 
 	assert_that(_guard().facing).is_equal(Vector2i.UP)
 	assert_object(_world.walkers.at(Vector2i(6, 2))).is_same(_guard())
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(_world.save.path_of(1)))["parts"]["map"]
-	assert_that(saved).is_equal({"map": "town", "cell": [3.0, 4.0], "level": 1.0, "facing": [-1.0, 0.0], "walkers": {"Entities/Guard": {"cell": [6.0, 2.0], "level": 0.0, "facing": [0.0, -1.0]}}})
+	assert_that(saved).is_equal({"map": "town", "cell": [3.0, 4.0], "level": 1.0, "facing": [-1.0, 0.0], "walkers": {"Entities/Guard": {"cell": [6.0, 2.0], "level": 0.0, "facing": [0.0, -1.0]}},
+		"look": {"offset": [0.0, 0.0], "shadow": [0.0, 0.0], "shadow_shown": true}})
 
 
 func test_cells_are_the_map_s_own_and_a_walker_gone_from_it_is_skipped() -> void:
@@ -129,3 +130,18 @@ func test_a_map_reached_by_its_scene_path_is_saved_and_loaded_by_it() -> void:
 	assert_bool(await _world.save.load_game(1)).is_true()
 	assert_str(_world.maps.current_id).is_equal(path)
 	assert_that(_player.cell).is_equal(Vector2i(4, 5))
+
+
+func test_the_player_s_looks_are_kept_and_a_new_game_shows_it_as_it_stands() -> void:
+	await _world.maps.go_to(&"town", &"Spawn")
+	_player.look_offset = Vector2(0, -64)
+	_player.shadow_offset = Vector2(2, -32)
+	_player.shadow_shown = false
+	_world.save.write(1)
+	_player.look_offset = Vector2.ZERO
+	_player.shadow_offset = Vector2.ZERO
+	_player.shadow_shown = true
+	assert_bool(await _world.save.load_game(1)).is_true()
+	assert_array([_player.look_offset, _player.shadow_offset, _player.shadow_shown]).is_equal([Vector2(0, -64), Vector2(2, -32), false])
+	_world.walkers.reset_map()
+	assert_array([_player.look_offset, _player.shadow_offset, _player.shadow_shown]).is_equal([Vector2.ZERO, Vector2.ZERO, true])

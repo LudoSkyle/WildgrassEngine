@@ -153,7 +153,7 @@ with where it stands (the `map` part), as the reference keeps its player.
 | `leave_cycling_state` | nothing: the engine has no bike yet, the player never rides |
 | `gm` (`$game_map`): `scroll_up`, `scroll_down`, `scroll_left`, `scroll_right(distance)` | `Wildgrass.screen.scroll_by()`, Studio's distance in its map units: 128 a cell |
 | `follow_me`: `smart_disable()` | the followers' line off if it is on, remembered (kept by the save) |
-| `follow_me`: `smart_enable()` | the line as `smart_disable` found it |
+| `follow_me`: `smart_enable()` | the line on if a `smart_disable()` once found it on (remembered as the reference's, never forgotten), else off |
 | `follow_me`: `update()`, `reset_position()` | nothing to do (the line follows by itself); the line put back |
 
 **The translator** (the rules above): a character's `offset_screen_x`,

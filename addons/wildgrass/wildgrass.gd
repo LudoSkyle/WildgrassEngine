@@ -173,6 +173,7 @@ func _init() -> void:
 	events.weather = weather
 	followers = _service(&"followers", _Followers, [log, hooks, maps, walkers, species])
 	followers.watch_party(party)
+	events.followers = followers
 	grass = _service(&"grass", _TallGrass, [hooks, walkers, tiles])
 	footprints = _service(&"footprints", _Footprints, [paths, config, maps, walkers, tiles])
 	reflections = _service(&"reflections", _Reflections, [config, walkers, tiles])

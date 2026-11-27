@@ -101,6 +101,12 @@ func scroll(direction: Vector2i, cells: int, speed: int) -> void:
 	_scroll_speed = clampi(speed, 1, 6)
 
 
+## Moves the view `pixels` at once, held within the map as a scroll is.
+func scroll_by(pixels: Vector2) -> void:
+	var wanted := scroll_offset + pixels
+	scroll_offset = clamp_scroll.call(wanted) if clamp_scroll.is_valid() else wanted
+
+
 func is_scrolling() -> bool:
 	return _scroll_rest > 0.0
 

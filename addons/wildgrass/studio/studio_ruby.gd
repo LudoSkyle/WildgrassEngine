@@ -18,8 +18,18 @@ const PRECEDENCE: Dictionary[String, int] = {
 	"+": 5, "-": 5, "*": 6, "/": 6, "%": 6, "neg": 7, "value": 8,
 }
 ## The members of what Studio's words give: a character, the text variables.
-const CHARACTER_MEMBERS: Array[String] = ["x", "y", "direction"]
-const CHARACTER_METHODS: Array[String] = ["moveto"]
+const CHARACTER_MEMBERS: Array[String] = [
+	"x", "y", "direction", "offset_screen_x", "offset_screen_y", "offset_shadow_screen_x", "offset_shadow_screen_y", "shadow_disabled",
+]
+const CHARACTER_WRITTEN: Array[String] = [
+	"direction", "offset_screen_x", "offset_screen_y", "offset_shadow_screen_x", "offset_shadow_screen_y", "shadow_disabled",
+]
+const CHARACTER_METHODS: Array[String] = ["moveto", "reset_follower", "leave_cycling_state"]
+## The map's view's (`gm`) and the followers' line's (`follow_me`), called.
+const MAP_METHODS: Array[String] = ["scroll_up", "scroll_down", "scroll_left", "scroll_right"]
+const FOLLOW_ME_METHODS: Array[String] = ["smart_disable", "smart_enable", "update", "reset_position"]
+## A module's last name, in snake_case, Studio's context has as a word.
+const MODULES: Array[String] = ["follow_me"]
 const TEXT_METHODS: Array[String] = ["set_variable", "unset_variable", "reset_variables"]
 ## A Pokémon's (`$actors[i]`, `pokemon_from_hash(…)`): read, written, called.
 const POKEMON_MEMBERS: Array[String] = ["id", "db_symbol", "form", "level", "loyalty", "shiny", "hp", "max_hp", "given_name", "name"]
@@ -166,13 +176,47 @@ func _statement() -> String:
 	var made := _expression(0)
 	if _failed:
 		return ""
-	if _peek() == "=" and (made[0].ends_with(".direction") and not made[0].begins_with("memory") or _is_pokemon_member(made[0], POKEMON_WRITTEN)):
-		_at += 1
-		var value := _expression(0)
-		return "%s = %s" % [made[0], value[0]] if not _failed else ""
+	if _peek() in ["=", "+=", "-="] and _writable(made[0]):
+		return _assign(made[0])
 	if not made[0].ends_with(")"):
 		return _fail(made[0])
 	return made[0]
+
+
+## `target`, a member written, then its operator and value at the cursor;
+## Ruby's `a = b = value` as `b = value`, then `a = b`.
+func _assign(target: String) -> String:
+	var operator := _peek()
+	_at += 1
+	var value := _expression(0)
+	if _failed:
+		return ""
+	if operator == "=" and _peek() == "=" and _writable(value[0]):
+		var inner := _assign(value[0])
+		return "%s\n%s = %s" % [inner, target, value[0]] if not _failed else ""
+	return "%s %s %s" % [target, operator, value[0]]
+
+
+## True if `text` is a member Studio's scripts write: a character's, a
+## Pokémon's.
+func _writable(text: String) -> bool:
+	var dot := text.rfind(".")
+	if dot <= 0:
+		return false
+	var base := text.substr(0, dot)
+	var member := text.substr(dot + 1)
+	return _is_character(base) and member in CHARACTER_WRITTEN or _is_pokemon_member(text, POKEMON_WRITTEN)
+
+
+## True if `text` is a character of Studio's words: `gp`, `ge(…)`,
+## `get_character(…)`, nothing after it.
+func _is_character(text: String) -> bool:
+	if text == "gp":
+		return true
+	for start: String in ["ge(", "get_character("]:
+		if text.begins_with(start) and text.ends_with(")") and _closes_at_end(text, start.length() - 1):
+			return true
+	return false
 
 
 ## An expression whose precedence is above `floor`: [text, precedence].
@@ -275,6 +319,8 @@ func _primary() -> Array:
 		if not _take("]"):
 			_fail(token)
 		return ["get_character(%s)" % index[0], 8]
+	if token in ["$game_map", "gm"]:
+		return ["gm", 8]
 	if token.begins_with("@"):
 		return ["memory.get(\"%s\")" % token.substr(1), 8]
 	if token == "PFM" and _peek() == "::" and _peek(1) == "Text":
@@ -283,6 +329,16 @@ func _primary() -> Array:
 	if token == "PFM" and _peek() == "::" and _peek(1) == "Pokemon" and _peek(2) == "." and _peek(3) == "generate_from_hash" and _peek(4) == "(":
 		_at += 5
 		return ["pokemon_from_hash(%s)" % ", ".join(_arguments(")")), 8]
+	if token[0] == token[0].to_upper() and token[0] != token[0].to_lower() and _peek() == "::":
+		var last := token
+		while _take("::"):
+			last = _peek()
+			_at += 1
+		var word := last.to_snake_case()
+		if word in MODULES:
+			return [word, 8]
+		_fail(token)
+		return ["", 8]
 	if token == ACTORS:
 		if not _take("["):
 			return ["actors", 8]
@@ -340,11 +396,12 @@ func _postfix(value: Array) -> Array:
 		var member := _peek(1).trim_suffix("?")
 		_at += 2
 		var is_text: bool = value[0] == "text"
-		var is_character: bool = value[0] == "gp" or value[0].begins_with("ge(") or value[0].begins_with("get_character(")
+		var is_character := _is_character(value[0])
 		var is_pokemon := _is_pokemon(value[0])
 		if is_text and member in TEXT_METHODS or is_character and member in CHARACTER_METHODS \
 				or is_pokemon and member in POKEMON_METHODS or value[0] == "actors" and member in ACTORS_METHODS \
-				or value[0] == "pokemon_party" and member in PARTY_METHODS:
+				or value[0] == "pokemon_party" and member in PARTY_METHODS or value[0] == "gm" and member in MAP_METHODS \
+				or value[0] == "follow_me" and member in FOLLOW_ME_METHODS:
 			var listed: Array[String] = []
 			if _take("("):
 				listed = _arguments(")")

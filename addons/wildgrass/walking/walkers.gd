@@ -483,6 +483,9 @@ func map_state() -> Dictionary:
 		return {}
 	var state := {"map": str(maps.current_id)}
 	state.merge(_place_of(maps.traveller, map))
+	var traveller := maps.traveller as WgWalker
+	if traveller != null:
+		state["look"] = {"offset": [traveller.look_offset.x, traveller.look_offset.y], "shadow": [traveller.shadow_offset.x, traveller.shadow_offset.y], "shadow_shown": traveller.shadow_shown}
 	var others := {}
 	for walker: WgWalker in _held:
 		if walker != maps.traveller and is_instance_valid(walker) and not walker is WgFollower and map.is_ancestor_of(walker):
@@ -522,6 +525,11 @@ func restore_map(state: Dictionary) -> void:
 	var traveller := maps.traveller as WgWalker
 	if traveller != null:
 		traveller.place_at(place["cell"], place["level"], place["facing"])
+		var look: Variant = state.get("look", {})
+		if look is Dictionary:
+			traveller.look_offset = _read_vector(look.get("offset"))
+			traveller.shadow_offset = _read_vector(look.get("shadow"))
+			traveller.shadow_shown = bool(look.get("shadow_shown", true))
 	var others: Variant = state.get("walkers", {})
 	if not others is Dictionary:
 		return
@@ -532,9 +540,14 @@ func restore_map(state: Dictionary) -> void:
 			walker.place_at(at["cell"], at["level"], at["facing"])
 
 
-## A new game: the game warps to its first map itself.
+## A new game: the game warps to its first map itself; the traveller shows
+## as it stands, its shadow allowed.
 func reset_map() -> void:
-	pass
+	var traveller := maps.traveller as WgWalker
+	if traveller != null:
+		traveller.look_offset = Vector2.ZERO
+		traveller.shadow_offset = Vector2.ZERO
+		traveller.shadow_shown = true
 
 
 ## The `save_summary` hook: a game's card shows where it was left.
@@ -555,6 +568,12 @@ func _place_of(node: Node2D, map: WgMap) -> Dictionary:
 
 static func _read_place(saved: Dictionary) -> Dictionary:
 	return {"cell": _read_cell(saved.get("cell")), "level": int(saved.get("level", 0)), "facing": _read_cell(saved.get("facing"))}
+
+
+static func _read_vector(value: Variant) -> Vector2:
+	if value is Array and value.size() == 2:
+		return Vector2(float(value[0]), float(value[1]))
+	return Vector2.ZERO
 
 
 static func _read_cell(value: Variant) -> Vector2i:

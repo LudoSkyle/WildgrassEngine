@@ -219,6 +219,8 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		"$actors[gv[45]].egg?": "actors.at(gv(45)).egg()",
 		"$actors[gv[43]].shiny": "actors.at(gv(43)).shiny",
 		"$pokemon_party.pokemon_alive == 1 && !$actors[gv[45]].dead?": "pokemon_party.pokemon_alive() == 1 and not actors.at(gv(45)).dead()",
+		"gp.offset_screen_y == -256": "gp.offset_screen_y == -256",
+		"get_character(10).offset_screen_y % 3 == 0": "get_character(10).offset_screen_y % 3 == 0",
 	}
 	for ruby: String in conditions:
 		var made := _built(111, [12, ruby]) as WgEventIf
@@ -233,6 +235,13 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		"@froslass = PFM::Pokemon.generate_from_hash(id: :froslass, level: 30)": "memory[\"froslass\"] = pokemon_from_hash({id = &\"froslass\", level = 30})",
 		"PFM::Text.set_variable(\"[POKE]\", $actors[gv[43]].given_name)": "text.set_variable(\"[POKE]\", actors.at(gv(43)).given_name)",
 		"@choices = [ext_text(3, 147),\next_text(3, 148)]": "memory[\"choices\"] = [ext_text(3, 147), ext_text(3, 148)]",
+		"gp.offset_screen_y = gp.offset_shadow_screen_y = 0": "gp.offset_shadow_screen_y = 0\ngp.offset_screen_y = gp.offset_shadow_screen_y",
+		"gp.offset_screen_y -= 16\ngp.offset_shadow_screen_y = gp.offset_screen_y": "gp.offset_screen_y -= 16\ngp.offset_shadow_screen_y = gp.offset_screen_y",
+		"get_character(10).offset_screen_y += 24": "get_character(10).offset_screen_y += 24",
+		"gp.offset_screen_y = gp.offset_shadow_screen_y = nil": "gp.offset_shadow_screen_y = null\ngp.offset_screen_y = gp.offset_shadow_screen_y",
+		"Mod::FollowMe.smart_disable\ngp.shadow_disabled = true\ngp.leave_cycling_state": "follow_me.smart_disable()\ngp.shadow_disabled = true\ngp.leave_cycling_state()",
+		"gp.reset_follower\nOther::Mod::FollowMe.update": "gp.reset_follower()\nfollow_me.update()",
+		"gm.scroll_up(16)\n$game_map.scroll_down(8)": "gm.scroll_up(16)\ngm.scroll_down(8)",
 		"choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")": "choice(26, 5, \"19, 168 Morning\", \"19,169 Midday\", \"Night\")",
 	}
 	for ruby: String in scripts:
@@ -252,8 +261,12 @@ func test_the_party_s_words_are_written_as_studio_s_context_names_them() -> void
 		command(355, ["$actors.first.form"]),
 		command(355, ["set_gv(1, $actors[0].form.level)"]),
 		command(355, ["choice(26, -1, *@choices)"]),
+		command(355, ["Mod::Elsewhere.smart_disable"]),
+		command(355, ["gp.x = 3"]),
+		command(355, ["gp.offset_screen_y = gp.x = 3"]),
+		command(355, ["gm.scroll_far(3)"]),
 	])
-	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true, true, true, true])
+	assert_array(kept.map(func(built: WgEventCommand) -> bool: return built is WgEventRaw)).is_equal([true, true, true, true, true, true, true, true, true, true, true, true])
 
 
 func test_the_project_s_translation_wins_and_a_script_not_translated_gets_its_file() -> void:

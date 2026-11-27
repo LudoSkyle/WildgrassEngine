@@ -199,6 +199,7 @@ func _init(parent: Node, map_config := {}) -> void:
 	events.screen = screen
 	followers = Followers.new(logger, hooks, maps, walkers, species)
 	followers.watch_party(party)
+	events.followers = followers
 	grass = TallGrass.new(hooks, walkers, tiles)
 	footprints = Footprints.new(paths, config, maps, walkers, tiles)
 	reflections = Reflections.new(config, walkers, tiles)
